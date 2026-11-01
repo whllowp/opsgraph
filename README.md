@@ -1,5 +1,7 @@
 # OpsGraph · eBPF × UModel 运维图工程
 
+[![CI](https://github.com/whllowp/opsgraph/actions/workflows/ci.yml/badge.svg)](https://github.com/whllowp/opsgraph/actions/workflows/ci.yml)
+
 > GitHub: [whllowp/opsgraph](https://github.com/whllowp/opsgraph)
 >
 > 把 eBPF 观测到的调用事实，编译成 UModel 上可查询、可推理、可回写的运维对象图。
