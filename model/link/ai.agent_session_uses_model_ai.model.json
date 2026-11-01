@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "ai.agent_session_uses_model_ai.model",
+    "domain": "ai",
+    "display_name": {
+      "en_us": "Agent Session uses Model",
+      "zh_cn": "Agent 会话使用模型"
+    },
+    "description": {
+      "en_us": "Attributes token usage and cost of a session to an LLM model.",
+      "zh_cn": "将会话的 Token 用量与成本归因到 LLM 模型。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "ai",
+      "kind": "entity_set",
+      "name": "ai.agent_session"
+    },
+    "dest": {
+      "domain": "ai",
+      "kind": "entity_set",
+      "name": "ai.model"
+    },
+    "entity_link_type": "uses_model"
+  }
+}

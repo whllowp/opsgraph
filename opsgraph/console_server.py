@@ -69,6 +69,10 @@ def _node_entity(entity: dict[str, Any]) -> dict[str, Any]:
         tier = "journey"
         status = "impacted" if entity.get("impacted") else "healthy"
         radius = 10.0
+    elif etype == "ai.agent_session":
+        tier = "ai"
+        status = str(entity.get("risk_level") or "low")
+        radius = 13.0
     elif etype == "ops.incident":
         tier = "ops"
         radius = 11.0
@@ -97,6 +101,11 @@ def _node_entity(entity: dict[str, Any]) -> dict[str, Any]:
             "outbound_amp": entity.get("outbound_amp"),
             "onset_ts": entity.get("onset_ts"),
             "onset_signal": entity.get("onset_signal"),
+            "tokens": entity.get("total_tokens"),
+            "cost_usd": entity.get("cost_usd"),
+            "risk_score": entity.get("risk_score"),
+            "tool_calls": entity.get("tool_calls"),
+            "failed_tool_calls": entity.get("failed_tool_calls"),
         },
     }
 
@@ -136,6 +145,11 @@ def _layout(nodes: list[dict[str, Any]]) -> None:
                 item["x"] = 940.0
                 item["y"] = 640.0 + index * 34.0
             continue
+        if tier == "ai":
+            for index, item in enumerate(items):
+                item["x"] = 48.0
+                item["y"] = 120.0 + index * 84.0
+            continue
         spacing = 82.0 if len(items) <= 6 else 64.0
         total = (len(items) - 1) * spacing
         for index, item in enumerate(items):
@@ -147,12 +161,15 @@ def build_console_state(
     snapshot: dict[str, Any],
     analysis: dict[str, Any],
     umodel_info: dict[str, Any] | None = None,
+    agents: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     visible_types = {
         "svc.service",
         "svc.external_service",
         "biz.journey",
     }
+    if agents and agents.get("sessions"):
+        visible_types.add("ai.agent_session")
     entities = [
         item
         for item in snapshot.get("entities", [])
@@ -199,7 +216,7 @@ def build_console_state(
         )
 
     # Focus edges by default: call graph + business + incident overlay.
-    focus_types = {"calls", "depends_on", "affects"}
+    focus_types = {"calls", "depends_on", "affects", "acts_on"}
     counts: dict[str, int] = {}
     for item in snapshot.get("entities", []):
         key = str(item.get("__entity_type__"))
@@ -221,6 +238,10 @@ def build_console_state(
             "label": "用 Cypher 读取完整证据图",
             "spl": ".topo | graph-call cypher(`MATCH (src)-[r]->(dest) RETURN src, r AS relation, dest LIMIT 50`)",
         },
+        {
+            "label": "读取 AgentSight 的 Agent 会话与风险",
+            "spl": ".entity with(domain='ai', name='ai.agent_session') | sort risk_score desc | project display_name,model,total_tokens,cost_usd,risk_score,claim_status,remediation_status",
+        },
     ]
     return {
         "meta": {
@@ -231,11 +252,13 @@ def build_console_state(
             "type_counts": counts,
             "model": {"entity_sets": len(ENTITY_SETS), "links": len(LINKS)},
             "umodel": umodel_info or {"addr": UMODEL_ADDR, "connected": False},
-            "source": "UModel Query Service + DeepFlow l7_flow_log",
+            "source": "UModel Query Service + DeepFlow l7_flow_log + AgentSight",
+            "agents": (agents or {}).get("summary", {}),
         },
         "nodes": nodes,
         "edges": edges,
         "focus_types": sorted(focus_types),
+        "agents": agents or {},
         "incident": next(
             (
                 item
@@ -253,6 +276,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     server_version = "OpsGraphConsole/0.1"
     snapshot: dict[str, Any] | None = None
     analysis: dict[str, Any] | None = None
+    agents: dict[str, Any] | None = None
     umodel_info: dict[str, Any] = {"addr": UMODEL_ADDR, "connected": False}
     lock = threading.Lock()
 
@@ -277,12 +301,14 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 return False
             cls.snapshot = read_json(snapshot_path)
             cls.analysis = read_json(analysis_path)
+            agents_path = ARTIFACT_DIR / "agents.json"
+            cls.agents = read_json(agents_path) if agents_path.exists() else {}
         return True
 
     def _state(self) -> dict[str, Any]:
         cls = type(self)
         assert cls.snapshot is not None and cls.analysis is not None
-        return build_console_state(cls.snapshot, cls.analysis, cls.umodel_info)
+        return build_console_state(cls.snapshot, cls.analysis, cls.umodel_info, cls.agents)
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
@@ -347,19 +373,14 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             target = CONSOLE_DIR / "index.html"
         else:
             target = (CONSOLE_DIR / path.lstrip("/")).resolve()
-            if (
-                CONSOLE_DIR.resolve() not in target.parents
-                and target != CONSOLE_DIR.resolve()
-            ):
+            if CONSOLE_DIR.resolve() not in target.parents and target != CONSOLE_DIR.resolve():
                 self._json({"error": "forbidden"}, 403)
                 return
         if not target.exists() or not target.is_file():
             self._json({"error": "not found"}, 404)
             return
         body = target.read_bytes()
-        content_type = (
-            mimetypes.guess_type(str(target))[0] or "application/octet-stream"
-        )
+        content_type = mimetypes.guess_type(str(target))[0] or "application/octet-stream"
         if content_type.startswith("text/") or content_type in {
             "application/javascript",
             "application/json",
@@ -417,9 +438,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 for service in remove:
                     if service in graph.services:
                         impacted.extend(graph.reachable(service))
-                impacted = sorted(
-                    set(name for name in impacted if name in graph.services) - remove
-                )
+                impacted = sorted(set(name for name in impacted if name in graph.services) - remove)
                 services = []
                 for name in impacted:
                     entity = graph.services.get(name, {})

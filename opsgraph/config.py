@@ -9,6 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODEL_DIR = PROJECT_ROOT / "model"
 DATA_DIR = PROJECT_ROOT / "data"
 REPLAY_DIR = DATA_DIR / "replay"
+AGENTSIGHT_SNAPSHOT = REPLAY_DIR / "agentsight_snapshot.json"
 ARTIFACT_DIR = PROJECT_ROOT / "artifacts"
 RUNTIME_DIR = PROJECT_ROOT / ".runtime"
 

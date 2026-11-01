@@ -1,8 +1,8 @@
 {
-  "declared_entities": 86,
-  "umodel_entities": 86,
-  "declared_relations": 151,
-  "umodel_relations": 151,
+  "declared_entities": 119,
+  "umodel_entities": 119,
+  "declared_relations": 183,
+  "umodel_relations": 183,
   "root_cause_field": "checkout-service",
   "service_roles": {
     "checkout-service": "root_cause",
@@ -16,5 +16,8 @@
     "payment-router": "downstream",
     "inventory-service": "downstream",
     "frontend-web": "upstream"
-  }
+  },
+  "agent_sessions": 2,
+  "agent_tool_calls": 16,
+  "agent_effects": 13
 }

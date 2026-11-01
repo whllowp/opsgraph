@@ -5,6 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from .agent_graph import AgentGraphBuilder
+from .agentsight import load_agentsight
+from .agentsight_demo import generate_demo_snapshot
 from .analysis import analyze, changed_entities
 from .config import (
     ARTIFACT_DIR,
@@ -62,9 +65,19 @@ def run_pipeline(
     deepflow_base: str | None = None,
     start: int | None = None,
     end: int | None = None,
+    agentsight_path: str | Path | None = None,
+    include_agents: bool = True,
     write_artifacts: bool = True,
 ) -> dict[str, Any]:
     replay = generate_replay(Path(replay_dir) if replay_dir else REPLAY_DIR)
+    agent_path: Path | None = None
+    if include_agents:
+        if agentsight_path is None:
+            agent_path = generate_demo_snapshot(
+                Path(replay_dir or REPLAY_DIR) / "agentsight_snapshot.json"
+            )
+        else:
+            agent_path = Path(agentsight_path)
     pack = build_model_pack(MODEL_DIR)
     client = UModelClient(addr, workspace)
     if not client.wait_ready():
@@ -87,9 +100,24 @@ def run_pipeline(
     snapshot = Materializer(flows, nodes, declared, window_start=window_start).build()
     snapshot["workspace"] = workspace
     snapshot["window"]["end"] = window_end
-    entity_write = client.write_entities(snapshot["entities"])
-    relation_write = client.write_relations(snapshot["relations"])
     analysis = analyze(snapshot)
+
+    agent_snapshot = load_agentsight(agent_path) if agent_path else None
+    agent_analysis: dict[str, Any] | None = None
+    if agent_snapshot:
+        agent_entities, agent_relations, agent_analysis = AgentGraphBuilder(
+            snapshot, agent_snapshot, analysis
+        ).build()
+        snapshot["entities"].extend(agent_entities)
+        snapshot["relations"].extend(agent_relations)
+        snapshot["counts"] = {
+            "entities": len(snapshot["entities"]),
+            "relations": len(snapshot["relations"]),
+        }
+
+    entity_write = client.write_entities(snapshot["entities"])
+    reconcile = reconcile_ai_relations(client, snapshot["relations"])
+    relation_write = client.write_relations(snapshot["relations"])
     role_write = client.write_entities(changed_entities(snapshot))
 
     umodel_snapshot = load_snapshot_from_umodel(client, declared)
@@ -111,6 +139,27 @@ def run_pipeline(
             for item in umodel_snapshot["entities"]
             if item.get("__entity_type__") == "svc.service"
         },
+        "agent_sessions": len(
+            [
+                item
+                for item in umodel_snapshot["entities"]
+                if item.get("__entity_type__") == "ai.agent_session"
+            ]
+        ),
+        "agent_tool_calls": len(
+            [
+                item
+                for item in umodel_snapshot["entities"]
+                if item.get("__entity_type__") == "ai.tool_call"
+            ]
+        ),
+        "agent_effects": len(
+            [
+                item
+                for item in umodel_snapshot["entities"]
+                if item.get("__entity_type__") == "ai.effect"
+            ]
+        ),
     }
     result = {
         "pipeline": {
@@ -119,12 +168,15 @@ def run_pipeline(
             "imports": imports,
             "entity_write": entity_write,
             "relation_write": relation_write,
+            "relation_reconcile": reconcile,
             "role_write": role_write,
             "replay": replay,
             "pack": pack,
+            "agentsight": str(agent_path) if agent_path else None,
         },
         "snapshot": snapshot,
         "analysis": analysis,
+        "agents": agent_analysis,
         "umodel": umodel_snapshot,
         "verification": verification,
     }
@@ -133,17 +185,61 @@ def run_pipeline(
     return result
 
 
+def _relation_key(relation: dict[str, Any]) -> str:
+    return "/".join(
+        [
+            str(relation.get("__src_domain__") or ""),
+            str(relation.get("__src_entity_type__") or ""),
+            str(relation.get("__src_entity_id__") or ""),
+            str(relation.get("__relation_type__") or ""),
+            str(relation.get("__dest_domain__") or ""),
+            str(relation.get("__dest_entity_type__") or ""),
+            str(relation.get("__dest_entity_id__") or ""),
+        ]
+    )
+
+
+def reconcile_ai_relations(
+    client: UModelClient, current_relations: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Expire AI relations that disappeared between two pipeline runs.
+
+    UModel writes are upserts; a changed tool->effect match otherwise leaves a
+    stale ``produces`` edge in the graph forever. Only AI-domain relations are
+    reconciled here so service topology can evolve independently.
+    """
+
+    current = {_relation_key(item) for item in current_relations}
+    stale = []
+    try:
+        existing = client.all_relations()
+    except Exception:
+        return {"expired": 0, "error": "could not enumerate existing relations"}
+    for relation in existing:
+        if relation.get("__src_domain__") != "ai" and relation.get("__dest_domain__") != "ai":
+            continue
+        key = _relation_key(relation)
+        if key and key not in current:
+            stale.append(key)
+    if not stale:
+        return {"expired": 0, "candidates": 0}
+    result = client.expire_relations(stale)
+    return {"expired": result.get("accepted", 0), "candidates": len(stale)}
+
+
 def write_artifacts_bundle(result: dict[str, Any]) -> dict[str, str]:
     root = ARTIFACT_DIR
     root.mkdir(parents=True, exist_ok=True)
     snapshot_path = write_json(root / "snapshot.json", result["snapshot"])
     analysis_path = write_json(root / "analysis.json", result["analysis"])
+    agents_path = write_json(root / "agents.json", result.get("agents") or {})
     verification_path = write_json(root / "verification.json", result["verification"])
     report_path = write_text(root / "incident-report.md", render_report(result))
     graph_path = write_json(root / "graph.json", build_graph_document(result))
     return {
         "snapshot": str(snapshot_path),
         "analysis": str(analysis_path),
+        "agents": str(agents_path),
         "verification": str(verification_path),
         "report": str(report_path),
         "graph": str(graph_path),
@@ -195,11 +291,7 @@ def render_report(result: dict[str, Any]) -> str:
     analysis = result["analysis"]
     snapshot = result["snapshot"]
     incident = next(
-        (
-            item
-            for item in snapshot["entities"]
-            if item.get("__entity_type__") == "ops.incident"
-        ),
+        (item for item in snapshot["entities"] if item.get("__entity_type__") == "ops.incident"),
         {},
     )
     ranking = analysis["ranking"]
@@ -254,12 +346,35 @@ def render_report(result: dict[str, Any]) -> str:
         )
     lines += ["", "## 图工程发现", ""]
     for finding in analysis["findings"]:
-        lines.append(
-            f"- **[{finding['severity']}] {finding['title']}**：{finding['detail']}"
-        )
+        lines.append(f"- **[{finding['severity']}] {finding['title']}**：{finding['detail']}")
     lines += ["", "## 已排除", ""]
     for item in analysis["ruled_out"]:
         lines.append(f"- **{item['title']}**：{item['detail']}")
+    agents = result.get("agents") or {}
+    if agents:
+        summary = agents.get("summary") or {}
+        lines += [
+            "",
+            "## AI Agent 观测（AgentSight）",
+            "",
+            f"- 会话：{summary.get('sessions', 0)}；工具调用：{summary.get('tool_calls', 0)}；失败：{summary.get('failed_tool_calls', 0)}；重试环：{summary.get('retry_loops', 0)}",
+            f"- Token：{summary.get('total_tokens', 0):,}；成本：${summary.get('cost_usd', 0):.2f}；高风险效果：{summary.get('high_risk_effects', 0)}",
+            "",
+            "| Agent 会话 | 模型 | Tokens | 成本 | 工具/失败 | 重试环 | 风险 | 关联服务 | 结论校验 |",
+            "|---|---|---:|---:|---:|---:|---|---|---|",
+        ]
+        for session in agents.get("sessions", []):
+            lines.append(
+                f"| `{session['name']}` | {session.get('model', '')} | {int(session.get('total_tokens') or 0):,} | "
+                f"${float(session.get('cost_usd') or 0):.2f} | {session.get('tool_calls', 0)}/{session.get('failed_tool_calls', 0)} | "
+                f"{session.get('retry_loops', 0)} | {session.get('risk_level', '')} | {session.get('linked_service', '') or '-'} | "
+                f"{session.get('claim_status', '') or '-'} |"
+            )
+        lines.append("")
+        for finding in agents.get("findings", []):
+            lines.append(
+                f"- **[{finding.get('severity')}] {finding.get('title')}**：{finding.get('detail')}"
+            )
     lines += [
         "",
         "## 复现查询",
@@ -272,6 +387,6 @@ def render_report(result: dict[str, Any]) -> str:
         '  ".topo | graph-call getDirectRelations([(:\\"svc@svc.service\\" {__entity_id__: \'<checkout-id>\'})])"',
         "```",
         "",
-        "模型、实体与关系均通过 UModel 公共 REST/CLI 契约写入和读取；eBPF 证据字段挂在 `calls` 关系上。",
+        "模型、实体与关系均通过 UModel 公共 REST/CLI 契约写入和读取；`calls` 边携带 eBPF 证据，`ai.*` 边携带 AgentSight 证据。",
     ]
     return "\n".join(lines) + "\n"

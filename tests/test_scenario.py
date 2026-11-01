@@ -63,17 +63,12 @@ class ScenarioTests(unittest.TestCase):
         rows = [
             row
             for row in self.rows
-            if row["pod_service_1"] == ""
-            and row["request_domain"] == "api.promo-flash.com"
+            if row["pod_service_1"] == "" and row["request_domain"] == "api.promo-flash.com"
         ]
         self.assertTrue(rows)
-        self.assertTrue(
-            all(int(row["time"]) >= SCENARIO_START + 31 * 60 for row in rows)
-        )
+        self.assertTrue(all(int(row["time"]) >= SCENARIO_START + 31 * 60 for row in rows))
         declared = scenario.declared_topology()
-        edge = next(
-            item for item in declared["edges"] if item["dst"] == "promo-shadow-api"
-        )
+        edge = next(item for item in declared["edges"] if item["dst"] == "promo-shadow-api")
         self.assertFalse(edge["declared"])
 
 

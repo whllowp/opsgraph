@@ -61,3 +61,19 @@ def change_id(name: str) -> str:
 
 def alert_id(name: str) -> str:
     return entity_id("ops", "ops.alert", name)
+
+
+def agent_session_id(key: str) -> str:
+    return entity_id("ai", "ai.agent_session", key)
+
+
+def model_id(key: str) -> str:
+    return entity_id("ai", "ai.model", key)
+
+
+def tool_call_id(key: str) -> str:
+    return entity_id("ai", "ai.tool_call", key)
+
+
+def effect_id(key: str) -> str:
+    return entity_id("ai", "ai.effect", key)

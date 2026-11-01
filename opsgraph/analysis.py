@@ -64,34 +64,18 @@ class GraphView:
             if item.get("__entity_type__") == "svc.endpoint"
         }
         self.incident = next(
-            (
-                item
-                for item in self.entities
-                if item.get("__entity_type__") == "ops.incident"
-            ),
+            (item for item in self.entities if item.get("__entity_type__") == "ops.incident"),
             {},
         )
         self.changes = [
-            item
-            for item in self.entities
-            if item.get("__entity_type__") == "ops.change"
+            item for item in self.entities if item.get("__entity_type__") == "ops.change"
         ]
-        self.alerts = [
-            item for item in self.entities if item.get("__entity_type__") == "ops.alert"
-        ]
+        self.alerts = [item for item in self.entities if item.get("__entity_type__") == "ops.alert"]
         self.journeys = [
-            item
-            for item in self.entities
-            if item.get("__entity_type__") == "biz.journey"
+            item for item in self.entities if item.get("__entity_type__") == "biz.journey"
         ]
-        self.nodes = [
-            item
-            for item in self.entities
-            if item.get("__entity_type__") == "infra.node"
-        ]
-        self.pods = [
-            item for item in self.entities if item.get("__entity_type__") == "infra.pod"
-        ]
+        self.nodes = [item for item in self.entities if item.get("__entity_type__") == "infra.node"]
+        self.pods = [item for item in self.entities if item.get("__entity_type__") == "infra.pod"]
         self.calls: list[dict[str, Any]] = []
         self.endpoint_calls: list[dict[str, Any]] = []
         self.depends_on: list[dict[str, Any]] = []
@@ -125,16 +109,11 @@ class GraphView:
 
     def edge(self, src: str, dst: str) -> dict[str, Any] | None:
         for item in self.out_calls.get(src, []):
-            if (
-                _service_key(self.by_id.get(str(item.get("__dest_entity_id__")), {}))
-                == dst
-            ):
+            if _service_key(self.by_id.get(str(item.get("__dest_entity_id__")), {})) == dst:
                 return item
         return None
 
-    def reachable(
-        self, start: str, reverse: bool = False, max_depth: int = 20
-    ) -> dict[str, int]:
+    def reachable(self, start: str, reverse: bool = False, max_depth: int = 20) -> dict[str, int]:
         adjacency = self.in_calls if reverse else self.out_calls
         distances: dict[str, int] = {}
         queue: deque[tuple[str, int]] = deque([(start, 0)])
@@ -144,11 +123,7 @@ class GraphView:
                 continue
             for edge in adjacency.get(current, []):
                 neighbor_entity = self.by_id.get(
-                    str(
-                        edge.get(
-                            "__src_entity_id__" if reverse else "__dest_entity_id__"
-                        )
-                    )
+                    str(edge.get("__src_entity_id__" if reverse else "__dest_entity_id__"))
                 )
                 if not neighbor_entity:
                     continue
@@ -202,9 +177,7 @@ def _change_for_service(graph: GraphView, service: str) -> dict[str, Any] | None
     return max(candidates, key=lambda item: int(item.get("applied_ts") or 0))
 
 
-def _component_change(
-    change: dict[str, Any] | None, onset_ts: int | None
-) -> tuple[float, str]:
+def _component_change(change: dict[str, Any] | None, onset_ts: int | None) -> tuple[float, str]:
     if not change:
         return 0.0, "no recent change"
     risk = str(change.get("risk") or "").lower()
@@ -230,9 +203,7 @@ def _component_change(
     return 0.02, "recent low-risk change"
 
 
-def _component_upstream(
-    candidate: str, victim: str, upstream: dict[str, int]
-) -> tuple[float, str]:
+def _component_upstream(candidate: str, victim: str, upstream: dict[str, int]) -> tuple[float, str]:
     if candidate == victim:
         return 0.10, "victim service"
     if candidate in upstream:
@@ -245,16 +216,12 @@ def _component_upstream(
     return 0.0, "not upstream of victim"
 
 
-def _component_lead(
-    candidate: dict[str, Any], victim: dict[str, Any]
-) -> tuple[float, str]:
+def _component_lead(candidate: dict[str, Any], victim: dict[str, Any]) -> tuple[float, str]:
     candidate_signal = min(
         int(candidate.get("amplification_onset_ts") or 0) or 10**12,
         int(candidate.get("latency_onset_ts") or 0) or 10**12,
     )
-    victim_signal = (
-        int(victim.get("latency_onset_ts") or victim.get("onset_ts") or 0) or 10**12
-    )
+    victim_signal = int(victim.get("latency_onset_ts") or victim.get("onset_ts") or 0) or 10**12
     if candidate_signal >= 10**12 or victim_signal >= 10**12:
         return 0.0, "no comparable onset"
     delta = (victim_signal - candidate_signal) / 60.0
@@ -289,9 +256,7 @@ def _component_amplification(candidate: dict[str, Any]) -> tuple[float, str]:
     return clamp((amp - 1.0) / 7.0) * 0.12, f"outbound {amp:.1f}x baseline"
 
 
-def _articulation_points(
-    services: Iterable[str], adjacency: dict[str, set[str]]
-) -> list[str]:
+def _articulation_points(services: Iterable[str], adjacency: dict[str, set[str]]) -> list[str]:
     """Tarjan articulation points over the undirected service graph."""
 
     discovery: dict[str, int] = {}
@@ -358,14 +323,7 @@ def analyze(snapshot: dict[str, Any]) -> dict[str, Any]:
         upstream_value, upstream_reason = _component_upstream(name, victim, upstream)
         lead_value, lead_reason = _component_lead(entity, victim_entity)
         prop_value, prop_reason = _component_propagation(graph, name, anomalous)
-        total = (
-            self_value
-            + change_value
-            + amp_value
-            + lead_value
-            + prop_value
-            + upstream_value
-        )
+        total = self_value + change_value + amp_value + lead_value + prop_value + upstream_value
         candidates.append(
             {
                 "service": name,
@@ -411,9 +369,7 @@ def analyze(snapshot: dict[str, Any]) -> dict[str, Any]:
     second = candidates[1]["score"] if len(candidates) > 1 else 0.0
     top = candidates[0]["score"] if candidates else 0.0
     confidence = (
-        clamp(0.55 + 0.45 * safe_div(top - second, max(top, 1e-9)), 0.0, 0.98)
-        if top
-        else 0.0
+        clamp(0.55 + 0.45 * safe_div(top - second, max(top, 1e-9)), 0.0, 0.98) if top else 0.0
     )
     if candidates:
         candidates[0]["confidence"] = round(confidence, 3)
@@ -428,20 +384,14 @@ def analyze(snapshot: dict[str, Any]) -> dict[str, Any]:
                 external_candidates,
                 key=lambda name: (
                     float(graph.externals.get(name, {}).get("rps") or 0)
-                    * (
-                        1.0
-                        + 5.0
-                        * float(graph.externals.get(name, {}).get("error_rate") or 0)
-                    )
+                    * (1.0 + 5.0 * float(graph.externals.get(name, {}).get("error_rate") or 0))
                 ),
             )
             tail = graph.shortest_path(victim, worst)
         elif downstream:
             worst = max(
                 downstream,
-                key=lambda name: float(
-                    graph.services.get(name, {}).get("latency_p99_ms") or 0
-                ),
+                key=lambda name: float(graph.services.get(name, {}).get("latency_p99_ms") or 0),
             )
             tail = graph.shortest_path(victim, worst)
     full_path = path + [item for item in tail if item not in path]
@@ -488,13 +438,9 @@ def _ruled_out(graph: GraphView, root: str, victim: str) -> list[dict[str, Any]]
         if float(node.get("anomaly_score") or 0) < ANOMALY_THRESHOLD:
             continue
         hosted = [
-            pod
-            for pod in graph.pods
-            if str(pod.get("node")) == str(node.get("display_name"))
+            pod for pod in graph.pods if str(pod.get("node")) == str(node.get("display_name"))
         ]
-        services = sorted(
-            {str(pod.get("workload", "")).replace("-deploy", "") for pod in hosted}
-        )
+        services = sorted({str(pod.get("workload", "")).replace("-deploy", "") for pod in hosted})
         victim_pods = [
             pod
             for pod in graph.pods
@@ -606,9 +552,7 @@ def _findings(
                 + ", ".join(points)
                 + " disconnects part of the call graph. These are structural single points of failure.",
                 "entities": [
-                    _entity_id(graph.services[name])
-                    for name in points
-                    if name in graph.services
+                    _entity_id(graph.services[name]) for name in points if name in graph.services
                 ],
                 "evidence": {"articulation_points": points},
             }
@@ -646,13 +590,9 @@ def _findings(
         if victim_pods:
             continue
         hosted = [
-            pod
-            for pod in graph.pods
-            if str(pod.get("node")) == str(node.get("display_name"))
+            pod for pod in graph.pods if str(pod.get("node")) == str(node.get("display_name"))
         ]
-        services = sorted(
-            {str(pod.get("workload", "")).replace("-deploy", "") for pod in hosted}
-        )
+        services = sorted({str(pod.get("workload", "")).replace("-deploy", "") for pod in hosted})
         findings.append(
             {
                 "id": "node-pressure",
@@ -665,16 +605,12 @@ def _findings(
         )
 
     findings.sort(
-        key=lambda item: {"critical": 0, "warning": 1, "info": 2}.get(
-            str(item.get("severity")), 3
-        )
+        key=lambda item: {"critical": 0, "warning": 1, "info": 2}.get(str(item.get("severity")), 3)
     )
     return findings
 
 
-def _impact(
-    graph: GraphView, root: str, victim: str, anomalous: set[str]
-) -> dict[str, Any]:
+def _impact(graph: GraphView, root: str, victim: str, anomalous: set[str]) -> dict[str, Any]:
     affected = set(graph.reachable(root)) if root else set()
     affected.add(root)
     affected.add(victim)
@@ -739,9 +675,7 @@ def _timeline(graph: GraphView, root: str, victim: str) -> list[dict[str, Any]]:
         if key in seen:
             return
         seen.add(key)
-        events.append(
-            {"ts": ts, "kind": kind, "title": title, "detail": detail, "entity": entity}
-        )
+        events.append({"ts": ts, "kind": kind, "title": title, "detail": detail, "entity": entity})
 
     window_start = int(graph.snapshot.get("window", {}).get("start") or 0)
     covered: set[tuple[int, str]] = set()
@@ -810,9 +744,7 @@ def _timeline(graph: GraphView, root: str, victim: str) -> list[dict[str, Any]]:
     return events
 
 
-def _summary(
-    candidates: list[dict[str, Any]], root: str, victim: str, confidence: float
-) -> str:
+def _summary(candidates: list[dict[str, Any]], root: str, victim: str, confidence: float) -> str:
     if not candidates:
         return "No anomalous service found in the window."
     top = candidates[0]
@@ -823,9 +755,7 @@ def _summary(
     )
 
 
-def _apply_roles(
-    snapshot: dict[str, Any], graph: GraphView, result: dict[str, Any]
-) -> None:
+def _apply_roles(snapshot: dict[str, Any], graph: GraphView, result: dict[str, Any]) -> None:
     root = result["root_cause"]
     victim = result["victim"]
     upstream = graph.reachable(victim, reverse=True) if victim else {}

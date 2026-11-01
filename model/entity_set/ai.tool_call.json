@@ -1,0 +1,169 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "ai.tool_call",
+    "domain": "ai",
+    "display_name": {
+      "en_us": "Tool Call",
+      "zh_cn": "工具调用"
+    },
+    "description": {
+      "en_us": "A tool decision made by an agent, with target, status, duration, and retry context.",
+      "zh_cn": "Agent 的工具决策，携带目标、状态、时长和重试上下文。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Tool Call",
+          "zh_cn": "工具调用"
+        }
+      },
+      {
+        "name": "session_id",
+        "type": "string",
+        "display_name": {
+          "en_us": "Session ID",
+          "zh_cn": "会话 ID"
+        }
+      },
+      {
+        "name": "session_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Session",
+          "zh_cn": "会话"
+        }
+      },
+      {
+        "name": "tool_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Tool",
+          "zh_cn": "工具"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      },
+      {
+        "name": "timestamp",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Timestamp",
+          "zh_cn": "时间戳"
+        }
+      },
+      {
+        "name": "duration_ms",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Duration (ms)",
+          "zh_cn": "时长（ms）"
+        }
+      },
+      {
+        "name": "target",
+        "type": "string",
+        "display_name": {
+          "en_us": "Target",
+          "zh_cn": "目标"
+        }
+      },
+      {
+        "name": "command",
+        "type": "string",
+        "display_name": {
+          "en_us": "Command",
+          "zh_cn": "命令"
+        }
+      },
+      {
+        "name": "retry_index",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Retry Index",
+          "zh_cn": "重试序号"
+        }
+      },
+      {
+        "name": "retry_of",
+        "type": "string",
+        "display_name": {
+          "en_us": "Retry Of",
+          "zh_cn": "重试自"
+        }
+      },
+      {
+        "name": "risk",
+        "type": "string",
+        "display_name": {
+          "en_us": "Risk",
+          "zh_cn": "风险"
+        }
+      },
+      {
+        "name": "input_summary",
+        "type": "string",
+        "display_name": {
+          "en_us": "Input Summary",
+          "zh_cn": "输入摘要"
+        }
+      },
+      {
+        "name": "output_summary",
+        "type": "string",
+        "display_name": {
+          "en_us": "Output Summary",
+          "zh_cn": "输出摘要"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "session_id",
+      "session_name",
+      "tool_name",
+      "status",
+      "timestamp",
+      "duration_ms",
+      "target",
+      "command",
+      "retry_index",
+      "retry_of",
+      "risk",
+      "input_summary",
+      "output_summary"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

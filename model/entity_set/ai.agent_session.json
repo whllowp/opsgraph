@@ -1,0 +1,322 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "ai.agent_session",
+    "domain": "ai",
+    "display_name": {
+      "en_us": "Agent Session",
+      "zh_cn": "Agent 会话"
+    },
+    "description": {
+      "en_us": "An AI agent run observed by AgentSight: prompt, model, tools, effects, cost, and risk.",
+      "zh_cn": "由 AgentSight 观测到的 AI Agent 运行：提示词、模型、工具、系统效果、成本与风险。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Session",
+          "zh_cn": "会话"
+        }
+      },
+      {
+        "name": "session_key",
+        "type": "string",
+        "display_name": {
+          "en_us": "Session Key",
+          "zh_cn": "会话键"
+        }
+      },
+      {
+        "name": "agent_type",
+        "type": "string",
+        "display_name": {
+          "en_us": "Agent Type",
+          "zh_cn": "Agent 类型"
+        }
+      },
+      {
+        "name": "model",
+        "type": "string",
+        "display_name": {
+          "en_us": "Model",
+          "zh_cn": "模型"
+        }
+      },
+      {
+        "name": "provider",
+        "type": "string",
+        "display_name": {
+          "en_us": "Provider",
+          "zh_cn": "提供方"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      },
+      {
+        "name": "start_ts",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Started",
+          "zh_cn": "开始时间"
+        }
+      },
+      {
+        "name": "end_ts",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Ended",
+          "zh_cn": "结束时间"
+        }
+      },
+      {
+        "name": "duration_s",
+        "type": "float",
+        "display_name": {
+          "en_us": "Duration (s)",
+          "zh_cn": "时长（秒）"
+        }
+      },
+      {
+        "name": "input_tokens",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Input Tokens",
+          "zh_cn": "输入 Token"
+        }
+      },
+      {
+        "name": "output_tokens",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Output Tokens",
+          "zh_cn": "输出 Token"
+        }
+      },
+      {
+        "name": "total_tokens",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Total Tokens",
+          "zh_cn": "总 Token"
+        }
+      },
+      {
+        "name": "cost_usd",
+        "type": "float",
+        "display_name": {
+          "en_us": "Cost (USD)",
+          "zh_cn": "成本（USD）"
+        }
+      },
+      {
+        "name": "tool_calls",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Tool Calls",
+          "zh_cn": "工具调用数"
+        }
+      },
+      {
+        "name": "failed_tool_calls",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Failed Tool Calls",
+          "zh_cn": "失败工具调用"
+        }
+      },
+      {
+        "name": "retry_loops",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Retry Loops",
+          "zh_cn": "重试环"
+        }
+      },
+      {
+        "name": "files_read",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Files Read",
+          "zh_cn": "读取文件数"
+        }
+      },
+      {
+        "name": "files_written",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Files Written",
+          "zh_cn": "写入文件数"
+        }
+      },
+      {
+        "name": "network_calls",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Network Calls",
+          "zh_cn": "网络调用数"
+        }
+      },
+      {
+        "name": "commands",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Commands",
+          "zh_cn": "命令数"
+        }
+      },
+      {
+        "name": "risk_score",
+        "type": "float",
+        "display_name": {
+          "en_us": "Risk Score",
+          "zh_cn": "风险分"
+        }
+      },
+      {
+        "name": "friction_score",
+        "type": "float",
+        "display_name": {
+          "en_us": "Friction Score",
+          "zh_cn": "摩擦分"
+        }
+      },
+      {
+        "name": "risk_level",
+        "type": "string",
+        "display_name": {
+          "en_us": "Risk Level",
+          "zh_cn": "风险等级"
+        }
+      },
+      {
+        "name": "cwd",
+        "type": "string",
+        "display_name": {
+          "en_us": "Working Directory",
+          "zh_cn": "工作目录"
+        }
+      },
+      {
+        "name": "prompt_preview",
+        "type": "string",
+        "display_name": {
+          "en_us": "Prompt Preview",
+          "zh_cn": "提示词预览"
+        }
+      },
+      {
+        "name": "linked_service",
+        "type": "string",
+        "display_name": {
+          "en_us": "Linked Service",
+          "zh_cn": "关联服务"
+        }
+      },
+      {
+        "name": "incident_id",
+        "type": "string",
+        "display_name": {
+          "en_us": "Incident",
+          "zh_cn": "关联事件"
+        }
+      },
+      {
+        "name": "claim_root_cause",
+        "type": "string",
+        "display_name": {
+          "en_us": "Claimed Root Cause",
+          "zh_cn": "Agent 声称根因"
+        }
+      },
+      {
+        "name": "claim_status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Claim Verification",
+          "zh_cn": "结论校验"
+        }
+      },
+      {
+        "name": "remediation_status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Remediation Status",
+          "zh_cn": "处置状态"
+        }
+      },
+      {
+        "name": "source",
+        "type": "string",
+        "display_name": {
+          "en_us": "Source",
+          "zh_cn": "数据来源"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "session_key",
+      "agent_type",
+      "model",
+      "provider",
+      "status",
+      "start_ts",
+      "end_ts",
+      "duration_s",
+      "input_tokens",
+      "output_tokens",
+      "total_tokens",
+      "cost_usd",
+      "tool_calls",
+      "failed_tool_calls",
+      "retry_loops",
+      "files_read",
+      "files_written",
+      "network_calls",
+      "commands",
+      "risk_score",
+      "friction_score",
+      "risk_level",
+      "cwd",
+      "prompt_preview",
+      "linked_service",
+      "incident_id",
+      "claim_root_cause",
+      "claim_status",
+      "remediation_status",
+      "source"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

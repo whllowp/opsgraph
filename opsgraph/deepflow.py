@@ -126,25 +126,18 @@ def normalize_record(row: dict[str, Any]) -> FlowRecord | None:
     values = {key: row.get(key) for key in row}
     for key in NUMERIC_FIELDS:
         if key in values:
-            values[key] = (
-                _to_int(values[key]) if key != "rrt_p99" else _to_float(values[key])
-            )
+            values[key] = _to_int(values[key]) if key != "rrt_p99" else _to_float(values[key])
     requests = _to_int(values.get("request"))
     if requests <= 0:
         return None
 
-    client = str(
-        values.get("pod_service_0") or _service_from_pod(str(values.get("pod_0") or ""))
-    )
+    client = str(values.get("pod_service_0") or _service_from_pod(str(values.get("pod_0") or "")))
     server = str(
-        values.get("pod_service_1")
-        or _service_from_domain(str(values.get("request_domain") or ""))
+        values.get("pod_service_1") or _service_from_domain(str(values.get("request_domain") or ""))
     )
     if not client or not server:
         return None
-    external = bool(_to_int(values.get("is_internet_1"))) or not values.get(
-        "pod_service_1"
-    )
+    external = bool(_to_int(values.get("is_internet_1"))) or not values.get("pod_service_1")
     p99 = _to_float(values.get("rrt_p99"))
     if p99 <= 0:
         # Older exports may only carry the mean; scale it to a p99 estimate.
@@ -291,9 +284,7 @@ class DeepFlowClient:
         values = result.get("values") or result.get("data") or []
         if not columns:
             raise RuntimeError(f"unexpected DeepFlow response: {str(payload)[:500]}")
-        columns = [
-            item.get("name") if isinstance(item, dict) else item for item in columns
-        ]
+        columns = [item.get("name") if isinstance(item, dict) else item for item in columns]
         rows: list[dict[str, Any]] = []
         for value in values:
             if isinstance(value, dict):

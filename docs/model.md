@@ -31,6 +31,10 @@ model/
 | `ops.incident` | `id` | 事故、受害服务、根因回写 |
 | `ops.change` | `id` | 部署/配置变更、风险、回滚 |
 | `ops.alert` | `id` | 告警目标、信号、触发时间 |
+| `ai.agent_session` | `id` | Agent 会话、tokens、成本、工具/失败/重试环、风险、claim/remediation 校验 |
+| `ai.model` | `id` | LLM provider/model、调用数、tokens、成本 |
+| `ai.tool_call` | `id` | 工具决策、输入/输出摘要、目标、状态、重试序号、风险 |
+| `ai.effect` | `id` | file/process/network/llm 效果、目标、风险、置信度 |
 
 所有实体都有：
 
@@ -67,6 +71,12 @@ model/
 | `ops.change_targets_svc.service` | change → service | 变更作用于服务 |
 | `ops.alert_targets_svc.service` | alert → service | 告警指向服务 |
 | `ops.alert_targets_infra.node` | alert → node | 告警指向节点 |
+| `ai.agent_session_uses_model_ai.model` | agent_session → model | 会话使用模型 |
+| `ai.agent_session_invokes_ai.tool_call` | agent_session → tool_call | 会话发起工具调用 |
+| `ai.tool_call_produces_ai.effect` | tool_call → effect | 工具调用产生系统效果 |
+| `ai.agent_session_acts_on_svc.service` | agent_session → service | Agent 作用于服务 |
+| `ai.agent_session_investigates_ops.incident` | agent_session → incident | Agent 排查事件 |
+| `ai.effect_affects_svc.service` | effect → service | 系统效果影响服务 |
 
 ### `calls` 关系字段
 
@@ -86,6 +96,23 @@ model/
 | `requests_per_min` | integer | requests / 分钟 |
 | `bytes_per_min` | integer | 双向字节数 / 分钟 |
 
+### AI 关系字段
+
+| 关系 | 字段 |
+|---|---|
+| `uses_model` | `tokens`, `cost_usd` |
+| `invokes` | `status`, `risk`, `retry_index` |
+| `produces` | `risk`, `status` |
+| `acts_on` | 无（语义边） |
+| `investigates` | 无（语义边） |
+| `affects` | `risk` |
+
+AI 实体核心字段：
+
+- `ai.agent_session`: `session_key`, `model`, `total_tokens`, `cost_usd`, `tool_calls`, `failed_tool_calls`, `retry_loops`, `risk_score`, `friction_score`, `claim_status`, `remediation_status`
+- `ai.tool_call`: `tool_name`, `status`, `target`, `command`, `retry_index`, `retry_of`, `risk`
+- `ai.effect`: `effect_type`, `action`, `target`, `status`, `risk`, `confidence`
+
 ## ID 规则
 
 ```text
@@ -96,6 +123,9 @@ entity_id = md5("{domain}/{entity_type}/{natural_key}")[:32]
 - external：`svc/svc.external_service/api.promo-flash.com`
 - endpoint：`svc/svc.endpoint/checkout-service:POST /api/v1/checkout`
 - pod：`infra/infra.pod/checkout-service-623e1-0`
+- agent session：`ai/ai.agent_session/sre-claude-01`
+- tool call：`ai/ai.tool_call/tool-sre-apply-1`
+- effect：`ai/ai.effect/audit-sre-file-write`
 
 自然键稳定，所以重放、重跑、跨环境迁移都不会产生重复实体。
 
@@ -131,4 +161,8 @@ umctl query run opsgraph \
 # 用 Cypher 拉全图（分页，避免 100 行上限）
 umctl query run opsgraph \
   ".topo | graph-call cypher(\`MATCH (src)-[r]->(dest) RETURN src, r AS relation, dest SKIP 0 LIMIT 100\`)"
+
+# Agent 会话与风险
+umctl query run opsgraph \
+  ".entity with(domain='ai', name='ai.agent_session') | sort risk_score desc | project display_name,total_tokens,cost_usd,risk_level,claim_status"
 ```

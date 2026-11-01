@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "ai.agent_session_investigates_ops.incident",
+    "domain": "ai",
+    "display_name": {
+      "en_us": "Agent Session investigates Incident",
+      "zh_cn": "Agent 会话排查故障"
+    },
+    "description": {
+      "en_us": "Links an agent run to the incident it is working on.",
+      "zh_cn": "将 Agent 运行与正在处理的故障事件关联。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "ai",
+      "kind": "entity_set",
+      "name": "ai.agent_session"
+    },
+    "dest": {
+      "domain": "ops",
+      "kind": "entity_set",
+      "name": "ops.incident"
+    },
+    "entity_link_type": "investigates"
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "ai.effect",
+    "domain": "ai",
+    "display_name": {
+      "en_us": "System Effect",
+      "zh_cn": "系统效果"
+    },
+    "description": {
+      "en_us": "A kernel-observed file, process, network, or model effect produced by an agent.",
+      "zh_cn": "Agent 产生的、由内核观测到的文件/进程/网络/模型效果。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Effect",
+          "zh_cn": "效果"
+        }
+      },
+      {
+        "name": "effect_type",
+        "type": "string",
+        "display_name": {
+          "en_us": "Effect Type",
+          "zh_cn": "效果类型"
+        }
+      },
+      {
+        "name": "action",
+        "type": "string",
+        "display_name": {
+          "en_us": "Action",
+          "zh_cn": "动作"
+        }
+      },
+      {
+        "name": "target",
+        "type": "string",
+        "display_name": {
+          "en_us": "Target",
+          "zh_cn": "目标"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      },
+      {
+        "name": "risk",
+        "type": "string",
+        "display_name": {
+          "en_us": "Risk",
+          "zh_cn": "风险"
+        }
+      },
+      {
+        "name": "timestamp",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Timestamp",
+          "zh_cn": "时间戳"
+        }
+      },
+      {
+        "name": "session_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Session",
+          "zh_cn": "会话"
+        }
+      },
+      {
+        "name": "tool_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Tool",
+          "zh_cn": "工具"
+        }
+      },
+      {
+        "name": "details",
+        "type": "string",
+        "display_name": {
+          "en_us": "Details",
+          "zh_cn": "详情"
+        }
+      },
+      {
+        "name": "confidence",
+        "type": "float",
+        "display_name": {
+          "en_us": "Confidence",
+          "zh_cn": "置信度"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "effect_type",
+      "action",
+      "target",
+      "status",
+      "risk",
+      "timestamp",
+      "session_name",
+      "tool_name",
+      "details",
+      "confidence"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

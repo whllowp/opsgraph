@@ -21,7 +21,7 @@
 
 ## 2. 图契约
 
-`opsgraph/ontology.py` 定义 12 个 EntitySet 与 14 条 Link。约束：
+`opsgraph/ontology.py` 定义 16 个 EntitySet 与 20 条 Link。约束：
 
 - 一个服务必须能通过 `runs_as` 落到 workload，再通过 `contains`/`scheduled_on` 落到 pod/node。
 - 一条调用必须用 `calls`，端点级证据用 `calls_endpoint`。
@@ -121,3 +121,13 @@ confidence = clamp(0.55 + 0.45 * (top1 - top2) / top1, 0, 0.98)
 - 重试放大是「出向 QPS / 基线」的启发式，遇到批量任务或缓存穿透需要白名单。
 - 观测边来自 eBPF，加密流量只能看到 L7 元数据（域名、端点、状态码），看不到 payload；这是隐私优势也是诊断边界。
 - 时间窗口固定 60 分钟，跨窗口的慢变更（例如 24h 前）需要扩大 `change_affinity` 的 lookback。
+
+## 8. AI 时代的扩展
+
+服务图之外，OpsGraph 把 AgentSight 观测到的 Agent 也建成了图：
+
+- `ai.agent_session` / `ai.tool_call` / `ai.effect` / `ai.model`；
+- `uses_model` / `invokes` / `produces` / `acts_on` / `investigates`；
+- 在服务 RCA 之外增加 agent risk、retry loop、cost attribution、claim verification、remediation verification。
+
+Agent 不是日志里的字符串，而是可遍历、可归因、可校验的图节点。详见 [AI Graph Engineering](ai-graph-engineering.md) 与 [AgentSight 接入](agentsight.md)。

@@ -41,6 +41,8 @@ def cmd_demo(args: argparse.Namespace) -> int:
         deepflow_base=args.deepflow_base,
         start=args.start,
         end=args.end,
+        agentsight_path=args.agentsight,
+        include_agents=not args.no_agents,
     )
     analysis = result["analysis"]
     print("=" * 78)
@@ -48,9 +50,7 @@ def cmd_demo(args: argparse.Namespace) -> int:
     print("=" * 78)
     print(f"UModel:          {args.addr}  workspace={args.workspace}")
     print(f"Entities:        {result['pipeline']['entity_write']['accepted']} written")
-    print(
-        f"Relations:       {result['pipeline']['relation_write']['accepted']} written"
-    )
+    print(f"Relations:       {result['pipeline']['relation_write']['accepted']} written")
     print(
         f"Root cause:      {analysis['root_cause']}  (confidence {analysis['confidence'] * 100:.0f}%)"
     )
@@ -60,15 +60,21 @@ def cmd_demo(args: argparse.Namespace) -> int:
     print(
         f"Findings:        {len(analysis['findings'])}  ({', '.join(item['id'] for item in analysis['findings'])})"
     )
+    agents = result.get("agents") or {}
+    if agents:
+        summary = agents.get("summary") or {}
+        print(
+            f"Agents:          {summary.get('sessions', 0)} sessions · {summary.get('tool_calls', 0)} tool calls · "
+            f"{summary.get('total_tokens', 0):,} tokens · ${summary.get('cost_usd', 0):.2f} · "
+            f"{summary.get('retry_loops', 0)} retry loops"
+        )
     print(f"Artifacts:       {ARTIFACT_DIR}")
     print(
         f"Verification:    entities {result['verification']['declared_entities']} -> {result['verification']['umodel_entities']}, "
         f"relations {result['verification']['declared_relations']} -> {result['verification']['umodel_relations']}"
     )
     if result["verification"]["root_cause_field"] != analysis["root_cause"]:
-        print(
-            "WARNING: root_cause field read back from UModel does not match the analysis"
-        )
+        print("WARNING: root_cause field read back from UModel does not match the analysis")
         return 1
     return 0
 
@@ -167,9 +173,7 @@ def cmd_report(args: argparse.Namespace) -> int:
     snapshot_path = ARTIFACT_DIR / "snapshot.json"
     analysis_path = ARTIFACT_DIR / "analysis.json"
     if not snapshot_path.exists() or not analysis_path.exists():
-        print(
-            "artifacts not found; run `python -m opsgraph demo` first", file=sys.stderr
-        )
+        print("artifacts not found; run `python -m opsgraph demo` first", file=sys.stderr)
         return 1
     from .pipeline import render_report
 
@@ -178,6 +182,9 @@ def cmd_report(args: argparse.Namespace) -> int:
         "analysis": read_json(analysis_path),
         "pipeline": {"workspace": args.workspace},
     }
+    agents_path = ARTIFACT_DIR / "agents.json"
+    if agents_path.exists():
+        result["agents"] = read_json(agents_path)
     target = ARTIFACT_DIR / "incident-report.md"
     target.write_text(render_report(result), encoding="utf-8")
     print(target)
@@ -186,9 +193,7 @@ def cmd_report(args: argparse.Namespace) -> int:
 
 def _add_common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--addr", default=argparse.SUPPRESS, help="UModel address")
-    parser.add_argument(
-        "--workspace", default=argparse.SUPPRESS, help="UModel workspace"
-    )
+    parser.add_argument("--workspace", default=argparse.SUPPRESS, help="UModel workspace")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -200,9 +205,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--workspace", default=WORKSPACE, help="UModel workspace")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p = sub.add_parser(
-        "demo", help="generate replay, import model, write graph, analyze"
-    )
+    p = sub.add_parser("demo", help="generate replay, import model, write graph, analyze")
     _add_common(p)
     p.add_argument("--source", choices=["replay", "deepflow"], default="replay")
     p.add_argument(
@@ -210,10 +213,10 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="DeepFlow server URL (default: DEEPFLOW_API_BASE)",
     )
-    p.add_argument(
-        "--start", type=int, default=None, help="window start (unix seconds)"
-    )
+    p.add_argument("--start", type=int, default=None, help="window start (unix seconds)")
     p.add_argument("--end", type=int, default=None, help="window end (unix seconds)")
+    p.add_argument("--agentsight", default=None, help="AgentSight snapshot.json or agentsight-*.db")
+    p.add_argument("--no-agents", action="store_true", help="skip AgentSight AI graph")
     p.set_defaults(func=cmd_demo)
 
     p = sub.add_parser("analyze", help="re-run graph analysis")

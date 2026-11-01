@@ -1,0 +1,599 @@
+{
+  "schema_version": 1,
+  "source": "agentsight.snapshot",
+  "source_path": "agentsight_snapshot.json",
+  "generated_at": "2026-11-02T01:00:00Z",
+  "summary": {
+    "sessions": 2,
+    "models": 2,
+    "tool_calls": 16,
+    "failed_tool_calls": 5,
+    "retry_loops": 3,
+    "total_tokens": 69400,
+    "cost_usd": 0.2713,
+    "high_risk_effects": 4,
+    "claims_verified": 1,
+    "claims_mismatched": 0,
+    "agent_entities": 33,
+    "agent_relations": 32
+  },
+  "models": [
+    {
+      "id": "9a811f92f134d61335e8f801e9fd787b",
+      "model": "claude-sonnet-4",
+      "provider": "anthropic",
+      "calls": 6,
+      "sessions": 1,
+      "tokens": 44600,
+      "cost_usd": 0.2106
+    },
+    {
+      "id": "b6e5ddf76a94c431a41f5aaa3c8ef740",
+      "model": "gpt-5",
+      "provider": "openai",
+      "calls": 4,
+      "sessions": 1,
+      "tokens": 24800,
+      "cost_usd": 0.0607
+    }
+  ],
+  "sessions": [
+    {
+      "id": "459b11f5d1bbc9ac2be163e4e5b3e143",
+      "key": "sre-claude-01",
+      "name": "claude:sre-claude-01",
+      "agent_type": "claude",
+      "model": "claude-sonnet-4",
+      "provider": "anthropic",
+      "status": "completed",
+      "start_ts": 1793551440,
+      "end_ts": 1793552280,
+      "duration_s": 840.0,
+      "input_tokens": 38200,
+      "output_tokens": 6400,
+      "total_tokens": 44600,
+      "cost_usd": 0.2106,
+      "tool_calls": 11,
+      "failed_tool_calls": 4,
+      "retry_loops": 2,
+      "files_read": 1,
+      "files_written": 1,
+      "network_calls": 3,
+      "commands": 2,
+      "risk_score": 100.0,
+      "friction_score": 82.5,
+      "risk_level": "high",
+      "linked_service": "checkout-service",
+      "incident_id": "INC-2026-1102-01",
+      "claim_root_cause": "checkout-service",
+      "claim_status": "verified",
+      "remediation_status": "pending_validation",
+      "prompt_preview": "Payment SLO is breaching. Use the UModel graph, find the root cause, and roll back the retry config.",
+      "cwd": "/workspace/opsgraph",
+      "reasons": [
+        "4 high-risk system effect(s)",
+        "2 retry loop(s)",
+        "claimed root cause matches graph evidence",
+        "remediation not yet validated by eBPF"
+      ],
+      "tool_timeline": [
+        {
+          "id": "tool-sre-query",
+          "tool": "query_umodel",
+          "target": ".entity with(domain='svc', name='svc.service', query='payment-gateway')",
+          "status": "success",
+          "ts": 1793551470,
+          "duration_ms": 1800,
+          "risk": "low"
+        },
+        {
+          "id": "tool-sre-kubectl-get",
+          "tool": "kubectl_get",
+          "target": "kubectl get pods -n payments -o wide",
+          "status": "success",
+          "ts": 1793551500,
+          "duration_ms": 2400,
+          "risk": "low"
+        },
+        {
+          "id": "tool-sre-read",
+          "tool": "read_file",
+          "target": "/workspace/opsgraph/checkout-retry-policy.yaml",
+          "status": "success",
+          "ts": 1793551530,
+          "duration_ms": 120,
+          "risk": "low"
+        },
+        {
+          "id": "tool-sre-patch-1",
+          "tool": "apply_patch",
+          "target": "/workspace/opsgraph/checkout-retry-policy.yaml",
+          "status": "failed",
+          "ts": 1793551560,
+          "duration_ms": 180,
+          "risk": "high"
+        },
+        {
+          "id": "tool-sre-patch-2",
+          "tool": "apply_patch",
+          "target": "/workspace/opsgraph/checkout-retry-policy.yaml",
+          "status": "failed",
+          "ts": 1793551578,
+          "duration_ms": 160,
+          "risk": "high"
+        },
+        {
+          "id": "tool-sre-patch-3",
+          "tool": "apply_patch",
+          "target": "/workspace/opsgraph/checkout-retry-policy.yaml",
+          "status": "success",
+          "ts": 1793551620,
+          "duration_ms": 220,
+          "risk": "high"
+        },
+        {
+          "id": "tool-sre-apply-1",
+          "tool": "kubectl_apply",
+          "target": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+          "status": "failed",
+          "ts": 1793551680,
+          "duration_ms": 3100,
+          "risk": "high"
+        },
+        {
+          "id": "tool-sre-apply-2",
+          "tool": "kubectl_apply",
+          "target": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+          "status": "failed",
+          "ts": 1793551740,
+          "duration_ms": 2900,
+          "risk": "high"
+        },
+        {
+          "id": "tool-sre-apply-3",
+          "tool": "kubectl_apply",
+          "target": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+          "status": "success",
+          "ts": 1793551800,
+          "duration_ms": 3400,
+          "risk": "high"
+        },
+        {
+          "id": "tool-sre-rollout",
+          "tool": "kubectl_rollout",
+          "target": "kubectl rollout restart deploy/checkout-service -n shop",
+          "status": "success",
+          "ts": 1793551860,
+          "duration_ms": 5200,
+          "risk": "high"
+        },
+        {
+          "id": "tool-sre-verify",
+          "tool": "verify_slo",
+          "target": "payment-gateway",
+          "status": "success",
+          "ts": 1793552040,
+          "duration_ms": 6400,
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "17d00cdb6673884602297645c0e656a7",
+      "key": "codex-console-02",
+      "name": "codex:codex-console-02",
+      "agent_type": "codex",
+      "model": "gpt-5",
+      "provider": "openai",
+      "status": "completed",
+      "start_ts": 1793551560,
+      "end_ts": 1793552340,
+      "duration_s": 780.0,
+      "input_tokens": 21400,
+      "output_tokens": 3400,
+      "total_tokens": 24800,
+      "cost_usd": 0.0607,
+      "tool_calls": 5,
+      "failed_tool_calls": 1,
+      "retry_loops": 1,
+      "files_read": 1,
+      "files_written": 1,
+      "network_calls": 1,
+      "commands": 2,
+      "risk_score": 21,
+      "friction_score": 33.5,
+      "risk_level": "low",
+      "linked_service": "",
+      "incident_id": "",
+      "claim_root_cause": "",
+      "claim_status": "unverifiable",
+      "remediation_status": "none",
+      "prompt_preview": "Add the AgentSight graph lane to the OpsGraph console and keep CI green.",
+      "cwd": "/workspace/opsgraph",
+      "reasons": [
+        "1 retry loop(s)"
+      ],
+      "tool_timeline": [
+        {
+          "id": "tool-codex-read",
+          "tool": "read_file",
+          "target": "/workspace/opsgraph/console/app.js",
+          "status": "success",
+          "ts": 1793551590,
+          "duration_ms": 140,
+          "risk": "low"
+        },
+        {
+          "id": "tool-codex-search",
+          "tool": "search",
+          "target": "build_console_state",
+          "status": "success",
+          "ts": 1793551620,
+          "duration_ms": 90,
+          "risk": "low"
+        },
+        {
+          "id": "tool-codex-test-1",
+          "tool": "exec",
+          "target": "npm test -- --runInBand",
+          "status": "failed",
+          "ts": 1793551680,
+          "duration_ms": 8300,
+          "risk": "medium"
+        },
+        {
+          "id": "tool-codex-patch",
+          "tool": "apply_patch",
+          "target": "/workspace/opsgraph/console/app.js",
+          "status": "success",
+          "ts": 1793551740,
+          "duration_ms": 260,
+          "risk": "high"
+        },
+        {
+          "id": "tool-codex-test-2",
+          "tool": "exec",
+          "target": "npm test -- --runInBand",
+          "status": "success",
+          "ts": 1793551860,
+          "duration_ms": 6100,
+          "risk": "medium"
+        }
+      ]
+    }
+  ],
+  "loops": [
+    {
+      "session": "sre-claude-01",
+      "tool": "apply_patch",
+      "target": "/workspace/opsgraph/checkout-retry-policy.yaml",
+      "attempts": 3,
+      "failures": 2,
+      "first_ts": 1793551560,
+      "last_ts": 1793551620,
+      "duration_s": 60.0
+    },
+    {
+      "session": "sre-claude-01",
+      "tool": "kubectl_apply",
+      "target": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+      "attempts": 3,
+      "failures": 2,
+      "first_ts": 1793551680,
+      "last_ts": 1793551800,
+      "duration_s": 120.0
+    },
+    {
+      "session": "codex-console-02",
+      "tool": "exec",
+      "target": "npm test -- --runInBand",
+      "attempts": 2,
+      "failures": 1,
+      "first_ts": 1793551680,
+      "last_ts": 1793551860,
+      "duration_s": 180.0
+    }
+  ],
+  "risk_effects": [
+    {
+      "id": "audit-sre-file-write",
+      "session": "claude:sre-claude-01",
+      "type": "file",
+      "action": "write",
+      "target": "/workspace/opsgraph/checkout-retry-policy.yaml",
+      "summary": "set max_retries 5 -> 2, timeout 2000ms -> 500ms",
+      "ts": 1793551620,
+      "risk": "high"
+    },
+    {
+      "id": "audit-sre-kubectl-apply",
+      "session": "claude:sre-claude-01",
+      "type": "process",
+      "action": "exec",
+      "target": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+      "summary": "applied checkout retry policy to prod cluster",
+      "ts": 1793551800,
+      "risk": "high"
+    },
+    {
+      "id": "audit-sre-network-k8s",
+      "session": "claude:sre-claude-01",
+      "type": "network",
+      "action": "connect",
+      "target": "kubernetes.default.svc:443",
+      "summary": "kubectl API call to prod cluster",
+      "ts": 1793551800,
+      "risk": "high"
+    },
+    {
+      "id": "audit-sre-kubectl-rollout",
+      "session": "claude:sre-claude-01",
+      "type": "process",
+      "action": "exec",
+      "target": "kubectl rollout restart deploy/checkout-service -n shop",
+      "summary": "restarted checkout-service deployment",
+      "ts": 1793551860,
+      "risk": "high"
+    }
+  ],
+  "claims": [
+    {
+      "session": "claude:sre-claude-01",
+      "claim": "checkout-service",
+      "graph_root_cause": "checkout-service",
+      "status": "verified"
+    }
+  ],
+  "findings": [
+    {
+      "id": "agent-retry-loop",
+      "severity": "critical",
+      "title": "apply_patch retry loop",
+      "detail": "sre-claude-01 attempted apply_patch 3 times against /workspace/opsgraph/checkout-retry-policy.yaml (2 failures) over 60s.",
+      "entities": [
+        "459b11f5d1bbc9ac2be163e4e5b3e143"
+      ],
+      "session": "sre-claude-01"
+    },
+    {
+      "id": "agent-retry-loop",
+      "severity": "critical",
+      "title": "kubectl_apply retry loop",
+      "detail": "sre-claude-01 attempted kubectl_apply 3 times against kubectl apply -f checkout-retry-policy.yaml -n shop (2 failures) over 120s.",
+      "entities": [
+        "459b11f5d1bbc9ac2be163e4e5b3e143"
+      ],
+      "session": "sre-claude-01"
+    },
+    {
+      "id": "agent-retry-loop",
+      "severity": "warning",
+      "title": "exec retry loop",
+      "detail": "codex-console-02 attempted exec 2 times against npm test -- --runInBand (1 failures) over 180s.",
+      "entities": [
+        "17d00cdb6673884602297645c0e656a7"
+      ],
+      "session": "codex-console-02"
+    },
+    {
+      "id": "agent-risky-effects",
+      "severity": "critical",
+      "title": "Agent touched high-risk system surfaces",
+      "detail": "4 high-risk effects, including write /workspace/opsgraph/checkout-retry-policy.yaml.",
+      "entities": [],
+      "session": "claude:sre-claude-01"
+    },
+    {
+      "id": "agent-claim-verified",
+      "severity": "info",
+      "title": "Agent root cause verified against graph",
+      "detail": "claude:sre-claude-01 claimed checkout-service; graph RCA says checkout-service (verified).",
+      "entities": [],
+      "session": "claude:sre-claude-01"
+    },
+    {
+      "id": "agent-remediation-pending",
+      "severity": "warning",
+      "title": "Remediation is not yet validated by eBPF",
+      "detail": "claude:sre-claude-01 changed checkout-service, but the service is still critical in the same window.",
+      "entities": [
+        "459b11f5d1bbc9ac2be163e4e5b3e143"
+      ],
+      "session": "claude:sre-claude-01"
+    }
+  ],
+  "timeline": [
+    {
+      "ts": 1793551440,
+      "kind": "agent",
+      "title": "claude:sre-claude-01 started",
+      "detail": "claude · claude-sonnet-4",
+      "session": "claude:sre-claude-01",
+      "clock": "00:44"
+    },
+    {
+      "ts": 1793551470,
+      "kind": "tool",
+      "title": "query_umodel succeeded",
+      "detail": ".entity with(domain='svc', name='svc.service', query='payment-gateway')",
+      "session": "claude:sre-claude-01",
+      "clock": "00:44"
+    },
+    {
+      "ts": 1793551500,
+      "kind": "tool",
+      "title": "kubectl_get succeeded",
+      "detail": "kubectl get pods -n payments -o wide",
+      "session": "claude:sre-claude-01",
+      "clock": "00:45"
+    },
+    {
+      "ts": 1793551530,
+      "kind": "tool",
+      "title": "read_file succeeded",
+      "detail": "/workspace/opsgraph/checkout-retry-policy.yaml",
+      "session": "claude:sre-claude-01",
+      "clock": "00:45"
+    },
+    {
+      "ts": 1793551560,
+      "kind": "agent",
+      "title": "codex:codex-console-02 started",
+      "detail": "codex · gpt-5",
+      "session": "codex:codex-console-02",
+      "clock": "00:46"
+    },
+    {
+      "ts": 1793551560,
+      "kind": "tool",
+      "title": "apply_patch failed",
+      "detail": "/workspace/opsgraph/checkout-retry-policy.yaml",
+      "session": "claude:sre-claude-01",
+      "clock": "00:46"
+    },
+    {
+      "ts": 1793551578,
+      "kind": "tool",
+      "title": "apply_patch failed",
+      "detail": "/workspace/opsgraph/checkout-retry-policy.yaml",
+      "session": "claude:sre-claude-01",
+      "clock": "00:46"
+    },
+    {
+      "ts": 1793551590,
+      "kind": "tool",
+      "title": "read_file succeeded",
+      "detail": "/workspace/opsgraph/console/app.js",
+      "session": "codex:codex-console-02",
+      "clock": "00:46"
+    },
+    {
+      "ts": 1793551620,
+      "kind": "tool",
+      "title": "apply_patch succeeded",
+      "detail": "/workspace/opsgraph/checkout-retry-policy.yaml",
+      "session": "claude:sre-claude-01",
+      "clock": "00:47"
+    },
+    {
+      "ts": 1793551620,
+      "kind": "tool",
+      "title": "search succeeded",
+      "detail": "build_console_state",
+      "session": "codex:codex-console-02",
+      "clock": "00:47"
+    },
+    {
+      "ts": 1793551620,
+      "kind": "effect",
+      "title": "high-risk file write",
+      "detail": "/workspace/opsgraph/checkout-retry-policy.yaml",
+      "session": "claude:sre-claude-01",
+      "clock": "00:47"
+    },
+    {
+      "ts": 1793551680,
+      "kind": "tool",
+      "title": "kubectl_apply failed",
+      "detail": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+      "session": "claude:sre-claude-01",
+      "clock": "00:48"
+    },
+    {
+      "ts": 1793551680,
+      "kind": "tool",
+      "title": "exec failed",
+      "detail": "npm test -- --runInBand",
+      "session": "codex:codex-console-02",
+      "clock": "00:48"
+    },
+    {
+      "ts": 1793551740,
+      "kind": "tool",
+      "title": "kubectl_apply failed",
+      "detail": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+      "session": "claude:sre-claude-01",
+      "clock": "00:49"
+    },
+    {
+      "ts": 1793551740,
+      "kind": "tool",
+      "title": "apply_patch succeeded",
+      "detail": "/workspace/opsgraph/console/app.js",
+      "session": "codex:codex-console-02",
+      "clock": "00:49"
+    },
+    {
+      "ts": 1793551800,
+      "kind": "tool",
+      "title": "kubectl_apply succeeded",
+      "detail": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+      "session": "claude:sre-claude-01",
+      "clock": "00:50"
+    },
+    {
+      "ts": 1793551800,
+      "kind": "effect",
+      "title": "high-risk process exec",
+      "detail": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+      "session": "claude:sre-claude-01",
+      "clock": "00:50"
+    },
+    {
+      "ts": 1793551800,
+      "kind": "effect",
+      "title": "high-risk network connect",
+      "detail": "kubernetes.default.svc:443",
+      "session": "claude:sre-claude-01",
+      "clock": "00:50"
+    },
+    {
+      "ts": 1793551860,
+      "kind": "tool",
+      "title": "kubectl_rollout succeeded",
+      "detail": "kubectl rollout restart deploy/checkout-service -n shop",
+      "session": "claude:sre-claude-01",
+      "clock": "00:51"
+    },
+    {
+      "ts": 1793551860,
+      "kind": "tool",
+      "title": "exec succeeded",
+      "detail": "npm test -- --runInBand",
+      "session": "codex:codex-console-02",
+      "clock": "00:51"
+    },
+    {
+      "ts": 1793551860,
+      "kind": "effect",
+      "title": "high-risk process exec",
+      "detail": "kubectl rollout restart deploy/checkout-service -n shop",
+      "session": "claude:sre-claude-01",
+      "clock": "00:51"
+    },
+    {
+      "ts": 1793552040,
+      "kind": "tool",
+      "title": "verify_slo succeeded",
+      "detail": "payment-gateway",
+      "session": "claude:sre-claude-01",
+      "clock": "00:54"
+    },
+    {
+      "ts": 1793552280,
+      "kind": "agent",
+      "title": "claude:sre-claude-01 ended",
+      "detail": "44600 tokens · 14.0 min",
+      "session": "claude:sre-claude-01",
+      "clock": "00:58"
+    },
+    {
+      "ts": 1793552340,
+      "kind": "agent",
+      "title": "codex:codex-console-02 ended",
+      "detail": "24800 tokens · 13.0 min",
+      "session": "codex:codex-console-02",
+      "clock": "00:59"
+    }
+  ]
+}

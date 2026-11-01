@@ -19,10 +19,10 @@ class ModelPackTests(unittest.TestCase):
         cls.tmp.cleanup()
 
     def test_counts(self):
-        self.assertEqual(self.result["entity_sets"], 12)
-        self.assertEqual(self.result["links"], 14)
-        self.assertEqual(len(list((self.root / "entity_set").glob("*.json"))), 12)
-        self.assertEqual(len(list((self.root / "link").glob("*.json"))), 14)
+        self.assertEqual(self.result["entity_sets"], 16)
+        self.assertEqual(self.result["links"], 20)
+        self.assertEqual(len(list((self.root / "entity_set").glob("*.json"))), 16)
+        self.assertEqual(len(list((self.root / "link").glob("*.json"))), 20)
 
     def test_entity_set_shape(self):
         element = json.loads(
@@ -36,9 +36,7 @@ class ModelPackTests(unittest.TestCase):
 
     def test_link_shape(self):
         element = json.loads(
-            (self.root / "link" / "svc.service_calls_svc.service.json").read_text(
-                encoding="utf-8"
-            )
+            (self.root / "link" / "svc.service_calls_svc.service.json").read_text(encoding="utf-8")
         )
         self.assertEqual(element["kind"], "entity_set_link")
         self.assertEqual(element["spec"]["entity_link_type"], "calls")

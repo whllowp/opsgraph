@@ -887,9 +887,7 @@ def _pods(service_name: str) -> list[dict[str, Any]]:
     item = service(service_name)
     namespace = item["namespace"]
     ns_index = next(i for i, ns in enumerate(NAMESPACES) if ns["name"] == namespace) + 1
-    svc_index = (
-        next(i for i, svc in enumerate(SERVICES) if svc["name"] == service_name) + 1
-    )
+    svc_index = next(i for i, svc in enumerate(SERVICES) if svc["name"] == service_name) + 1
     pods = []
     for index in range(item["replicas"]):
         digest = hashlib.md5(f"{service_name}:{index}".encode()).hexdigest()[:5]
@@ -970,9 +968,7 @@ def declared_topology() -> dict[str, Any]:
         "workloads": workloads,
         "journeys": JOURNEYS,
         "edges": edges,
-        "changes": [
-            {key: value for key, value in change.items()} for change in CHANGES
-        ],
+        "changes": [{key: value for key, value in change.items()} for change in CHANGES],
         "alerts": ALERTS,
         "incident": INCIDENT,
         "timeline": TIMELINE,
@@ -1095,9 +1091,7 @@ def _flow_row(edge: dict[str, Any], minute: int) -> dict[str, Any] | None:
 
 def _node_metrics(minute: int) -> list[dict[str, Any]]:
     rows = []
-    payment_load = max(
-        1.0, _load(next(e for e in EDGES if e.get("payment_path")), minute)
-    )
+    payment_load = max(1.0, _load(next(e for e in EDGES if e.get("payment_path")), minute))
     for node in NODES:
         cpu = float(node["base_cpu"])
         if node["name"] == "node-3":
@@ -1113,9 +1107,7 @@ def _node_metrics(minute: int) -> list[dict[str, Any]]:
                 "time": SCENARIO_START + minute * 60,
                 "pod_node": node["name"],
                 "cpu_utilization": round(min(0.99, cpu), 4),
-                "memory_utilization": round(
-                    0.55 + (0.17 if node["name"] == "node-3" else 0.02), 4
-                ),
+                "memory_utilization": round(0.55 + (0.17 if node["name"] == "node-3" else 0.02), 4),
                 "pod_count": sum(
                     1
                     for svc in SERVICES
@@ -1146,9 +1138,7 @@ def generate_replay(output_dir: Path | None = None) -> dict[str, Any]:
         writer.writerows(flow_rows)
 
     node_path = target / "node_metrics.csv"
-    node_rows = [
-        row for minute in range(WINDOW_MINUTES) for row in _node_metrics(minute)
-    ]
+    node_rows = [row for minute in range(WINDOW_MINUTES) for row in _node_metrics(minute)]
     with node_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
             handle,

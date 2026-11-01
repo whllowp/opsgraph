@@ -107,9 +107,7 @@ def _aggregate(records: list[FlowRecord], window_start: int) -> list[MinuteMetri
         if requests <= 0:
             continue
         p99 = sum(item.p99_ms * item.requests for item in items) / requests
-        err = (
-            sum((item.client_errors + item.server_errors) for item in items) / requests
-        )
+        err = sum((item.client_errors + item.server_errors) for item in items) / requests
         result.append(
             MinuteMetric(
                 minute=minute,
@@ -124,9 +122,7 @@ def _aggregate(records: list[FlowRecord], window_start: int) -> list[MinuteMetri
 
 
 def _baseline(series: list[MinuteMetric], field: str) -> list[float]:
-    values = [
-        float(getattr(item, field)) for item in series if item.minute < BASELINE_MINUTES
-    ]
+    values = [float(getattr(item, field)) for item in series if item.minute < BASELINE_MINUTES]
     return values or [float(getattr(series[0], field))] if series else []
 
 
@@ -222,13 +218,9 @@ def _metric_summary(
             "observed": False,
         }
     selected = (
-        series[-1]
-        if minute is None
-        else min(series, key=lambda item: abs(item.minute - minute))
+        series[-1] if minute is None else min(series, key=lambda item: abs(item.minute - minute))
     )
-    baseline_p99 = (
-        median(_baseline(series, "p99")) if _baseline(series, "p99") else selected.p99
-    )
+    baseline_p99 = median(_baseline(series, "p99")) if _baseline(series, "p99") else selected.p99
     stats = _signal_stats(series)
     # z-scores alone make a 12ms -> 70ms change look worse than a 1.1s -> 2.2s
     # change. Weight the score by absolute severity so graph ranking follows
@@ -254,9 +246,7 @@ def _metric_summary(
         "p99": round(selected.p99, 2),
         "err": round(selected.err, 5),
         "baseline_p99": round(baseline_p99, 2),
-        "p99_delta_pct": round(
-            safe_div(selected.p99 - baseline_p99, baseline_p99) * 100.0, 1
-        ),
+        "p99_delta_pct": round(safe_div(selected.p99 - baseline_p99, baseline_p99) * 100.0, 1),
         "requests": selected.requests,
         "bytes": selected.bytes,
         "onset_ts": (window_start + onset * 60) if onset is not None else None,
@@ -318,8 +308,7 @@ class Materializer:
         for item in self.declared.get("externals", []):
             self._external_meta[item["name"]] = item
         workload_by_service = {
-            item.get("service"): item["name"]
-            for item in self.declared.get("workloads", [])
+            item.get("service"): item["name"] for item in self.declared.get("workloads", [])
         }
         for name, meta in self._service_meta.items():
             if workload_by_service.get(name):
@@ -336,17 +325,15 @@ class Materializer:
             self._external_meta.setdefault(item["name"], item)
 
         by_pair: dict[tuple[str, str], list[FlowRecord]] = defaultdict(list)
-        by_endpoint: dict[tuple[str, str, str, str], list[FlowRecord]] = defaultdict(
-            list
-        )
+        by_endpoint: dict[tuple[str, str, str, str], list[FlowRecord]] = defaultdict(list)
         for record in self.flows:
             server = self._resolve_server(record)
             pair = (record.client_service, server)
             by_pair[pair].append(record)
             if not record.external:
-                by_endpoint[
-                    (record.client_service, server, record.method, record.endpoint)
-                ].append(record)
+                by_endpoint[(record.client_service, server, record.method, record.endpoint)].append(
+                    record
+                )
                 self._endpoint_meta.setdefault(
                     (server, record.method, record.endpoint),
                     {
@@ -386,9 +373,7 @@ class Materializer:
         # merged on demand because amplification is an edge property.
         for service_name in self._service_meta:
             inbound = [
-                records
-                for (src, dst), records in self._edge_series.items()
-                if dst == service_name
+                records for (src, dst), records in self._edge_series.items() if dst == service_name
             ]
             self._service_series[service_name] = _merge_series(inbound)
 
@@ -474,9 +459,7 @@ class Materializer:
         for node in nodes:
             series = self._node_series.get(node["name"], [])
             cpu_values = [
-                item.cpu
-                for item in series
-                if item.time < self.window_start + BASELINE_MINUTES * 60
+                item.cpu for item in series if item.time < self.window_start + BASELINE_MINUTES * 60
             ]
             baseline = cpu_values or [node.get("base_cpu", 0.3)]
             current = series[-1].cpu if series else node.get("base_cpu", 0.0)
@@ -505,12 +488,8 @@ class Materializer:
                         "instance_type": node.get("instance_type", ""),
                         "cpu_cores": node.get("cores", 0),
                         "cpu_utilization": round(current, 4),
-                        "memory_utilization": round(
-                            series[-1].memory if series else 0.0, 4
-                        ),
-                        "pod_count": sum(
-                            1 for pod in pods if pod.get("node") == node["name"]
-                        ),
+                        "memory_utilization": round(series[-1].memory if series else 0.0, 4),
+                        "pod_count": sum(1 for pod in pods if pod.get("node") == node["name"]),
                         "anomaly_score": round(severity, 2),
                         "onset_ts": onset,
                         "status": status,
@@ -564,9 +543,7 @@ class Materializer:
                         "namespace": workload.get("namespace", ""),
                         "kind": workload.get("kind", "Deployment"),
                         "replicas": workload.get("replicas", 0),
-                        "ready_replicas": workload.get(
-                            "ready", workload.get("replicas", 0)
-                        ),
+                        "ready_replicas": workload.get("ready", workload.get("replicas", 0)),
                         "image": workload.get("image", ""),
                         "service": workload.get("service", ""),
                         "status": "healthy",
@@ -602,9 +579,7 @@ class Materializer:
                         "az": node.get("az", ""),
                         "ip": pod.get("ip", ""),
                         "phase": "Running",
-                        "restart_count": 1
-                        if pod.get("service") == "batch-reporter"
-                        else 0,
+                        "restart_count": 1 if pod.get("service") == "batch-reporter" else 0,
                         "cpu_millicores": 0.0,
                         "memory_mb": 0.0,
                         "status": "healthy",
@@ -661,10 +636,7 @@ class Materializer:
             )
             recent = changes[0] if changes else None
             baseline_out = (
-                median(
-                    [item.rps for item in out_series if item.minute < BASELINE_MINUTES]
-                )
-                or 1.0
+                median([item.rps for item in out_series if item.minute < BASELINE_MINUTES]) or 1.0
             )
             out_amp = safe_div(out_summary["rps"], baseline_out, 1.0)
             score = max(in_summary["anomaly_score"], out_summary["anomaly_score"] * 0.7)
@@ -672,21 +644,13 @@ class Materializer:
             err = primary["err"]
             status = (
                 "critical"
-                if (
-                    (primary["p99"] >= 1000 and delta >= 100)
-                    or err >= 0.05
-                    or score >= 12
-                )
+                if ((primary["p99"] >= 1000 and delta >= 100) or err >= 0.05 or score >= 12)
                 else "warning"
-                if (
-                    (primary["p99"] >= 200 and delta >= 50) or err >= 0.01 or score >= 4
-                )
+                if ((primary["p99"] >= 200 and delta >= 50) or err >= 0.01 or score >= 4)
                 else "healthy"
             )
             onset_ts = in_summary["onset_ts"] or out_summary["onset_ts"]
-            onset_signal = (
-                in_summary["onset_signal"] or out_summary["onset_signal"] or ""
-            )
+            onset_signal = in_summary["onset_signal"] or out_summary["onset_signal"] or ""
             payload = {
                 "namespace": meta.get("namespace", ""),
                 "tier": meta.get("tier", "observed"),
@@ -911,10 +875,7 @@ class Materializer:
             started = self.window_start + int(incident.get("started_minute", 0)) * 60
             detected = (
                 self.window_start
-                + int(
-                    incident.get("detected_minute", incident.get("started_minute", 0))
-                )
-                * 60
+                + int(incident.get("detected_minute", incident.get("started_minute", 0))) * 60
             )
             self.entities.append(
                 _entity(

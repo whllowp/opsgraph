@@ -85,9 +85,7 @@ class UModelClient:
             timeout=self.timeout,
         )
         if response.status_code != 200:
-            raise UModelError(
-                f"import model failed: {response.status_code} {response.text[:800]}"
-            )
+            raise UModelError(f"import model failed: {response.status_code} {response.text[:800]}")
         payload = response.json()
         if payload.get("errors"):
             raise UModelError(
@@ -106,9 +104,26 @@ class UModelClient:
     ) -> dict[str, int]:
         return self._write("relations", list(relations), batch_size)
 
-    def _write(
-        self, kind: str, items: list[dict[str, Any]], batch_size: int
-    ) -> dict[str, int]:
+    def expire_relations(self, ids: Iterable[str]) -> dict[str, int]:
+        ids = list(ids)
+        if not ids:
+            return {"accepted": 0, "failed": 0}
+        response = self.session.post(
+            f"{self.addr}/api/v1/entitystore/{self.workspace}/relations:expire",
+            json={"ids": ids, "reason": "OpsGraph snapshot reconciliation"},
+            timeout=self.timeout,
+        )
+        if response.status_code != 200:
+            raise UModelError(
+                f"expire relations failed: {response.status_code} {response.text[:800]}"
+            )
+        payload = response.json()
+        return {
+            "accepted": int(payload.get("accepted", 0) or 0),
+            "failed": int(payload.get("failed", 0) or 0),
+        }
+
+    def _write(self, kind: str, items: list[dict[str, Any]], batch_size: int) -> dict[str, int]:
         accepted = 0
         failed = 0
         for offset in range(0, len(items), batch_size):
@@ -135,9 +150,7 @@ class UModelClient:
             timeout=self.timeout,
         )
         if response.status_code != 200:
-            raise UModelError(
-                f"query failed: {response.status_code} {response.text[:800]}"
-            )
+            raise UModelError(f"query failed: {response.status_code} {response.text[:800]}")
         payload = response.json()
         if not payload.get("success", True):
             raise UModelError(f"query returned failure: {payload.get('message')}")
@@ -150,9 +163,7 @@ class UModelClient:
             return rows
         return [dict(zip(header, row)) for row in rows]
 
-    def entities(
-        self, domain: str, name: str, limit: int = 5000
-    ) -> list[dict[str, Any]]:
+    def entities(self, domain: str, name: str, limit: int = 5000) -> list[dict[str, Any]]:
         spl = f".entity with(domain='{domain}', name='{name}') | limit {limit}"
         return self.query(spl)
 

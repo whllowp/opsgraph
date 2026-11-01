@@ -4,7 +4,7 @@
 - 受害服务：`payment-gateway`
 - 根因：`checkout-service`（置信度 78%）
 - 时间窗口：2026-11-02T00:00:00+08:00 → 2026-11-02T01:00:00+08:00
-- 图规模：86 个实体 / 151 条关系
+- 图规模：119 个实体 / 183 条关系
 
 ## 结论
 
@@ -64,6 +64,23 @@ Root cause is checkout-service, upstream of the victim payment-gateway. Score 0.
 - **node-3 pressure is not on the victim path**：CPU 92% but payment-gateway has no pods on this node. Hosted services: batch-reporter, inventory-service, order-service, risk-control.
 - **Flash Sale explains baseline traffic, not the retry multiplier**：All services see ~3.2x traffic after 00:30, but checkout -> payment-gateway grows ~8x. The extra ~2.5x is retry amplification.
 
+## AI Agent 观测（AgentSight）
+
+- 会话：2；工具调用：16；失败：5；重试环：3
+- Token：69,400；成本：$0.27；高风险效果：4
+
+| Agent 会话 | 模型 | Tokens | 成本 | 工具/失败 | 重试环 | 风险 | 关联服务 | 结论校验 |
+|---|---|---:|---:|---:|---:|---|---|---|
+| `claude:sre-claude-01` | claude-sonnet-4 | 44,600 | $0.21 | 11/4 | 2 | high | checkout-service | verified |
+| `codex:codex-console-02` | gpt-5 | 24,800 | $0.06 | 5/1 | 1 | low | - | unverifiable |
+
+- **[critical] apply_patch retry loop**：sre-claude-01 attempted apply_patch 3 times against /workspace/opsgraph/checkout-retry-policy.yaml (2 failures) over 60s.
+- **[critical] kubectl_apply retry loop**：sre-claude-01 attempted kubectl_apply 3 times against kubectl apply -f checkout-retry-policy.yaml -n shop (2 failures) over 120s.
+- **[warning] exec retry loop**：codex-console-02 attempted exec 2 times against npm test -- --runInBand (1 failures) over 180s.
+- **[critical] Agent touched high-risk system surfaces**：4 high-risk effects, including write /workspace/opsgraph/checkout-retry-policy.yaml.
+- **[info] Agent root cause verified against graph**：claude:sre-claude-01 claimed checkout-service; graph RCA says checkout-service (verified).
+- **[warning] Remediation is not yet validated by eBPF**：claude:sre-claude-01 changed checkout-service, but the service is still critical in the same window.
+
 ## 复现查询
 
 ```bash
@@ -74,4 +91,4 @@ umctl --addr http://127.0.0.1:18080 query run opsgraph \
   ".topo | graph-call getDirectRelations([(:\"svc@svc.service\" {__entity_id__: '<checkout-id>'})])"
 ```
 
-模型、实体与关系均通过 UModel 公共 REST/CLI 契约写入和读取；eBPF 证据字段挂在 `calls` 关系上。
+模型、实体与关系均通过 UModel 公共 REST/CLI 契约写入和读取；`calls` 边携带 eBPF 证据，`ai.*` 边携带 AgentSight 证据。

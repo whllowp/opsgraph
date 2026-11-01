@@ -38,9 +38,7 @@ class AnalysisTests(unittest.TestCase):
         self.assertIn("payment-gateway", self.result["path"])
         self.assertIn("Alipay Gateway", self.result["path"])
         ids = {item["id"] for item in self.result["findings"]}
-        self.assertTrue(
-            {"retry-storm", "shadow-dependency", "declared-unobserved"}.issubset(ids)
-        )
+        self.assertTrue({"retry-storm", "shadow-dependency", "declared-unobserved"}.issubset(ids))
 
     def test_roles_and_journeys(self):
         services = {
@@ -51,9 +49,7 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(services["checkout-service"]["role"], "root_cause")
         self.assertEqual(services["payment-gateway"]["role"], "victim")
         journeys = [
-            item
-            for item in self.snapshot["entities"]
-            if item["__entity_type__"] == "biz.journey"
+            item for item in self.snapshot["entities"] if item["__entity_type__"] == "biz.journey"
         ]
         self.assertTrue(any(item["impacted"] for item in journeys))
         self.assertEqual(len(self.result["impact"]["journeys"]), 3)

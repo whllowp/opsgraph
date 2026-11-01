@@ -6,10 +6,10 @@ OpsGraph 把「运维对象图」拆成五个可独立验证的层：
 
 | 层 | 职责 | 代码 |
 |---|---|---|
-| Observe | 从 eBPF 遥测得到 L7 调用事实 | `deepflow.py`, `scenario.py` |
+| Observe | 从 eBPF 遥测得到 L7 调用与 Agent 行为 | `deepflow.py`, `scenario.py`, `agentsight.py`, `agentsight_demo.py` |
 | Contract | 用 UModel 固化对象、关系与字段语义 | `ontology.py`, `model_pack.py` |
-| Materialize | 稳定 ID、证据边、声明/观测对账 | `materialize.py` |
-| Reason | RCA、影响面、漂移、割点、模拟 | `analysis.py` |
+| Materialize | 稳定 ID、证据边、声明/观测对账、Agent 意图→效果链 | `materialize.py`, `agent_graph.py` |
+| Reason | RCA、影响面、漂移、割点、模拟、Agent 风险/重试环/结论校验 | `analysis.py`, `agent_graph.py` |
 | Act | 控制台、报告、UModel 查询、Agent | `console_server.py`, `pipeline.py` |
 
 关键不变式：
@@ -19,34 +19,33 @@ OpsGraph 把「运维对象图」拆成五个可独立验证的层：
 - 每条 `calls` 边必须携带证据字段；没有证据的边只能是 `observed=false` 的声明边。
 - 观测到但未声明的依赖不丢弃，落成 `shadow=true` 的外部实体/边。
 - 声明了但未观测到的依赖不丢弃，落成 `observed=false` 的边。
+- Agent 的 `claim` 只是声明，不是事实；必须通过 `claim_status` 与图 RCA 对比。
+- Agent 的 `remediation` 只有被 eBPF 指标验证后才能从 `pending_validation` 变为 `applied`。
+- AgentSight 原始内容（prompt/response/命令全文）不写入图，只写摘要与派生指标。
 
 ## 2. 运行时数据流
 
 ```
-DeepFlow l7_flow_log
-  │  (pod_service_0/1, pod_node, request_domain, endpoint, request, rrt_p99, error)
-  ▼
-normalize_record()
-  │  FlowRecord（typed, per-minute aggregate）
-  ▼
-Materializer._index()
-  │  edge series / endpoint series / service series / node series
-  ▼
-Materializer.build()
-  │  EntityPayload[] + RelationPayload[]
-  ├──────────────► UModel REST: entities:write / relations:write
-  │
-  ▼
-analyze(snapshot)
-  │  ranking / findings / impact / timeline
-  ├──────────────► UModel REST: 更新 svc.service.role,
-  │                              ops.incident.root_cause,
-  │                              biz.journey.impacted
-  ▼
-artifacts/{snapshot,analysis,verification}.json
-artifacts/incident-report.md
-artifacts/graph.json
-console (/api/state)
+DeepFlow l7_flow_log                 AgentSight snapshot / SQLite
+  │  (pod_service, request_domain)     │  (sessions, tool_calls, audit_events)
+  ▼                                    ▼
+normalize_record()                 load_snapshot()/load_sqlite()
+  │  FlowRecord                        │  AgentSnapshot
+  ▼                                    ▼
+Materializer                       AgentGraphBuilder
+  │  entities + relations             │  ai.* entities + relations
+  └──────────────┬────────────────────┘
+                 ▼
+        UModel REST (entities:write / relations:write)
+                 │
+                 ▼
+        analyze(snapshot) + analyze_agents()
+                 │
+                 ├──► UModel 回写 role / root_cause / claim
+                 ▼
+        artifacts/{snapshot,analysis,agents,verification}.json
+        artifacts/incident-report.md
+        console (/api/state)
 ```
 
 ## 3. 组件边界

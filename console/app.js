@@ -3,8 +3,9 @@
 const state = {
   data: null,
   selected: null,
+  selectedAgent: null,
   tab: "diagnosis",
-  filters: { calls: true, business: true, ops: true, observedOnly: false },
+  filters: { calls: true, business: true, agents: true, ops: false, observedOnly: false },
   transform: { x: 0, y: 0, k: 1 },
   search: "",
   simulation: null,
@@ -56,6 +57,11 @@ function initials(name) {
 }
 
 function nodeFill(node) {
+  if (node.type === "ai.agent_session") {
+    if (node.status === "high") return "rgba(255,91,110,.18)";
+    if (node.status === "medium") return "rgba(245,165,36,.15)";
+    return "rgba(167,139,250,.16)";
+  }
   if (node.type === "ops.incident") return "rgba(251,191,36,.20)";
   if (node.type === "ops.change") return "rgba(91,157,255,.15)";
   if (node.type === "ops.alert") return "rgba(245,165,36,.15)";
@@ -68,6 +74,11 @@ function nodeFill(node) {
 }
 
 function nodeStroke(node) {
+  if (node.type === "ai.agent_session") {
+    if (node.status === "high") return "rgba(255,91,110,.9)";
+    if (node.status === "medium") return "rgba(245,165,36,.8)";
+    return "rgba(167,139,250,.8)";
+  }
   if (node.type === "ops.incident") return "rgba(251,191,36,.75)";
   if (node.type === "biz.journey") return "rgba(91,157,255,.65)";
   if (node.type === "svc.external_service") return "rgba(167,139,250,.7)";
@@ -91,6 +102,11 @@ async function loadState() {
     if (!response.ok) throw new Error((await response.json()).error || response.statusText);
     state.data = await response.json();
     renderAll();
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab) switchTab(tab);
+    const agentKey = params.get("agent");
+    if (agentKey) selectAgent(agentKey);
   } catch (error) {
     $("#empty-state").classList.remove("hidden");
     console.error(error);
@@ -108,6 +124,7 @@ function renderAll() {
   renderRuledOut();
   renderBlast();
   renderTimeline();
+  renderAgents();
   renderQueries();
   renderGraph();
 }
@@ -122,6 +139,11 @@ function renderHeader() {
   $("#top-counts").textContent = `${meta.graph_counts?.entities ?? "—"} entities · ${meta.graph_counts?.relations ?? "—"} relations`;
   const window = meta.window || {};
   $("#stage-sub").textContent = `${fmt.clock(window.start)}–${fmt.clock(window.end)} · service → dependency → business impact`;
+  const agents = meta.agents || {};
+  $("#ai-tokens").textContent = agents.total_tokens ? fmt.int(agents.total_tokens) : "—";
+  $("#ai-cost").textContent = agents.cost_usd != null ? `$${Number(agents.cost_usd).toFixed(2)}` : "—";
+  $("#ai-sessions").textContent = agents.sessions ?? "—";
+  $("#ai-risk").textContent = agents.high_risk_effects ? `${agents.high_risk_effects} high-risk effects` : "no high-risk effects";
 }
 
 function renderIncident() {
@@ -159,6 +181,7 @@ function renderCounts() {
   const edges = state.data.edges || [];
   $("#layer-calls").textContent = edges.filter((edge) => edge.type === "calls").length;
   $("#layer-business").textContent = edges.filter((edge) => edge.type === "depends_on").length;
+  $("#layer-agents").textContent = state.data.meta.agents?.sessions ?? state.data.agents?.summary?.sessions ?? 0;
 }
 
 function renderRanking() {
@@ -265,8 +288,96 @@ function renderTimeline() {
     .join("");
 }
 
-function renderQueries() {
-  const queries = state.data.queries || [];
+function renderAgents() {
+  const agents = state.data.agents || {};
+  const sessions = agents.sessions || [];
+  const summary = agents.summary || {};
+  $("#agent-count").textContent = `${sessions.length} sessions`;
+  $("#agent-finding-count").textContent = `${(agents.findings || []).length} findings`;
+  $("#agent-summary").innerHTML = `
+    <div><strong>${summary.sessions ?? sessions.length}</strong><span>sessions</span></div>
+    <div><strong>${summary.tool_calls ?? 0}</strong><span>tools</span></div>
+    <div><strong>${summary.failed_tool_calls ?? 0}</strong><span>failed</span></div>
+    <div><strong>${summary.retry_loops ?? 0}</strong><span>loops</span></div>`;
+  if (!sessions.length) {
+    $("#agent-list").innerHTML = '<p class="muted small">没有 AgentSight 数据。用 <code>--agentsight snapshot.json</code> 导入。</p>';
+    $("#agent-detail").innerHTML = '<p class="muted small">导入 AgentSight 快照后，这里会显示 tool → effect 证据链。</p>';
+    $("#agent-findings").innerHTML = "";
+    return;
+  }
+  if (!state.selectedAgent) state.selectedAgent = sessions[0].key;
+  $("#agent-list").innerHTML = sessions
+    .map((session) => {
+      const risk = String(session.risk_level || "low");
+      const tokens = Number(session.total_tokens || 0);
+      const cost = Number(session.cost_usd || 0);
+      return `
+        <div class="agent-card ${session.key === state.selectedAgent ? "active" : ""}" data-agent="${escapeHtml(session.key)}">
+          <div class="agent-card-head">
+            <strong>${escapeHtml(session.name)}</strong>
+            <span class="agent-risk ${risk}">${risk}</span>
+            <em>${escapeHtml(session.model || "")}</em>
+          </div>
+          <div class="agent-card-meta">
+            <span>tok <b>${fmt.qps(tokens)}</b></span>
+            <span>$ <b>${cost.toFixed(2)}</b></span>
+            <span>tools <b>${session.tool_calls ?? 0}</b></span>
+            <span>fail <b>${session.failed_tool_calls ?? 0}</b></span>
+            <span>loops <b>${session.retry_loops ?? 0}</b></span>
+          </div>
+        </div>`;
+    })
+    .join("");
+  $$("#agent-list .agent-card").forEach((card) => {
+    card.addEventListener("click", () => selectAgent(card.dataset.agent));
+  });
+  const selected = sessions.find((session) => session.key === state.selectedAgent) || sessions[0];
+  $("#agent-detail-name").textContent = selected.name;
+  const claim = selected.claim_status && selected.claim_status !== "unverifiable"
+    ? `<div class="agent-claim ${escapeHtml(selected.claim_status)}">claim <b>${escapeHtml(selected.claim_root_cause || "—")}</b> · ${escapeHtml(selected.claim_status)}</div>`
+    : "";
+  const remediation = selected.remediation_status && selected.remediation_status !== "none"
+    ? `<div class="agent-claim ${selected.remediation_status === "pending_validation" ? "mismatch" : "verified"}">remediation <b>${escapeHtml(selected.remediation_status)}</b> · ${Number(selected.risk_score || 0).toFixed(0)} risk</div>`
+    : "";
+  const tools = (selected.tool_timeline || [])
+    .slice(-14)
+    .map(
+      (tool) => `<div class="agent-tool ${tool.status === "failed" ? "failed" : ""}">
+        <span class="status"></span>
+        <span class="tool">${escapeHtml(tool.tool)}</span>
+        <span class="target">${escapeHtml(tool.target || "")}</span>
+        ${tool.risk === "high" ? '<span class="risk">high</span>' : ""}
+      </div>`
+    )
+    .join("");
+  const reasons = (selected.reasons || []).map((reason) => `<span>${escapeHtml(reason)}</span>`).join("");
+  $("#agent-detail").innerHTML = `
+    ${claim}${remediation}
+    <div class="rank-reasons">${reasons}</div>
+    <div class="agent-tools">${tools || '<p class="muted small">没有工具调用。</p>'}</div>`;
+  $("#agent-findings").innerHTML = (agents.findings || [])
+    .map(
+      (finding) => `
+      <div class="finding ${escapeHtml(finding.severity)}">
+        <div class="finding-head"><span class="finding-tag">${escapeHtml(finding.severity)}</span><span class="finding-title">${escapeHtml(finding.title)}</span></div>
+        <p>${escapeHtml(finding.detail)}</p>
+      </div>`
+    )
+    .join("");
+}
+
+function selectAgent(key) {
+  state.selectedAgent = key;
+  const session = (state.data.agents?.sessions || []).find((item) => item.key === key);
+  if (session) {
+    const node = nodeByName(session.name);
+    if (node) state.selected = node.id;
+  }
+  renderAgents();
+  renderGraph();
+}
+
+function renderQueries() {  const queries = state.data.queries || [];
   $("#query-list").innerHTML = queries
     .map(
       (query, index) => `
@@ -326,21 +437,28 @@ function showDetail(node) {
   const analysis = state.data.analysis || {};
   const role = node.role || "";
   const metrics = node.metrics || {};
+  const isAgent = node.type === "ai.agent_session";
   card.classList.remove("hidden");
+  const metricsHtml = isAgent
+    ? `<div><strong>${fmt.qps(metrics.tokens)}</strong><span>tokens</span></div>
+       <div><strong>$${Number(metrics.cost_usd || 0).toFixed(2)}</strong><span>cost</span></div>
+       <div><strong>${Number(metrics.risk_score || 0).toFixed(0)}</strong><span>risk</span></div>
+       <div><strong>${metrics.tool_calls ?? 0}</strong><span>tools</span></div>
+       <div><strong>${metrics.failed_tool_calls ?? 0}</strong><span>failed</span></div>
+       <div><strong>${node.status || "—"}</strong><span>risk level</span></div>`
+    : `<div><strong>${fmt.qps(metrics.qps)}</strong><span>qps</span></div>
+       <div><strong>${fmt.ms(metrics.p99_ms)}</strong><span>p99</span></div>
+       <div><strong>${fmt.pct(Number(metrics.error_rate || 0) * 100)}</strong><span>errors</span></div>
+       <div><strong>${Number(metrics.delta_pct || 0).toFixed(0)}%</strong><span>vs baseline</span></div>
+       <div><strong>${Number(metrics.outbound_amp || 1).toFixed(1)}x</strong><span>outbound</span></div>
+       <div><strong>${fmt.clock(metrics.onset_ts)}</strong><span>onset</span></div>`;
   card.innerHTML = `
     <button class="detail-close" aria-label="关闭">×</button>
     <h3>${escapeHtml(node.name)}</h3>
     <div class="detail-type">${escapeHtml(node.type)}${role ? " · " + escapeHtml(role) : ""}</div>
-    <div class="detail-grid">
-      <div><strong>${fmt.qps(metrics.qps)}</strong><span>qps</span></div>
-      <div><strong>${fmt.ms(metrics.p99_ms)}</strong><span>p99</span></div>
-      <div><strong>${fmt.pct(Number(metrics.error_rate || 0) * 100)}</strong><span>errors</span></div>
-      <div><strong>${Number(metrics.delta_pct || 0).toFixed(0)}%</strong><span>vs baseline</span></div>
-      <div><strong>${Number(metrics.outbound_amp || 1).toFixed(1)}x</strong><span>outbound</span></div>
-      <div><strong>${fmt.clock(metrics.onset_ts)}</strong><span>onset</span></div>
-    </div>
+    <div class="detail-grid">${metricsHtml}</div>
     <div class="detail-actions">
-      <button class="btn" id="detail-simulate">模拟摘除</button>
+      ${isAgent ? '<button class="btn" id="detail-agent">Agent 详情</button>' : '<button class="btn" id="detail-simulate">模拟摘除</button>'}
       <button class="btn" id="detail-query">UModel 查询</button>
       <button class="btn ghost" id="detail-focus">定位</button>
     </div>`;
@@ -349,10 +467,23 @@ function showDetail(node) {
     state.selected = null;
     renderGraph();
   });
-  card.querySelector("#detail-simulate").addEventListener("click", () => simulateRemoval(node));
+  const simulate = card.querySelector("#detail-simulate");
+  if (simulate) simulate.addEventListener("click", () => simulateRemoval(node));
+  const agentButton = card.querySelector("#detail-agent");
+  if (agentButton) {
+    agentButton.addEventListener("click", () => {
+      const session = (state.data.agents?.sessions || []).find((item) => item.name === node.name);
+      if (session) {
+        state.selectedAgent = session.key;
+        switchTab("agents");
+        renderAgents();
+      }
+    });
+  }
   card.querySelector("#detail-query").addEventListener("click", () => {
     switchTab("queries");
-    const spl = `.entity with(domain='${node.type === "svc.external_service" ? "svc" : node.type.split(".")[0]}', name='${node.type}', query='${node.name}') | limit 5`;
+    const domain = node.type.split(".")[0];
+    const spl = `.entity with(domain='${domain}', name='${node.type}', query='${node.name}') | limit 5`;
     runQuery(spl);
   });
   card.querySelector("#detail-focus").addEventListener("click", () => focusNode(node));
@@ -416,13 +547,15 @@ function edgePath(source, target) {
 
 function visibleNode(node) {
   if (node.type === "biz.journey") return state.filters.business;
-  if (node.type?.startsWith("ops.")) return state.filters.ops;
+  if (node.type === "ai.agent_session") return state.filters.agents;
+  if (node.type?.startsWith("ops.")) return false;
   return true;
 }
 
 function visibleEdge(edge) {
   if (edge.type === "calls" && !state.filters.calls) return false;
   if (edge.type === "depends_on" && !state.filters.business) return false;
+  if (["acts_on", "investigates"].includes(edge.type) && !state.filters.agents) return false;
   if (["targets", "affects"].includes(edge.type) && !state.filters.ops) return false;
   if (state.filters.observedOnly && edge.observed === false) return false;
   return true;
@@ -510,7 +643,7 @@ function renderGraph() {
     const g = document.createElementNS(NS, "g");
     const isPath = pathPairs.has(`${edge.src}->${edge.dst}`) && edge.type === "calls";
     const hot = edge.type === "calls" && ((Number(edge.p99_ms || 0) >= 800 && Number(edge.delta_pct || 0) >= 100) || Number(edge.error_rate || 0) >= 0.03);
-    const classes = ["edge", edge.type === "calls" ? "call" : edge.type === "depends_on" ? "business" : "ops"];
+    const classes = ["edge", edge.type === "calls" ? "call" : edge.type === "depends_on" ? "business" : edge.type === "acts_on" ? "agent" : "ops"];
     if (hot) classes.push("hot");
     if (!edge.observed) classes.push("unobserved");
     if (edge.shadow) classes.push("shadow");
@@ -571,8 +704,17 @@ function renderGraph() {
     const glyph = document.createElementNS(NS, "text");
     glyph.setAttribute("class", "glyph");
     glyph.setAttribute("fill", node.type === "svc.external_service" ? "#e9e3ff" : "#071018");
-    glyph.textContent = initials(node.name);
+    glyph.textContent = node.type === "ai.agent_session" ? "AI" : initials(node.name);
     g.appendChild(glyph);
+
+    if (node.type === "ai.agent_session" && node.status === "high") {
+      const badge = document.createElementNS(NS, "text");
+      badge.setAttribute("class", "badge");
+      badge.setAttribute("y", String(-Number(node.radius) - 13));
+      badge.setAttribute("fill", "#d9c9ff");
+      badge.textContent = "HIGH RISK";
+      g.appendChild(badge);
+    }
 
     if (node.name === analysis.root_cause || node.name === analysis.victim) {
       const badge = document.createElementNS(NS, "text");
@@ -596,6 +738,8 @@ function renderGraph() {
       sub.textContent = `${fmt.qps(node.metrics?.qps)} qps · ${fmt.ms(node.metrics?.p99_ms)}`;
     } else if (node.type === "biz.journey") {
       sub.textContent = node.status === "impacted" ? "impacted" : "healthy";
+    } else if (node.type === "ai.agent_session") {
+      sub.textContent = `${fmt.qps(node.metrics?.tokens)} tok · $${Number(node.metrics?.cost_usd || 0).toFixed(2)}`;
     } else {
       sub.textContent = node.status || "";
     }
@@ -653,6 +797,12 @@ function switchTab(name) {
 /* --------------------------------------------------------------- listeners */
 function bindEvents() {
   $$(".tab").forEach((tab) => tab.addEventListener("click", () => switchTab(tab.dataset.tab)));
+  $$("[data-goto]").forEach((button) => {
+    button.addEventListener("click", () => {
+      switchTab(button.dataset.goto);
+      if (button.dataset.goto === "agents") renderAgents();
+    });
+  });
   $$(".layer input[data-layer]").forEach((input) => {
     input.addEventListener("change", () => {
       state.filters[input.dataset.layer] = input.checked;

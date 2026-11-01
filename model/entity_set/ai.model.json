@@ -1,0 +1,124 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "ai.model",
+    "domain": "ai",
+    "display_name": {
+      "en_us": "Model",
+      "zh_cn": "模型"
+    },
+    "description": {
+      "en_us": "An LLM provider/model used by observed agent sessions.",
+      "zh_cn": "被观测 Agent 会话使用的 LLM 提供方/模型。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Model",
+          "zh_cn": "模型"
+        }
+      },
+      {
+        "name": "provider",
+        "type": "string",
+        "display_name": {
+          "en_us": "Provider",
+          "zh_cn": "提供方"
+        }
+      },
+      {
+        "name": "model",
+        "type": "string",
+        "display_name": {
+          "en_us": "Model ID",
+          "zh_cn": "模型 ID"
+        }
+      },
+      {
+        "name": "calls",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Calls",
+          "zh_cn": "调用数"
+        }
+      },
+      {
+        "name": "sessions",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Sessions",
+          "zh_cn": "会话数"
+        }
+      },
+      {
+        "name": "input_tokens",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Input Tokens",
+          "zh_cn": "输入 Token"
+        }
+      },
+      {
+        "name": "output_tokens",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Output Tokens",
+          "zh_cn": "输出 Token"
+        }
+      },
+      {
+        "name": "total_tokens",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Total Tokens",
+          "zh_cn": "总 Token"
+        }
+      },
+      {
+        "name": "cost_usd",
+        "type": "float",
+        "display_name": {
+          "en_us": "Cost (USD)",
+          "zh_cn": "成本（USD）"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "provider",
+      "model",
+      "calls",
+      "sessions",
+      "input_tokens",
+      "output_tokens",
+      "total_tokens",
+      "cost_usd"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

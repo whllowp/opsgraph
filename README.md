@@ -1,10 +1,10 @@
-# OpsGraph · eBPF × UModel 运维图工程
+# OpsGraph · eBPF × UModel × AgentSight 运维图工程
 
 [![CI](https://github.com/whllowp/opsgraph/actions/workflows/ci.yml/badge.svg)](https://github.com/whllowp/opsgraph/actions/workflows/ci.yml)
 
 > GitHub: [whllowp/opsgraph](https://github.com/whllowp/opsgraph)
 >
-> 把 eBPF 观测到的调用事实，编译成 UModel 上可查询、可推理、可回写的运维对象图。
+> 把 eBPF 观测到的服务调用与 AI Agent 行为，编译成 UModel 上可查询、可推理、可回写的运维对象图。
 > 不是再画一张拓扑图，而是把「图」当作运维系统的工程产物来设计、构建和演进。
 
 ![OpsGraph console](docs/console.png)
@@ -17,33 +17,40 @@
 2. **边没有证据。** 一条 `A -> B` 的线，说不清 QPS、P99、错误率、起始时间，也说不清是声明还是观测。
 3. **图不能推理。** 有拓扑但回答不了「为什么是它」「影响哪些业务」「摘掉它会怎样」。
 
-OpsGraph 用 **eBPF 事实** 构建边，用 **UModel 语义层** 固化对象与关系，用 **图算子** 做因果排序、爆炸半径、影子依赖和变更对比。所有结论都能回到一条 UModel 查询和一组 eBPF 指标。
+AI 时代多了第四个断点：**Agent 是新的变更执行者，但它的行为不在图里。**
+
+- Agent 读了哪些文件、调了哪些命令、连了哪些服务？
+- 它声称的根因，和 eBPF/UModel 图上的证据一致吗？
+- 它是在排查故障，还是在制造新的变更风险？
+- 一次 Agent 运行消耗了多少 token、触发了几次重试环、影响了哪些生产对象？
+
+OpsGraph 用 **DeepFlow eBPF** 构建服务事实边，用 **AgentSight eBPF** 构建 Agent 决策/效果边，用 **UModel** 固化对象与关系，用 **图算子** 做因果排序、爆炸半径、影子依赖、Agent 重试环与结论校验。所有结论都能回到一条 UModel 查询和一组内核观测。
 
 ## 四层架构
 
 ```
-                 ┌──────────────────────────────────────────────┐
-                 │  DeepFlow agent (eBPF)                       │
-                 │  L7 flow log · universal tags · node metrics │
-                 └──────────────────────┬───────────────────────┘
-                                        │  replay CSV / querier API
-                                        ▼
-┌─────────────────────┐      ┌──────────────────────┐      ┌─────────────────────┐
-│ 1. Observe          │      │ 2. Model             │      │ 3. Materialize      │
-│ DeepFlow adapter    │ ───► │ UModel model pack    │ ───► │ entities + relations │
-│ normalize / window  │      │ 12 EntitySets/14 Link│      │ evidence on edges    │
-└─────────────────────┘      └──────────────────────┘      └──────────┬──────────┘
-                                                                     │
-                                        ┌────────────────────────────▼──────────┐
-                                        │ 4. Reason                             │
-                                        │ RCA ranking · blast radius · drift    │
-                                        │ SPOF · critical path · simulation     │
-                                        └────────────────────────────┬──────────┘
-                                                                     │
-                     ┌───────────────────────────────────────────────┼──────────────────────────────┐
-                     ▼                                               ▼                              ▼
-              UModel Query Service                          Graph Console                  Markdown report
-              `.entity` / `.topo` / `.umodel`               (SVG + evidence)               (incident-report.md)
+        ┌──────────────────────────────┐        ┌─────────────────────────────────┐
+        │  DeepFlow agent (eBPF)       │        │  AgentSight (eBPF + TLS)        │
+        │  L7 flow · tags · node metrics│        │  session · tool · file/net/proc │
+        └──────────────┬───────────────┘        └────────────────┬────────────────┘
+                       │ replay CSV / querier API                │ snapshot.json / SQLite
+                       ▼                                         ▼
+┌─────────────────────────────┐   ┌──────────────────────────┐   ┌──────────────────────────┐
+│ 1. Observe                  │   │ 2. Model                 │   │ 3. Materialize           │
+│ DeepFlow + AgentSight       │──►│ UModel pack              │──►│ service graph + AI graph │
+│ normalize / window          │   │ 16 EntitySet / 20 Link   │   │ evidence on edges        │
+└─────────────────────────────┘   └──────────────────────────┘   └────────────┬─────────────┘
+                                                                              │
+                                           ┌──────────────────────────────────▼─────────────┐
+                                           │ 4. Reason                                      │
+                                           │ service RCA · blast radius · drift · SPOF      │
+                                           │ agent risk · retry loop · claim verification   │
+                                           └──────────────────────────────────┬─────────────┘
+                                                                              │
+                    ┌─────────────────────────────────────────────────────────┼──────────────────────────────┐
+                    ▼                                                         ▼                              ▼
+             UModel Query Service                                    Graph Console                  Markdown report
+             `.entity` / `.topo` / `.umodel`                         (service + AI lanes)           (incident-report.md)
 ```
 
 ## 5 分钟运行
@@ -65,9 +72,9 @@ cd E:\ebpf\opsgraph
 脚本会：
 
 1. 构建/启动 UModel（`file.memory`，`127.0.0.1:18080`）；
-2. 生成 DeepFlow 形态的回放数据；
-3. 导入 UModel 模型包，写入 86 个实体 / 151 条关系；
-4. 运行图分析并把根因角色回写 UModel；
+2. 生成 DeepFlow 形态的服务回放与 AgentSight 形态的 Agent 会话；
+3. 导入 UModel 模型包，写入 119 个实体 / 183 条关系；
+4. 运行服务 RCA + Agent 风险/重试环/结论校验，并把角色回写 UModel；
 5. 启动控制台 `http://127.0.0.1:18088`。
 
 停止：
@@ -104,6 +111,10 @@ python -m opsgraph serve --port 18088
 | 00:19 | Alipay 5xx 开始上升 |
 | 00:20 | node-3 CPU 92%（batch-reporter 造成，不在支付路径） |
 | 00:40 | SLO burn-rate 告警，进入事故 |
+| 00:44 | SRE Agent（Claude）开始排查，查询 UModel、读取 retry 配置 |
+| 00:47 | Agent 写入 `checkout-retry-policy.yaml`，前两次 `apply_patch` 被拒后重试成功 |
+| 00:50 | Agent `kubectl apply` 到 prod，前两次 forbidden，第三次成功 |
+| 00:54 | Agent 验证 SLO，P99 仍 2.2s → remediation pending |
 
 OpsGraph 的输出：
 
@@ -115,6 +126,8 @@ Path:       checkout-service -> payment-gateway -> payment-router -> Alipay Gate
 #1 checkout-service  0.96   high-risk config @00:10 + outbound 4.6x + upstream of victim
 #2 payment-gateway   0.47   victim, anomalous but no risky change
 #3 payment-router    0.41   downstream, no change, anomaly fully explained by upstream
+
+Agents: 2 sessions · 16 tool calls · 69,400 tokens · $0.27 · 3 retry loops
 ```
 
 图工程发现：
@@ -124,10 +137,14 @@ Path:       checkout-service -> payment-gateway -> payment-router -> Alipay Gate
 - **declared-unobserved**：`order-service -> notification-service` 在 CMDB 中声明，但窗口内 0 请求。
 - **single-point-of-failure**：服务图的割点，摘除会导致调用链断开。
 - **node-pressure（已排除）**：node-3 CPU 92%，但 payment-gateway 没有 Pod 在该节点。
+- **agent-retry-loop**：SRE Agent 的 `apply_patch` 与 `kubectl_apply` 各重试 3 次（2 次失败），累计 2 个重试环。
+- **agent-risky-effects**：Agent 写入 prod retry 配置、执行 `kubectl apply` / `kubectl rollout`，共 4 个高风险系统效果。
+- **agent-claim-verified**：Agent 声称根因 `checkout-service`，与 UModel 图 RCA 一致（verified）。
+- **agent-remediation-pending**：Agent 已重启服务，但同窗口 eBPF 仍显示 payment-gateway P99 2.2s，处置未验证。
 
-完整报告：`artifacts/incident-report.md`。
+完整报告：`artifacts/incident-report.md`；Agent 专项数据：`artifacts/agents.json`。
 
-## 图模型：12 个实体集 / 14 条关系
+## 图模型：16 个实体集 / 20 条关系
 
 模型定义在 `model/`，由 `opsgraph/ontology.py` 生成；导入后可在 UModel 里按 `.umodel` 查询。
 
@@ -139,8 +156,12 @@ Path:       checkout-service -> payment-gateway -> payment-router -> Alipay Gate
 | svc | `svc.external_service` | 域名、类型、声明状态、shadow 标记 |
 | biz | `biz.journey` | 等级、转化影响、营收敞口、是否受影响 |
 | ops | `ops.incident` / `ops.change` / `ops.alert` | 严重级别、时间、变更摘要、根因回写 |
+| ai | `ai.agent_session` | Agent 类型、模型、tokens、成本、工具/失败/重试环、风险分、claim 校验 |
+| ai | `ai.model` | provider/model、调用数、tokens、成本 |
+| ai | `ai.tool_call` | 工具名、输入/输出摘要、目标、状态、重试序号、风险 |
+| ai | `ai.effect` | 文件/进程/网络/模型效果、目标、风险、置信度 |
 
-关系：`contains`、`scheduled_on`、`runs_as`、`exposes`、`calls`、`calls_endpoint`、`depends_on`、`affects`、`targets`。
+关系：`contains`、`scheduled_on`、`runs_as`、`exposes`、`calls`、`calls_endpoint`、`depends_on`、`affects`、`targets`，以及 AI 域的 `uses_model`、`invokes`、`produces`、`acts_on`、`investigates`。
 
 **边即证据。** `calls` 关系自带：
 
@@ -182,6 +203,62 @@ python -m opsgraph demo --source deepflow
 
 `opsgraph/deepflow.py` 中的 SQL 直接查询 `flow_log.l7_flow_log`，按分钟与通用标签聚合；详见 [DeepFlow 接入](docs/deepflow.md)。
 
+## AI 时代：Agent 也是一等图节点
+
+AgentSight 从系统边界观测 Agent，不要求 SDK/代理：
+
+- LLM 调用与 token：`llm_calls` / `token_usage`
+- 工具决策：`tool_calls`（工具名、输入、状态、时长、related_pid）
+- 系统效果：`audit_events`（file/process/network/llm）+ `process_nodes` + `network_targets`
+- 资源：`resource_samples`
+- 会话：`sessions` / `token_summary`
+
+OpsGraph 把四类 AI 对象接进 UModel：
+
+```text
+ai.agent_session --uses_model--> ai.model
+ai.agent_session --invokes----> ai.tool_call --produces--> ai.effect
+ai.agent_session --acts_on----> svc.service
+ai.agent_session --investigates-> ops.incident
+ai.effect        --affects----> svc.service
+```
+
+每条 `ai.*` 边都带证据：token、成本、工具状态、重试序号、风险、置信度、`source=agentsight.*`。
+
+![AgentSight view](docs/agent-tab.png)
+
+### Agent 图算子
+
+| 算子 | 回答的问题 |
+|---|---|
+| `agent_risk` | 这次 Agent 运行碰了哪些高风险文件/命令/生产环境？ |
+| `agent_loop` | 哪些工具在同一目标上连续失败/重试，烧了多少 token？ |
+| `agent_blast_radius` | Agent 读了/写了哪些文件、连了哪些 host、影响了哪些服务？ |
+| `agent_cost` | token/成本如何归因到 session、model、incident？ |
+| `agent_claim_check` | Agent 声称的根因，与 UModel 图 RCA 是否一致？ |
+| `agent_remediation_check` | Agent 的处置动作，是否被 eBPF 指标验证？ |
+
+### 接入真实 AgentSight
+
+```bash
+# 1) 在 Linux 上录制一次 Agent 运行（需要 eBPF 权限）
+sudo agentsight record -- claude
+
+# 2) 导出 JSON 快照
+agentsight report export -o agentsight_snapshot.json
+
+# 3) 编译进 UModel 图
+python -m opsgraph demo --agentsight agentsight_snapshot.json
+```
+
+也支持直接读取 `agentsight-*.db`：
+
+```bash
+python -m opsgraph demo --agentsight agentsight-2026-11-02.db
+```
+
+AgentSight 快照包含 prompt、路径、命令等敏感内容。OpsGraph 只把摘要、风险与派生指标写入图；原始内容不要提交到仓库。详见 [AgentSight 接入](docs/agentsight.md)。
+
 ## 图工程算子
 
 | 算子 | 输入 | 输出 | 说明 |
@@ -210,13 +287,15 @@ score = 0.28 * self_severity
 ## 常用命令
 
 ```powershell
-python -m opsgraph demo --addr http://127.0.0.1:18080   # 全链路
+python -m opsgraph demo --addr http://127.0.0.1:18080   # 全链路（含 AgentSight demo）
+python -m opsgraph demo --agentsight agentsight_snapshot.json
+python -m opsgraph demo --no-agents                     # 只跑服务图
 python -m opsgraph analyze --source umodel              # 从 UModel 重新读图分析
 python -m opsgraph rca                                  # 打印根因排序
 python -m opsgraph serve --port 18088                   # 控制台
 python -m opsgraph doctor                               # UModel 连通性/计数
 python -m opsgraph query ".entity with(domain='svc', name='svc.service') | limit 5"
-python -m unittest discover -s tests -v                 # 24 个单测
+python -m unittest discover -s tests -v                 # 33 个单测
 ```
 
 ## UModel 查询示例
@@ -242,7 +321,10 @@ opsgraph/
 ├── opsgraph/
 │   ├── scenario.py        # 确定性 DeepFlow 回放（含红鲱鱼/影子依赖）
 │   ├── deepflow.py        # replay + live querier 适配
-│   ├── ontology.py        # 图契约：12 EntitySet + 14 Link
+│   ├── agentsight.py      # AgentSight snapshot/SQLite 适配
+│   ├── agentsight_demo.py # 确定性 AgentSight 会话
+│   ├── agent_graph.py     # Agent 会话/工具/效果 -> UModel 图
+│   ├── ontology.py        # 图契约：16 EntitySet + 20 Link
 │   ├── model_pack.py      # 生成 UModel 模型包
 │   ├── materialize.py     # 观测 -> 实体/关系（证据边）
 │   ├── analysis.py        # RCA / 影响面 / 漂移 / SPOF
@@ -251,9 +333,9 @@ opsgraph/
 │   ├── umodel_client.py   # UModel 公共 REST 客户端
 │   └── cli.py
 ├── model/                 # 生成的 UModel 模型包
-├── data/replay/           # l7_flow_log.csv / node_metrics.csv
-├── console/               # 零依赖 SVG 图控制台
-├── artifacts/             # snapshot / analysis / report
+├── data/replay/           # l7_flow_log.csv / agentsight_snapshot.json
+├── console/               # 零依赖 SVG 图控制台（服务 + AI lane）
+├── artifacts/             # snapshot / analysis / agents / report
 ├── docs/
 ├── tests/
 └── run-demo.ps1
@@ -270,19 +352,25 @@ python -m opsgraph doctor
 
 ```json
 {
-  "declared_entities": 86,
-  "umodel_entities": 86,
-  "declared_relations": 151,
-  "umodel_relations": 151,
-  "root_cause_field": "checkout-service"
+  "declared_entities": 119,
+  "umodel_entities": 119,
+  "declared_relations": 183,
+  "umodel_relations": 183,
+  "root_cause_field": "checkout-service",
+  "agent_sessions": 2,
+  "agent_tool_calls": 16,
+  "agent_effects": 13
 }
 ```
 
 ## 设计边界
 
 - **DeepFlow 是可替换的传感器。** 只要能把 L7 调用聚合到「客户端服务、服务端服务/域名、端点、时间、QPS、P99、错误」这些维度，就可以替换 `deepflow.py` 的适配层。
+- **AgentSight 是可替换的 Agent 传感器。** 当前消费其 JSON snapshot 与 SQLite schema v1；换其他 Agent 遥测只需产出同样的 `sessions` / `tool_calls` / `effects`。
 - **UModel 是唯一读路径。** 控制台与 CLI 读取都通过 UModel Query Service；本地 `snapshot.json` 只是同一批写入数据的分析快照。
 - **RCA 是可解释的。** 当前是规则 + 因果图排序，不是黑盒模型；每个分值都有对应证据字段。
+- **Agent 结论不是事实。** `claim_status` 只表示 Agent 声称与图 RCA 是否一致；`remediation_status=pending_validation` 表示行动尚未被 eBPF 指标验证。
+- **敏感数据默认不图化。** AgentSight 快照可能含 prompt、路径、命令；写入图的是摘要与派生风险，原始快照不应提交到 Git。
 - **不是生产级采集器。** 生产化需要处理多集群、采样、卡片性、权限、长期存储与告警闭环；这些在 [架构文档](docs/architecture.md) 的「下一步」中列出。
 
 ## License

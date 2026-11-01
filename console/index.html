@@ -72,10 +72,24 @@
           <div class="source-line">source · <span id="source-label">DeepFlow l7_flow_log</span></div>
         </section>
 
+        <section class="panel ai-card">
+          <div class="panel-kicker">AI OBSERVER · AGENTSIGHT</div>
+          <div class="ai-card-main">
+            <div><strong id="ai-tokens">—</strong><span>tokens</span></div>
+            <div><strong id="ai-cost">—</strong><span>cost</span></div>
+            <div><strong id="ai-sessions">—</strong><span>sessions</span></div>
+          </div>
+          <div class="ai-card-foot">
+            <span id="ai-risk">—</span>
+            <button class="btn ghost tiny" data-goto="agents">查看 Agent →</button>
+          </div>
+        </section>
+
         <section class="panel layers">
           <div class="panel-kicker">LAYERS</div>
           <label class="layer"><input type="checkbox" data-layer="calls" checked /><i class="swatch teal"></i><span>服务调用图</span><em id="layer-calls">—</em></label>
           <label class="layer"><input type="checkbox" data-layer="business" checked /><i class="swatch blue"></i><span>业务旅程</span><em id="layer-business">—</em></label>
+          <label class="layer"><input type="checkbox" data-layer="agents" checked /><i class="swatch violet"></i><span>AI Agent</span><em id="layer-agents">—</em></label>
           <label class="layer"><input type="checkbox" id="toggle-observed" /><i class="swatch rose"></i><span>仅已观测关系</span></label>
         </section>
 
@@ -85,6 +99,7 @@
           <div class="legend-row"><i class="dot warning"></i>warning</div>
           <div class="legend-row"><i class="dot healthy"></i>healthy</div>
           <div class="legend-row"><i class="dot shadow"></i>shadow</div>
+          <div class="legend-row"><i class="dot ai"></i>AI agent</div>
           <div class="legend-row"><i class="line solid"></i>observed</div>
           <div class="legend-row"><i class="line dashed"></i>declared</div>
         </section>
@@ -128,6 +143,7 @@
           <button class="tab active" data-tab="diagnosis" role="tab">诊断</button>
           <button class="tab" data-tab="blast" role="tab">影响面</button>
           <button class="tab" data-tab="timeline" role="tab">时间线</button>
+          <button class="tab" data-tab="agents" role="tab">Agent</button>
           <button class="tab" data-tab="queries" role="tab">查询</button>
         </div>
 
@@ -162,6 +178,24 @@
           <section class="panel-block">
             <div class="section-head"><span>事故时间线</span><em>UTC+8</em></div>
             <div class="timeline" id="timeline"></div>
+          </section>
+        </div>
+
+        <div class="tab-panel" id="panel-agents">
+          <section class="panel-block">
+            <div class="section-head"><span>AI Agent 运行</span><em id="agent-count">—</em></div>
+            <div class="agent-summary" id="agent-summary"></div>
+            <div class="agent-list" id="agent-list"></div>
+          </section>
+          <section class="panel-block">
+            <div class="section-head"><span>运行详情</span><em id="agent-detail-name">select a session</em></div>
+            <div class="agent-detail" id="agent-detail">
+              <p class="muted small">点击一个 Agent 会话，查看 tool → effect 证据链。</p>
+            </div>
+          </section>
+          <section class="panel-block">
+            <div class="section-head"><span>Agent 发现</span><em id="agent-finding-count">—</em></div>
+            <div class="findings" id="agent-findings"></div>
           </section>
         </div>
 

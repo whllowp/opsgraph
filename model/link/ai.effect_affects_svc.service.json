@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "ai.effect_affects_svc.service",
+    "domain": "ai",
+    "display_name": {
+      "en_us": "Effect affects Service",
+      "zh_cn": "系统效果影响服务"
+    },
+    "description": {
+      "en_us": "An observed effect (for example a kubectl apply or config write) that lands on a service.",
+      "zh_cn": "落在服务上的可观测效果（例如 kubectl apply 或配置写入）。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "ai",
+      "kind": "entity_set",
+      "name": "ai.effect"
+    },
+    "dest": {
+      "domain": "svc",
+      "kind": "entity_set",
+      "name": "svc.service"
+    },
+    "entity_link_type": "affects"
+  }
+}

@@ -4,7 +4,9 @@ OpsGraph is a Python reference implementation of eBPF-observed operational graph
 
 ## Project In One Minute
 
-- `opsgraph/ontology.py` — the graph contract (12 EntitySets, 14 Links).
+- `opsgraph/ontology.py` — the graph contract (16 EntitySets, 20 Links, incl. AI domain).
+- `opsgraph/agentsight.py` — AgentSight snapshot/SQLite adapter.
+- `opsgraph/agent_graph.py` — agent session/tool/effect graph + AI graph operators.
 - `opsgraph/scenario.py` — deterministic DeepFlow-shaped replay with a retry-storm incident.
 - `opsgraph/materialize.py` — observations + declared topology -> UModel entities/relations with evidence.
 - `opsgraph/analysis.py` — explainable RCA, blast radius, drift, SPOF, timeline.
@@ -29,6 +31,8 @@ node --check console/app.js
 - Do not drop shadow or declared-unobserved edges; they are product features.
 - Keep entity IDs derived from semantic natural keys via `opsgraph/ids.py`.
 - Do not let `analysis.py` read `scenario.expected_root_cause`.
+- AgentSight `claim` is not truth: keep `claim_status` derived from graph RCA and `remediation_status` derived from eBPF service status.
+- Do not commit raw AgentSight snapshots; they contain prompts, paths, and commands. Commit only derived `artifacts/agents.json`.
 - Update `docs/en`-style paired docs only if the project gains bilingual docs; currently Chinese README plus English code comments is intentional.
 - Regenerate `model/` after changing `ontology.py` (`python -m opsgraph model`).
 
