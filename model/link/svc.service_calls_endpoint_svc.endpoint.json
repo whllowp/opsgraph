@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "svc.service_calls_endpoint_svc.endpoint",
+    "domain": "svc",
+    "display_name": {
+      "en_us": "Service calls Endpoint",
+      "zh_cn": "服务调用端点"
+    },
+    "description": {
+      "en_us": "Endpoint-level call evidence, used to localize a failing API.",
+      "zh_cn": "端点级调用证据，用于定位具体失败的 API。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "svc",
+      "kind": "entity_set",
+      "name": "svc.service"
+    },
+    "dest": {
+      "domain": "svc",
+      "kind": "entity_set",
+      "name": "svc.endpoint"
+    },
+    "entity_link_type": "calls_endpoint"
+  }
+}

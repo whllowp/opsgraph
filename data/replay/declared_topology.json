@@ -1,0 +1,1199 @@
+{
+  "cluster": {
+    "name": "prod-shanghai",
+    "display": "prod-shanghai",
+    "region": "cn-shanghai",
+    "az_count": 3,
+    "kubernetes_version": "v1.31.4"
+  },
+  "nodes": [
+    {
+      "name": "node-1",
+      "az": "az-a",
+      "instance_type": "c6.4xlarge",
+      "cores": 16,
+      "base_cpu": 0.48
+    },
+    {
+      "name": "node-2",
+      "az": "az-a",
+      "instance_type": "c6.4xlarge",
+      "cores": 16,
+      "base_cpu": 0.46
+    },
+    {
+      "name": "node-3",
+      "az": "az-b",
+      "instance_type": "c6.4xlarge",
+      "cores": 16,
+      "base_cpu": 0.35
+    },
+    {
+      "name": "node-4",
+      "az": "az-b",
+      "instance_type": "c6.2xlarge",
+      "cores": 8,
+      "base_cpu": 0.33
+    },
+    {
+      "name": "node-5",
+      "az": "az-c",
+      "instance_type": "c6.2xlarge",
+      "cores": 8,
+      "base_cpu": 0.3
+    },
+    {
+      "name": "node-6",
+      "az": "az-c",
+      "instance_type": "c6.2xlarge",
+      "cores": 8,
+      "base_cpu": 0.28
+    }
+  ],
+  "namespaces": [
+    {
+      "name": "shop",
+      "display": "shop",
+      "team": "commerce-core"
+    },
+    {
+      "name": "payments",
+      "display": "payments",
+      "team": "payments-backend"
+    },
+    {
+      "name": "platform",
+      "display": "platform",
+      "team": "platform-sre"
+    }
+  ],
+  "services": [
+    {
+      "name": "frontend",
+      "display": "frontend-web",
+      "namespace": "shop",
+      "tier": "edge",
+      "language": "typescript",
+      "owner": "storefront",
+      "criticality": "platinum",
+      "version": "v4.8.2",
+      "replicas": 3,
+      "nodes": [
+        "node-1",
+        "node-2",
+        "node-4"
+      ],
+      "endpoints": [
+        [
+          "GET",
+          "/api/v1/home"
+        ],
+        [
+          "GET",
+          "/api/v1/search"
+        ]
+      ],
+      "layout": [
+        1,
+        0
+      ]
+    },
+    {
+      "name": "checkout-service",
+      "display": "checkout-service",
+      "namespace": "shop",
+      "tier": "core",
+      "language": "go",
+      "owner": "commerce-core",
+      "criticality": "platinum",
+      "version": "v2.14.0",
+      "replicas": 3,
+      "nodes": [
+        "node-1",
+        "node-2",
+        "node-5"
+      ],
+      "endpoints": [
+        [
+          "POST",
+          "/api/v1/checkout"
+        ]
+      ],
+      "layout": [
+        2,
+        0
+      ]
+    },
+    {
+      "name": "cart-service",
+      "display": "cart-service",
+      "namespace": "shop",
+      "tier": "core",
+      "language": "go",
+      "owner": "commerce-core",
+      "criticality": "gold",
+      "version": "v1.9.3",
+      "replicas": 2,
+      "nodes": [
+        "node-2",
+        "node-4"
+      ],
+      "endpoints": [
+        [
+          "GET",
+          "/api/v1/cart"
+        ],
+        [
+          "POST",
+          "/api/v1/cart/items"
+        ]
+      ],
+      "layout": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "order-service",
+      "display": "order-service",
+      "namespace": "shop",
+      "tier": "core",
+      "language": "java",
+      "owner": "commerce-core",
+      "criticality": "platinum",
+      "version": "v3.2.7",
+      "replicas": 3,
+      "nodes": [
+        "node-1",
+        "node-3",
+        "node-5"
+      ],
+      "endpoints": [
+        [
+          "POST",
+          "/api/v1/orders"
+        ],
+        [
+          "GET",
+          "/api/v1/orders/{id}"
+        ]
+      ],
+      "layout": [
+        2,
+        2
+      ]
+    },
+    {
+      "name": "inventory-service",
+      "display": "inventory-service",
+      "namespace": "shop",
+      "tier": "core",
+      "language": "go",
+      "owner": "supply-chain",
+      "criticality": "gold",
+      "version": "v1.5.1",
+      "replicas": 2,
+      "nodes": [
+        "node-3",
+        "node-6"
+      ],
+      "endpoints": [
+        [
+          "GET",
+          "/api/v1/inventory/{sku}"
+        ]
+      ],
+      "layout": [
+        2,
+        3
+      ]
+    },
+    {
+      "name": "payment-gateway",
+      "display": "payment-gateway",
+      "namespace": "payments",
+      "tier": "payment",
+      "language": "go",
+      "owner": "payments-backend",
+      "criticality": "platinum",
+      "version": "v3.2.1",
+      "replicas": 3,
+      "nodes": [
+        "node-1",
+        "node-2",
+        "node-4"
+      ],
+      "endpoints": [
+        [
+          "POST",
+          "/api/v1/pay"
+        ]
+      ],
+      "layout": [
+        3,
+        0
+      ]
+    },
+    {
+      "name": "payment-router",
+      "display": "payment-router",
+      "namespace": "payments",
+      "tier": "channel",
+      "language": "go",
+      "owner": "payments-backend",
+      "criticality": "platinum",
+      "version": "v2.8.4",
+      "replicas": 2,
+      "nodes": [
+        "node-2",
+        "node-4"
+      ],
+      "endpoints": [
+        [
+          "POST",
+          "/api/v1/route"
+        ]
+      ],
+      "layout": [
+        4,
+        0
+      ]
+    },
+    {
+      "name": "risk-control",
+      "display": "risk-control",
+      "namespace": "payments",
+      "tier": "payment",
+      "language": "java",
+      "owner": "risk-platform",
+      "criticality": "gold",
+      "version": "v5.1.0",
+      "replicas": 2,
+      "nodes": [
+        "node-3",
+        "node-5"
+      ],
+      "endpoints": [
+        [
+          "POST",
+          "/api/v1/risk/evaluate"
+        ]
+      ],
+      "layout": [
+        3,
+        1
+      ]
+    },
+    {
+      "name": "ledger-service",
+      "display": "ledger-service",
+      "namespace": "payments",
+      "tier": "payment",
+      "language": "java",
+      "owner": "payments-backend",
+      "criticality": "platinum",
+      "version": "v4.6.2",
+      "replicas": 2,
+      "nodes": [
+        "node-2",
+        "node-5"
+      ],
+      "endpoints": [
+        [
+          "POST",
+          "/api/v1/ledger/entry"
+        ]
+      ],
+      "layout": [
+        3,
+        2
+      ]
+    },
+    {
+      "name": "notification-service",
+      "display": "notification-service",
+      "namespace": "platform",
+      "tier": "platform",
+      "language": "python",
+      "owner": "platform-sre",
+      "criticality": "silver",
+      "version": "v1.2.5",
+      "replicas": 2,
+      "nodes": [
+        "node-4",
+        "node-6"
+      ],
+      "endpoints": [
+        [
+          "POST",
+          "/api/v1/notify"
+        ]
+      ],
+      "layout": [
+        3,
+        3
+      ]
+    },
+    {
+      "name": "batch-reporter",
+      "display": "batch-reporter",
+      "namespace": "platform",
+      "tier": "platform",
+      "language": "python",
+      "owner": "data-platform",
+      "criticality": "bronze",
+      "version": "v0.9.8",
+      "replicas": 1,
+      "nodes": [
+        "node-3"
+      ],
+      "endpoints": [],
+      "layout": [
+        3,
+        4
+      ]
+    }
+  ],
+  "externals": [
+    {
+      "name": "alipay",
+      "display": "Alipay Gateway",
+      "domain": "api.alipay.com",
+      "kind": "payment_channel",
+      "provider": "Ant Group",
+      "criticality": "platinum",
+      "declared": true,
+      "layout": [
+        5,
+        0
+      ]
+    },
+    {
+      "name": "wechatpay",
+      "display": "WeChat Pay",
+      "domain": "api.mch.weixin.qq.com",
+      "kind": "payment_channel",
+      "provider": "Tencent",
+      "criticality": "platinum",
+      "declared": true,
+      "layout": [
+        5,
+        1
+      ]
+    },
+    {
+      "name": "unionpay",
+      "display": "UnionPay Gateway",
+      "domain": "gateway.95516.com",
+      "kind": "payment_channel",
+      "provider": "China UnionPay",
+      "criticality": "gold",
+      "declared": true,
+      "layout": [
+        5,
+        2
+      ]
+    },
+    {
+      "name": "fraud-model",
+      "display": "Fraud Scoring Model",
+      "domain": "fraud-model.ml.svc.cluster.local",
+      "kind": "ml_service",
+      "provider": "in-house",
+      "criticality": "gold",
+      "declared": true,
+      "layout": [
+        4,
+        3
+      ]
+    },
+    {
+      "name": "redis-cart",
+      "display": "Cart Redis",
+      "domain": "redis-cart.data.svc.cluster.local",
+      "kind": "middleware",
+      "provider": "in-house",
+      "criticality": "gold",
+      "declared": true,
+      "layout": [
+        4,
+        4
+      ]
+    },
+    {
+      "name": "mysql-ledger",
+      "display": "Ledger MySQL",
+      "domain": "mysql-ledger.data.svc.cluster.local",
+      "kind": "database",
+      "provider": "in-house",
+      "criticality": "platinum",
+      "declared": true,
+      "layout": [
+        6,
+        1
+      ]
+    },
+    {
+      "name": "mysql-inventory",
+      "display": "Inventory MySQL",
+      "domain": "mysql-inventory.data.svc.cluster.local",
+      "kind": "database",
+      "provider": "in-house",
+      "criticality": "gold",
+      "declared": true,
+      "layout": [
+        6,
+        3
+      ]
+    },
+    {
+      "name": "promo-shadow-api",
+      "display": "promo-flash.com API",
+      "domain": "api.promo-flash.com",
+      "kind": "third_party_api",
+      "provider": "growth-vendor",
+      "criticality": "silver",
+      "declared": false,
+      "layout": [
+        5,
+        4
+      ]
+    }
+  ],
+  "pods": [
+    {
+      "name": "frontend-bdf15-0",
+      "service": "frontend",
+      "namespace": "shop",
+      "node": "node-1",
+      "ip": "10.42.1.10",
+      "index": 0
+    },
+    {
+      "name": "frontend-f0345-1",
+      "service": "frontend",
+      "namespace": "shop",
+      "node": "node-2",
+      "ip": "10.42.1.11",
+      "index": 1
+    },
+    {
+      "name": "frontend-53d77-2",
+      "service": "frontend",
+      "namespace": "shop",
+      "node": "node-4",
+      "ip": "10.42.1.12",
+      "index": 2
+    },
+    {
+      "name": "checkout-service-623e1-0",
+      "service": "checkout-service",
+      "namespace": "shop",
+      "node": "node-1",
+      "ip": "10.42.1.20",
+      "index": 0
+    },
+    {
+      "name": "checkout-service-61a5c-1",
+      "service": "checkout-service",
+      "namespace": "shop",
+      "node": "node-2",
+      "ip": "10.42.1.21",
+      "index": 1
+    },
+    {
+      "name": "checkout-service-d1c10-2",
+      "service": "checkout-service",
+      "namespace": "shop",
+      "node": "node-5",
+      "ip": "10.42.1.22",
+      "index": 2
+    },
+    {
+      "name": "cart-service-3f19e-0",
+      "service": "cart-service",
+      "namespace": "shop",
+      "node": "node-2",
+      "ip": "10.42.1.30",
+      "index": 0
+    },
+    {
+      "name": "cart-service-e460f-1",
+      "service": "cart-service",
+      "namespace": "shop",
+      "node": "node-4",
+      "ip": "10.42.1.31",
+      "index": 1
+    },
+    {
+      "name": "order-service-657d8-0",
+      "service": "order-service",
+      "namespace": "shop",
+      "node": "node-1",
+      "ip": "10.42.1.40",
+      "index": 0
+    },
+    {
+      "name": "order-service-fe0a7-1",
+      "service": "order-service",
+      "namespace": "shop",
+      "node": "node-3",
+      "ip": "10.42.1.41",
+      "index": 1
+    },
+    {
+      "name": "order-service-f995a-2",
+      "service": "order-service",
+      "namespace": "shop",
+      "node": "node-5",
+      "ip": "10.42.1.42",
+      "index": 2
+    },
+    {
+      "name": "inventory-service-1f75f-0",
+      "service": "inventory-service",
+      "namespace": "shop",
+      "node": "node-3",
+      "ip": "10.42.1.50",
+      "index": 0
+    },
+    {
+      "name": "inventory-service-34754-1",
+      "service": "inventory-service",
+      "namespace": "shop",
+      "node": "node-6",
+      "ip": "10.42.1.51",
+      "index": 1
+    },
+    {
+      "name": "payment-gateway-c5b26-0",
+      "service": "payment-gateway",
+      "namespace": "payments",
+      "node": "node-1",
+      "ip": "10.42.2.60",
+      "index": 0
+    },
+    {
+      "name": "payment-gateway-398e4-1",
+      "service": "payment-gateway",
+      "namespace": "payments",
+      "node": "node-2",
+      "ip": "10.42.2.61",
+      "index": 1
+    },
+    {
+      "name": "payment-gateway-0c411-2",
+      "service": "payment-gateway",
+      "namespace": "payments",
+      "node": "node-4",
+      "ip": "10.42.2.62",
+      "index": 2
+    },
+    {
+      "name": "payment-router-14704-0",
+      "service": "payment-router",
+      "namespace": "payments",
+      "node": "node-2",
+      "ip": "10.42.2.70",
+      "index": 0
+    },
+    {
+      "name": "payment-router-8d961-1",
+      "service": "payment-router",
+      "namespace": "payments",
+      "node": "node-4",
+      "ip": "10.42.2.71",
+      "index": 1
+    },
+    {
+      "name": "risk-control-856ec-0",
+      "service": "risk-control",
+      "namespace": "payments",
+      "node": "node-3",
+      "ip": "10.42.2.80",
+      "index": 0
+    },
+    {
+      "name": "risk-control-b0bdd-1",
+      "service": "risk-control",
+      "namespace": "payments",
+      "node": "node-5",
+      "ip": "10.42.2.81",
+      "index": 1
+    },
+    {
+      "name": "ledger-service-09419-0",
+      "service": "ledger-service",
+      "namespace": "payments",
+      "node": "node-2",
+      "ip": "10.42.2.90",
+      "index": 0
+    },
+    {
+      "name": "ledger-service-f1309-1",
+      "service": "ledger-service",
+      "namespace": "payments",
+      "node": "node-5",
+      "ip": "10.42.2.91",
+      "index": 1
+    },
+    {
+      "name": "notification-service-3c290-0",
+      "service": "notification-service",
+      "namespace": "platform",
+      "node": "node-4",
+      "ip": "10.42.3.100",
+      "index": 0
+    },
+    {
+      "name": "notification-service-267ab-1",
+      "service": "notification-service",
+      "namespace": "platform",
+      "node": "node-6",
+      "ip": "10.42.3.101",
+      "index": 1
+    },
+    {
+      "name": "batch-reporter-78953-0",
+      "service": "batch-reporter",
+      "namespace": "platform",
+      "node": "node-3",
+      "ip": "10.42.3.110",
+      "index": 0
+    }
+  ],
+  "workloads": [
+    {
+      "name": "frontend-deploy",
+      "service": "frontend",
+      "namespace": "shop",
+      "kind": "Deployment",
+      "replicas": 3,
+      "ready": 3,
+      "image": "registry.example.com/shop/frontend:v4.8.2"
+    },
+    {
+      "name": "checkout-service-deploy",
+      "service": "checkout-service",
+      "namespace": "shop",
+      "kind": "Deployment",
+      "replicas": 3,
+      "ready": 3,
+      "image": "registry.example.com/shop/checkout-service:v2.14.0"
+    },
+    {
+      "name": "cart-service-deploy",
+      "service": "cart-service",
+      "namespace": "shop",
+      "kind": "Deployment",
+      "replicas": 2,
+      "ready": 2,
+      "image": "registry.example.com/shop/cart-service:v1.9.3"
+    },
+    {
+      "name": "order-service-deploy",
+      "service": "order-service",
+      "namespace": "shop",
+      "kind": "Deployment",
+      "replicas": 3,
+      "ready": 3,
+      "image": "registry.example.com/shop/order-service:v3.2.7"
+    },
+    {
+      "name": "inventory-service-deploy",
+      "service": "inventory-service",
+      "namespace": "shop",
+      "kind": "Deployment",
+      "replicas": 2,
+      "ready": 2,
+      "image": "registry.example.com/shop/inventory-service:v1.5.1"
+    },
+    {
+      "name": "payment-gateway-deploy",
+      "service": "payment-gateway",
+      "namespace": "payments",
+      "kind": "Deployment",
+      "replicas": 3,
+      "ready": 3,
+      "image": "registry.example.com/payments/payment-gateway:v3.2.1"
+    },
+    {
+      "name": "payment-router-deploy",
+      "service": "payment-router",
+      "namespace": "payments",
+      "kind": "Deployment",
+      "replicas": 2,
+      "ready": 2,
+      "image": "registry.example.com/payments/payment-router:v2.8.4"
+    },
+    {
+      "name": "risk-control-deploy",
+      "service": "risk-control",
+      "namespace": "payments",
+      "kind": "Deployment",
+      "replicas": 2,
+      "ready": 2,
+      "image": "registry.example.com/payments/risk-control:v5.1.0"
+    },
+    {
+      "name": "ledger-service-deploy",
+      "service": "ledger-service",
+      "namespace": "payments",
+      "kind": "Deployment",
+      "replicas": 2,
+      "ready": 2,
+      "image": "registry.example.com/payments/ledger-service:v4.6.2"
+    },
+    {
+      "name": "notification-service-deploy",
+      "service": "notification-service",
+      "namespace": "platform",
+      "kind": "Deployment",
+      "replicas": 2,
+      "ready": 2,
+      "image": "registry.example.com/platform/notification-service:v1.2.5"
+    },
+    {
+      "name": "batch-reporter-deploy",
+      "service": "batch-reporter",
+      "namespace": "platform",
+      "kind": "CronJob",
+      "replicas": 1,
+      "ready": 1,
+      "image": "registry.example.com/platform/batch-reporter:v0.9.8"
+    }
+  ],
+  "journeys": [
+    {
+      "name": "standard-checkout",
+      "display": "Standard Checkout",
+      "tier": "platinum",
+      "owner": "commerce-core",
+      "services": [
+        "frontend",
+        "checkout-service",
+        "cart-service",
+        "inventory-service",
+        "order-service",
+        "payment-gateway",
+        "payment-router",
+        "risk-control",
+        "ledger-service"
+      ],
+      "conversion_impact": "18% drop in paid orders",
+      "revenue_exposure": "CNY 2.4M/hour"
+    },
+    {
+      "name": "subscription-renewal",
+      "display": "Subscription Renewal",
+      "tier": "gold",
+      "owner": "payments-backend",
+      "services": [
+        "order-service",
+        "payment-gateway",
+        "ledger-service",
+        "notification-service"
+      ],
+      "conversion_impact": "6% renewal failure",
+      "revenue_exposure": "CNY 380k/hour"
+    },
+    {
+      "name": "browse-and-cart",
+      "display": "Browse & Cart",
+      "tier": "silver",
+      "owner": "storefront",
+      "services": [
+        "frontend",
+        "cart-service",
+        "inventory-service"
+      ],
+      "conversion_impact": "p95 degraded by 340ms",
+      "revenue_exposure": "CNY 120k/hour"
+    }
+  ],
+  "edges": [
+    {
+      "src": "frontend",
+      "dst": "checkout-service",
+      "method": "POST",
+      "path": "/api/v1/checkout",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "frontend",
+      "dst": "cart-service",
+      "method": "GET",
+      "path": "/api/v1/cart",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "frontend",
+      "dst": "order-service",
+      "method": "GET",
+      "path": "/api/v1/orders/{id}",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "frontend",
+      "dst": "inventory-service",
+      "method": "GET",
+      "path": "/api/v1/inventory/{sku}",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "checkout-service",
+      "dst": "cart-service",
+      "method": "GET",
+      "path": "/api/v1/cart",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "checkout-service",
+      "dst": "inventory-service",
+      "method": "GET",
+      "path": "/api/v1/inventory/{sku}",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "checkout-service",
+      "dst": "order-service",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "checkout-service",
+      "dst": "payment-gateway",
+      "method": "POST",
+      "path": "/api/v1/pay",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "checkout-service",
+      "dst": "notification-service",
+      "method": "POST",
+      "path": "/api/v1/notify",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "order-service",
+      "dst": "inventory-service",
+      "method": "GET",
+      "path": "/api/v1/inventory/{sku}",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "order-service",
+      "dst": "ledger-service",
+      "method": "POST",
+      "path": "/api/v1/ledger/entry",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "order-service",
+      "dst": "notification-service",
+      "method": "POST",
+      "path": "/api/v1/notify",
+      "declared": true,
+      "observed": false,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "payment-gateway",
+      "dst": "payment-router",
+      "method": "POST",
+      "path": "/api/v1/route",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "payment-gateway",
+      "dst": "risk-control",
+      "method": "POST",
+      "path": "/api/v1/risk/evaluate",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "payment-gateway",
+      "dst": "ledger-service",
+      "method": "POST",
+      "path": "/api/v1/ledger/entry",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "payment-router",
+      "dst": "alipay",
+      "method": "POST",
+      "path": "/gateway.do",
+      "declared": true,
+      "observed": true,
+      "external": true,
+      "shadow": false
+    },
+    {
+      "src": "payment-router",
+      "dst": "wechatpay",
+      "method": "POST",
+      "path": "/pay/unifiedorder",
+      "declared": true,
+      "observed": true,
+      "external": true,
+      "shadow": false
+    },
+    {
+      "src": "payment-router",
+      "dst": "unionpay",
+      "method": "POST",
+      "path": "/gateway",
+      "declared": true,
+      "observed": true,
+      "external": true,
+      "shadow": false
+    },
+    {
+      "src": "risk-control",
+      "dst": "fraud-model",
+      "method": "POST",
+      "path": "/score",
+      "declared": true,
+      "observed": true,
+      "external": true,
+      "shadow": false
+    },
+    {
+      "src": "cart-service",
+      "dst": "redis-cart",
+      "method": "GET",
+      "path": "/cart",
+      "declared": true,
+      "observed": true,
+      "external": true,
+      "shadow": false
+    },
+    {
+      "src": "ledger-service",
+      "dst": "mysql-ledger",
+      "method": "SQL",
+      "path": "/ledger",
+      "declared": true,
+      "observed": true,
+      "external": true,
+      "shadow": false
+    },
+    {
+      "src": "inventory-service",
+      "dst": "mysql-inventory",
+      "method": "SQL",
+      "path": "/inventory",
+      "declared": true,
+      "observed": true,
+      "external": true,
+      "shadow": false
+    },
+    {
+      "src": "batch-reporter",
+      "dst": "ledger-service",
+      "method": "POST",
+      "path": "/api/v1/ledger/entry",
+      "declared": true,
+      "observed": true,
+      "external": false,
+      "shadow": false
+    },
+    {
+      "src": "checkout-service",
+      "dst": "promo-shadow-api",
+      "method": "POST",
+      "path": "/api/v1/promo/apply",
+      "declared": false,
+      "observed": false,
+      "external": true,
+      "shadow": true
+    }
+  ],
+  "changes": [
+    {
+      "name": "CHG-2026-1101-07",
+      "display": "checkout retry policy 2 -> 5",
+      "service": "checkout-service",
+      "change_type": "config",
+      "applied_minute": 10,
+      "risk": "high",
+      "summary": "max_retries 2 -> 5; request timeout 500ms -> 2000ms",
+      "detail": "ConfigMap checkout-retry-policy applied to checkout-service. Retries now cover 5 attempts and each attempt waits up to 2s, so a slow payment call is retried instead of failing fast.",
+      "rollback": "kubectl apply -f checkout-retry-policy.v1.yaml && rollout restart deploy/checkout-service",
+      "status": "applied"
+    },
+    {
+      "name": "CHG-2026-1101-06",
+      "display": "payment-gateway v3.2.1",
+      "service": "payment-gateway",
+      "change_type": "deployment",
+      "applied_minute": -10,
+      "risk": "low",
+      "summary": "logging format only; no request-path change",
+      "detail": "Deployment v3.2.1 changes structured log field names and bumps the base image digest. Diff contains no handler, retry, timeout, or connection-pool changes.",
+      "rollback": "kubectl rollout undo deploy/payment-gateway",
+      "status": "applied"
+    }
+  ],
+  "alerts": [
+    {
+      "name": "ALT-2026-1102-001",
+      "display": "payment-gateway SLO burn rate 14.2x",
+      "target": "payment-gateway",
+      "target_type": "svc.service",
+      "severity": "P1",
+      "status": "firing",
+      "fired_minute": 40,
+      "signal": "slo_burn_rate",
+      "value": "14.2x",
+      "summary": "P99 latency 2.6s against an 800ms SLO for 10 consecutive minutes."
+    },
+    {
+      "name": "ALT-2026-1102-002",
+      "display": "node-3 CPU saturation 92%",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "fired_minute": 25,
+      "signal": "node_cpu_utilization",
+      "value": "92%",
+      "summary": "Sustained CPU pressure on node-3 after the nightly batch reporter started."
+    }
+  ],
+  "incident": {
+    "name": "INC-2026-1102-01",
+    "display": "Payment P99 SLO breach",
+    "severity": "P1",
+    "status": "investigating",
+    "started_minute": 40,
+    "detected_minute": 40,
+    "victim": "payment-gateway",
+    "owner": "payments-oncall",
+    "summary": "payment-gateway P99 is 2.6s against an 800ms SLO; checkout success rate is down 3.4 percentage points.",
+    "impact": "Standard Checkout conversion is down 18%; two payment channels are returning 5xx."
+  },
+  "timeline": [
+    {
+      "minute": -10,
+      "kind": "change",
+      "title": "payment-gateway v3.2.1 deployed",
+      "detail": "Logging format only (red herring).",
+      "ref": "CHG-2026-1101-06"
+    },
+    {
+      "minute": 5,
+      "kind": "business",
+      "title": "Flash Sale campaign active",
+      "detail": "Traffic multiplier 3.2x begins to ramp.",
+      "ref": "standard-checkout"
+    },
+    {
+      "minute": 10,
+      "kind": "change",
+      "title": "checkout retry policy changed",
+      "detail": "max_retries 2 -> 5, timeout 500ms -> 2000ms.",
+      "ref": "CHG-2026-1101-07"
+    },
+    {
+      "minute": 11,
+      "kind": "signal",
+      "title": "checkout outbound RPS anomaly",
+      "detail": "Retry amplification appears before payment latency.",
+      "ref": "checkout-service"
+    },
+    {
+      "minute": 14,
+      "kind": "signal",
+      "title": "payment-gateway p99 breach begins",
+      "detail": "Inbound p99 rises past 200ms with 1.6x load.",
+      "ref": "payment-gateway"
+    },
+    {
+      "minute": 16,
+      "kind": "signal",
+      "title": "payment-router latency follows",
+      "detail": "Downstream router p99 crosses 150ms.",
+      "ref": "payment-router"
+    },
+    {
+      "minute": 19,
+      "kind": "signal",
+      "title": "Alipay 5xx rate rises",
+      "detail": "Channel error rate reaches 19%.",
+      "ref": "alipay"
+    },
+    {
+      "minute": 20,
+      "kind": "noise",
+      "title": "node-3 CPU saturation",
+      "detail": "batch-reporter saturates node-3 (not on the payment path).",
+      "ref": "node-3"
+    },
+    {
+      "minute": 30,
+      "kind": "business",
+      "title": "Flash Sale traffic peak",
+      "detail": "3.2x traffic meets 2.5x retry amplification.",
+      "ref": "standard-checkout"
+    },
+    {
+      "minute": 40,
+      "kind": "alert",
+      "title": "SLO burn-rate alert fires",
+      "detail": "payment-gateway P99 2.6s, burn rate 14.2x.",
+      "ref": "ALT-2026-1102-001"
+    },
+    {
+      "minute": 42,
+      "kind": "incident",
+      "title": "INC-2026-1102-01 opened",
+      "detail": "Payment on-call starts graph investigation.",
+      "ref": "INC-2026-1102-01"
+    }
+  ]
+}

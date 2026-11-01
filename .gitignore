@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.runtime/
+data/replay/*.csv
+artifacts/*.png
+artifacts/*.json
+artifacts/*.md
+!artifacts/incident-report.md
+!artifacts/verification.json
+.venv/
+.ruff_cache/
+

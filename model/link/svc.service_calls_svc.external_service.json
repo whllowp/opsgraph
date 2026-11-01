@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "svc.service_calls_svc.external_service",
+    "domain": "svc",
+    "display_name": {
+      "en_us": "Service calls External Dependency",
+      "zh_cn": "服务调用外部依赖"
+    },
+    "description": {
+      "en_us": "An outbound L7 dependency on a domain, database, or third-party API.",
+      "zh_cn": "对域名、数据库或第三方 API 的出向 L7 依赖。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "svc",
+      "kind": "entity_set",
+      "name": "svc.service"
+    },
+    "dest": {
+      "domain": "svc",
+      "kind": "entity_set",
+      "name": "svc.external_service"
+    },
+    "entity_link_type": "calls"
+  }
+}

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpsGraph · eBPF × UModel</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="8" r="4"></circle>
+          <circle cx="8" cy="28" r="4"></circle>
+          <circle cx="32" cy="28" r="4"></circle>
+          <path d="M20 12 L9 25 M20 12 L31 25 M12 28 L28 28"></path>
+        </svg>
+        <div class="brand-text">
+          <div class="brand-title">OpsGraph</div>
+          <div class="brand-sub">eBPF telemetry · UModel object graph</div>
+        </div>
+      </div>
+      <div class="topmeta">
+        <span class="chip" id="workspace-chip">workspace · —</span>
+        <span class="status-pill" id="umodel-pill"><i></i> UModel</span>
+        <span class="top-counts" id="top-counts">— entities · — relations</span>
+      </div>
+      <div class="top-actions">
+        <button class="btn ghost" id="btn-focus" title="缩放到根因路径">聚焦因果路径</button>
+        <button class="btn" id="btn-report" title="打开 Markdown 故障报告">故障报告</button>
+        <button class="btn primary" id="btn-rerun"><span class="btn-dot"></span>重跑 RCA</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="rail rail-left">
+        <section class="panel incident-card" id="incident-card">
+          <div class="panel-kicker">ACTIVE INCIDENT</div>
+          <div class="incident-head">
+            <span class="sev" id="incident-sev">P1</span>
+            <span class="incident-status" id="incident-status">investigating</span>
+          </div>
+          <h1 id="incident-title">Loading incident…</h1>
+          <p id="incident-summary"></p>
+          <div class="incident-meta">
+            <div><span>victim</span><strong id="incident-victim">—</strong></div>
+            <div><span>started</span><strong id="incident-started">—</strong></div>
+            <div><span>window</span><strong id="incident-window">—</strong></div>
+          </div>
+        </section>
+
+        <section class="panel verdict" id="verdict-card">
+          <div class="panel-kicker">ROOT CAUSE</div>
+          <div class="verdict-name" id="root-name">—</div>
+          <div class="verdict-line">
+            <span id="root-confidence">—</span>
+            <div class="confidence-track"><div class="confidence-fill" id="confidence-fill"></div></div>
+          </div>
+          <p class="verdict-summary" id="root-summary"></p>
+          <div class="verdict-path" id="root-path"></div>
+        </section>
+
+        <section class="panel contract">
+          <div class="panel-kicker">GRAPH CONTRACT</div>
+          <div class="contract-grid">
+            <div><strong id="stat-entity-sets">—</strong><span>entity sets</span></div>
+            <div><strong id="stat-links">—</strong><span>links</span></div>
+            <div><strong id="stat-entities">—</strong><span>entities</span></div>
+            <div><strong id="stat-relations">—</strong><span>relations</span></div>
+          </div>
+          <div class="source-line">source · <span id="source-label">DeepFlow l7_flow_log</span></div>
+        </section>
+
+        <section class="panel layers">
+          <div class="panel-kicker">LAYERS</div>
+          <label class="layer"><input type="checkbox" data-layer="calls" checked /><i class="swatch teal"></i><span>服务调用图</span><em id="layer-calls">—</em></label>
+          <label class="layer"><input type="checkbox" data-layer="business" checked /><i class="swatch blue"></i><span>业务旅程</span><em id="layer-business">—</em></label>
+          <label class="layer"><input type="checkbox" id="toggle-observed" /><i class="swatch rose"></i><span>仅已观测关系</span></label>
+        </section>
+
+        <section class="panel legend">
+          <div class="panel-kicker">LEGEND</div>
+          <div class="legend-row"><i class="dot critical"></i>critical</div>
+          <div class="legend-row"><i class="dot warning"></i>warning</div>
+          <div class="legend-row"><i class="dot healthy"></i>healthy</div>
+          <div class="legend-row"><i class="dot shadow"></i>shadow</div>
+          <div class="legend-row"><i class="line solid"></i>observed</div>
+          <div class="legend-row"><i class="line dashed"></i>declared</div>
+        </section>
+      </aside>
+
+      <section class="stage">
+        <div class="stage-toolbar">
+          <div class="stage-title">
+            <span class="live-dot"></span>
+            <span>Operational graph</span>
+            <span class="muted" id="stage-sub">service → dependency → business impact</span>
+          </div>
+          <div class="stage-tools">
+            <div class="search-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+              <input id="search" placeholder="搜索服务 / 依赖…" autocomplete="off" />
+            </div>
+            <div class="zoom-group">
+              <button id="zoom-out" title="缩小">−</button>
+              <button id="zoom-fit" title="适应画布">⌂</button>
+              <button id="zoom-in" title="放大">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="graph-wrap" id="graph-wrap">
+          <svg id="graph" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid meet" aria-label="Operational graph"></svg>
+          <div class="graph-hint">拖拽平移 · 滚轮缩放 · 点击节点查看证据</div>
+          <div class="detail-card hidden" id="detail-card"></div>
+          <div class="empty-state hidden" id="empty-state">
+            <div class="empty-icon">◌</div>
+            <h3>还没有图数据</h3>
+            <p>先运行 <code>python -m opsgraph demo</code> 生成 UModel 工作区与图快照，然后刷新此页面。</p>
+          </div>
+          <div class="toast" id="toast"></div>
+        </div>
+      </section>
+
+      <aside class="rail rail-right">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="diagnosis" role="tab">诊断</button>
+          <button class="tab" data-tab="blast" role="tab">影响面</button>
+          <button class="tab" data-tab="timeline" role="tab">时间线</button>
+          <button class="tab" data-tab="queries" role="tab">查询</button>
+        </div>
+
+        <div class="tab-panel active" id="panel-diagnosis">
+          <section class="panel-block">
+            <div class="section-head"><span>根因候选</span><em id="ranking-count">—</em></div>
+            <div class="ranking" id="ranking"></div>
+          </section>
+          <section class="panel-block">
+            <div class="section-head"><span>图工程发现</span><em id="finding-count">—</em></div>
+            <div class="findings" id="findings"></div>
+          </section>
+          <section class="panel-block">
+            <div class="section-head"><span>已排除</span><em>evidence</em></div>
+            <div class="ruled-out" id="ruled-out"></div>
+          </section>
+        </div>
+
+        <div class="tab-panel" id="panel-blast">
+          <section class="panel-block">
+            <div class="section-head"><span>爆炸半径</span><em id="blast-count">—</em></div>
+            <p class="muted small" id="blast-summary"></p>
+            <div class="blast-list" id="blast-list"></div>
+          </section>
+          <section class="panel-block">
+            <div class="section-head"><span>业务旅程</span><em>impact</em></div>
+            <div class="journey-list" id="journey-list"></div>
+          </section>
+        </div>
+
+        <div class="tab-panel" id="panel-timeline">
+          <section class="panel-block">
+            <div class="section-head"><span>事故时间线</span><em>UTC+8</em></div>
+            <div class="timeline" id="timeline"></div>
+          </section>
+        </div>
+
+        <div class="tab-panel" id="panel-queries">
+          <section class="panel-block">
+            <div class="section-head"><span>UModel 查询</span><em>SPL</em></div>
+            <p class="muted small">这些查询直接打到 UModel Query Service；每一条都能在 <code>umctl</code> 中复现。</p>
+            <div class="query-list" id="query-list"></div>
+          </section>
+          <section class="panel-block">
+            <div class="section-head"><span>结果</span><em id="query-meta">—</em></div>
+            <pre class="query-result" id="query-result">选择一条查询并运行。</pre>
+          </section>
+        </div>
+      </aside>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

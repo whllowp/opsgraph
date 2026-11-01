@@ -1,0 +1,133 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "infra.node",
+    "domain": "infra",
+    "display_name": {
+      "en_us": "Node",
+      "zh_cn": "节点"
+    },
+    "description": {
+      "en_us": "A Kubernetes node with eBPF-observed resource pressure.",
+      "zh_cn": "带有 eBPF 观测资源压力的 Kubernetes 节点。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Hostname",
+          "zh_cn": "主机名"
+        }
+      },
+      {
+        "name": "az",
+        "type": "string",
+        "display_name": {
+          "en_us": "Availability Zone",
+          "zh_cn": "可用区"
+        }
+      },
+      {
+        "name": "instance_type",
+        "type": "string",
+        "display_name": {
+          "en_us": "Instance Type",
+          "zh_cn": "实例规格"
+        }
+      },
+      {
+        "name": "cpu_cores",
+        "type": "integer",
+        "display_name": {
+          "en_us": "CPU Cores",
+          "zh_cn": "CPU 核数"
+        }
+      },
+      {
+        "name": "cpu_utilization",
+        "type": "float",
+        "display_name": {
+          "en_us": "CPU Utilization",
+          "zh_cn": "CPU 使用率"
+        }
+      },
+      {
+        "name": "memory_utilization",
+        "type": "float",
+        "display_name": {
+          "en_us": "Memory Utilization",
+          "zh_cn": "内存使用率"
+        }
+      },
+      {
+        "name": "pod_count",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Pods",
+          "zh_cn": "Pod 数量"
+        }
+      },
+      {
+        "name": "anomaly_score",
+        "type": "float",
+        "display_name": {
+          "en_us": "Anomaly Score",
+          "zh_cn": "异常分值"
+        }
+      },
+      {
+        "name": "onset_ts",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Anomaly Onset",
+          "zh_cn": "异常起始时间"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "az",
+      "instance_type",
+      "cpu_cores",
+      "cpu_utilization",
+      "memory_utilization",
+      "pod_count",
+      "anomaly_score",
+      "onset_ts",
+      "status"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

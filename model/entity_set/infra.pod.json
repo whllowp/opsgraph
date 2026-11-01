@@ -1,0 +1,142 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "infra.pod",
+    "domain": "infra",
+    "display_name": {
+      "en_us": "Pod",
+      "zh_cn": "Pod"
+    },
+    "description": {
+      "en_us": "A pod placed on a node, observed by the eBPF agent.",
+      "zh_cn": "由 eBPF Agent 观测到、调度在节点上的 Pod。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Name",
+          "zh_cn": "名称"
+        }
+      },
+      {
+        "name": "namespace",
+        "type": "string",
+        "display_name": {
+          "en_us": "Namespace",
+          "zh_cn": "命名空间"
+        }
+      },
+      {
+        "name": "workload",
+        "type": "string",
+        "display_name": {
+          "en_us": "Workload",
+          "zh_cn": "工作负载"
+        }
+      },
+      {
+        "name": "node",
+        "type": "string",
+        "display_name": {
+          "en_us": "Node",
+          "zh_cn": "节点"
+        }
+      },
+      {
+        "name": "az",
+        "type": "string",
+        "display_name": {
+          "en_us": "Availability Zone",
+          "zh_cn": "可用区"
+        }
+      },
+      {
+        "name": "ip",
+        "type": "string",
+        "display_name": {
+          "en_us": "Pod IP",
+          "zh_cn": "Pod IP"
+        }
+      },
+      {
+        "name": "phase",
+        "type": "string",
+        "display_name": {
+          "en_us": "Phase",
+          "zh_cn": "阶段"
+        }
+      },
+      {
+        "name": "restart_count",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Restarts",
+          "zh_cn": "重启次数"
+        }
+      },
+      {
+        "name": "cpu_millicores",
+        "type": "float",
+        "display_name": {
+          "en_us": "CPU (m)",
+          "zh_cn": "CPU（毫核）"
+        }
+      },
+      {
+        "name": "memory_mb",
+        "type": "float",
+        "display_name": {
+          "en_us": "Memory (MB)",
+          "zh_cn": "内存（MB）"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "namespace",
+      "workload",
+      "node",
+      "az",
+      "ip",
+      "phase",
+      "restart_count",
+      "cpu_millicores",
+      "memory_mb",
+      "status"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

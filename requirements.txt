@@ -1,0 +1,4 @@
+# Python dependencies for OpsGraph.
+# The bundled demo runtime already includes requests; install into a venv for a
+# clean environment.
+requests>=2.31

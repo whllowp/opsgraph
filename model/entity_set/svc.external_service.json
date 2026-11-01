@@ -1,0 +1,151 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "svc.external_service",
+    "domain": "svc",
+    "display_name": {
+      "en_us": "External Dependency",
+      "zh_cn": "外部依赖"
+    },
+    "description": {
+      "en_us": "A dependency observed by eBPF but not necessarily declared in the CMDB.",
+      "zh_cn": "由 eBPF 观测到、但未必在 CMDB 中声明的依赖。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Name",
+          "zh_cn": "名称"
+        }
+      },
+      {
+        "name": "domain",
+        "type": "string",
+        "display_name": {
+          "en_us": "DNS Domain",
+          "zh_cn": "DNS 域名"
+        }
+      },
+      {
+        "name": "kind",
+        "type": "string",
+        "display_name": {
+          "en_us": "Kind",
+          "zh_cn": "类型"
+        }
+      },
+      {
+        "name": "provider",
+        "type": "string",
+        "display_name": {
+          "en_us": "Provider",
+          "zh_cn": "提供方"
+        }
+      },
+      {
+        "name": "criticality",
+        "type": "string",
+        "display_name": {
+          "en_us": "Criticality",
+          "zh_cn": "关键级别"
+        }
+      },
+      {
+        "name": "qps",
+        "type": "float",
+        "display_name": {
+          "en_us": "QPS",
+          "zh_cn": "QPS"
+        }
+      },
+      {
+        "name": "error_rate",
+        "type": "float",
+        "display_name": {
+          "en_us": "Error Rate",
+          "zh_cn": "错误率"
+        }
+      },
+      {
+        "name": "latency_p99_ms",
+        "type": "float",
+        "display_name": {
+          "en_us": "P99 Latency (ms)",
+          "zh_cn": "P99 延迟（ms）"
+        }
+      },
+      {
+        "name": "anomaly_score",
+        "type": "float",
+        "display_name": {
+          "en_us": "Anomaly Score",
+          "zh_cn": "异常分值"
+        }
+      },
+      {
+        "name": "declared",
+        "type": "boolean",
+        "display_name": {
+          "en_us": "Declared",
+          "zh_cn": "已声明"
+        }
+      },
+      {
+        "name": "shadow",
+        "type": "boolean",
+        "display_name": {
+          "en_us": "Shadow Dependency",
+          "zh_cn": "影子依赖"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "domain",
+      "kind",
+      "provider",
+      "criticality",
+      "qps",
+      "error_rate",
+      "latency_p99_ms",
+      "anomaly_score",
+      "declared",
+      "shadow",
+      "status"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

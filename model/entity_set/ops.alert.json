@@ -1,0 +1,133 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "ops.alert",
+    "domain": "ops",
+    "display_name": {
+      "en_us": "Alert",
+      "zh_cn": "告警"
+    },
+    "description": {
+      "en_us": "A signal that opened or amplified an incident.",
+      "zh_cn": "触发或放大故障的信号。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Alert",
+          "zh_cn": "告警"
+        }
+      },
+      {
+        "name": "target",
+        "type": "string",
+        "display_name": {
+          "en_us": "Target",
+          "zh_cn": "目标"
+        }
+      },
+      {
+        "name": "target_type",
+        "type": "string",
+        "display_name": {
+          "en_us": "Target Type",
+          "zh_cn": "目标类型"
+        }
+      },
+      {
+        "name": "severity",
+        "type": "string",
+        "display_name": {
+          "en_us": "Severity",
+          "zh_cn": "严重级别"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      },
+      {
+        "name": "fired_at",
+        "type": "string",
+        "display_name": {
+          "en_us": "Fired At",
+          "zh_cn": "触发时间"
+        }
+      },
+      {
+        "name": "fired_ts",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Fired Timestamp",
+          "zh_cn": "触发时间戳"
+        }
+      },
+      {
+        "name": "signal",
+        "type": "string",
+        "display_name": {
+          "en_us": "Signal",
+          "zh_cn": "信号"
+        }
+      },
+      {
+        "name": "value",
+        "type": "string",
+        "display_name": {
+          "en_us": "Value",
+          "zh_cn": "值"
+        }
+      },
+      {
+        "name": "summary",
+        "type": "string",
+        "display_name": {
+          "en_us": "Summary",
+          "zh_cn": "摘要"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "target",
+      "target_type",
+      "severity",
+      "status",
+      "fired_at",
+      "fired_ts",
+      "signal",
+      "value",
+      "summary"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

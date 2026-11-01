@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "svc.service_calls_svc.service",
+    "domain": "svc",
+    "display_name": {
+      "en_us": "Service calls Service",
+      "zh_cn": "服务调用服务"
+    },
+    "description": {
+      "en_us": "An L7 call edge observed by eBPF. The relation carries its own RPS, error rate, P99, baseline and onset evidence.",
+      "zh_cn": "eBPF 观测到的 L7 调用边，关系自身携带 RPS、错误率、P99、基线与起始时间证据。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "svc",
+      "kind": "entity_set",
+      "name": "svc.service"
+    },
+    "dest": {
+      "domain": "svc",
+      "kind": "entity_set",
+      "name": "svc.service"
+    },
+    "entity_link_type": "calls"
+  }
+}

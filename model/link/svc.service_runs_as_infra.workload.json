@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "svc.service_runs_as_infra.workload",
+    "domain": "svc",
+    "display_name": {
+      "en_us": "Service runs as Workload",
+      "zh_cn": "服务由工作负载运行"
+    },
+    "description": {
+      "en_us": "Maps a logical service to its Kubernetes workload.",
+      "zh_cn": "将逻辑服务映射到 Kubernetes 工作负载。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "svc",
+      "kind": "entity_set",
+      "name": "svc.service"
+    },
+    "dest": {
+      "domain": "infra",
+      "kind": "entity_set",
+      "name": "infra.workload"
+    },
+    "entity_link_type": "runs_as"
+  }
+}

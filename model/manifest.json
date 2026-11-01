@@ -1,0 +1,20 @@
+{
+  "name": "opsgraph",
+  "display_name": {
+    "en_us": "OpsGraph eBPF Operational Graph",
+    "zh_cn": "OpsGraph eBPF 运维对象图"
+  },
+  "description": {
+    "en_us": "UModel model pack for eBPF-observed services, runtime objects, business journeys, and incident evidence.",
+    "zh_cn": "面向 eBPF 观测服务、运行时对象、业务旅程与故障证据的 UModel 模型包。"
+  },
+  "entity_sets": 12,
+  "entity_set_links": 14,
+  "domains": [
+    "infra",
+    "svc",
+    "biz",
+    "ops"
+  ],
+  "generated_by": "opsgraph.model_pack"
+}

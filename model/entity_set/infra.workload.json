@@ -1,0 +1,115 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "infra.workload",
+    "domain": "infra",
+    "display_name": {
+      "en_us": "Workload",
+      "zh_cn": "工作负载"
+    },
+    "description": {
+      "en_us": "A Deployment or CronJob that runs a service.",
+      "zh_cn": "运行服务的工作负载（Deployment 或 CronJob）。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Name",
+          "zh_cn": "名称"
+        }
+      },
+      {
+        "name": "namespace",
+        "type": "string",
+        "display_name": {
+          "en_us": "Namespace",
+          "zh_cn": "命名空间"
+        }
+      },
+      {
+        "name": "kind",
+        "type": "string",
+        "display_name": {
+          "en_us": "Kind",
+          "zh_cn": "类型"
+        }
+      },
+      {
+        "name": "replicas",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Desired Replicas",
+          "zh_cn": "期望副本数"
+        }
+      },
+      {
+        "name": "ready_replicas",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Ready Replicas",
+          "zh_cn": "就绪副本数"
+        }
+      },
+      {
+        "name": "image",
+        "type": "string",
+        "display_name": {
+          "en_us": "Image",
+          "zh_cn": "镜像"
+        }
+      },
+      {
+        "name": "service",
+        "type": "string",
+        "display_name": {
+          "en_us": "Service",
+          "zh_cn": "服务"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "namespace",
+      "kind",
+      "replicas",
+      "ready_replicas",
+      "image",
+      "service",
+      "status"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

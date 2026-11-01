@@ -1,0 +1,20 @@
+{
+  "declared_entities": 86,
+  "umodel_entities": 86,
+  "declared_relations": 151,
+  "umodel_relations": 151,
+  "root_cause_field": "checkout-service",
+  "service_roles": {
+    "checkout-service": "root_cause",
+    "payment-gateway": "victim",
+    "batch-reporter": "bystander",
+    "risk-control": "downstream",
+    "ledger-service": "downstream",
+    "cart-service": "downstream",
+    "order-service": "downstream",
+    "notification-service": "downstream",
+    "payment-router": "downstream",
+    "inventory-service": "downstream",
+    "frontend-web": "upstream"
+  }
+}

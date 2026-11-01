@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "svc.service_exposes_svc.endpoint",
+    "domain": "svc",
+    "display_name": {
+      "en_us": "Service exposes Endpoint",
+      "zh_cn": "服务暴露端点"
+    },
+    "description": {
+      "en_us": "An API endpoint served by a service.",
+      "zh_cn": "服务提供的 API 端点。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "svc",
+      "kind": "entity_set",
+      "name": "svc.service"
+    },
+    "dest": {
+      "domain": "svc",
+      "kind": "entity_set",
+      "name": "svc.endpoint"
+    },
+    "entity_link_type": "exposes"
+  }
+}

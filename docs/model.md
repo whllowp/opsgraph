@@ -1,0 +1,134 @@
+# 模型
+
+模型包由 `opsgraph/ontology.py` 生成，目录结构：
+
+```
+model/
+├── entity_set/
+│   ├── infra.cluster.json
+│   ├── infra.node.json
+│   ├── ...
+│   └── ops.alert.json
+├── link/
+│   ├── svc.service_calls_svc.service.json
+│   └── ...
+└── manifest.json
+```
+
+## 实体集
+
+| 名称 | 主键 | 用途 |
+|---|---|---|
+| `infra.cluster` | `id` | 集群边界与版本 |
+| `infra.node` | `id` | 节点 CPU/内存/异常分值/onset |
+| `infra.namespace` | `id` | 团队与命名空间 |
+| `infra.workload` | `id` | Deployment/CronJob、镜像、副本 |
+| `infra.pod` | `id` | Pod、节点、IP、重启次数 |
+| `svc.service` | `id` | 服务黄金指标、基线、异常分、onset、RCA 角色、最近变更 |
+| `svc.endpoint` | `id` | API 方法/路径、QPS、P99、错误率 |
+| `svc.external_service` | `id` | 外部域名/DB/中间件，`declared`、`shadow` |
+| `biz.journey` | `id` | 业务旅程、转化影响、营收敞口 |
+| `ops.incident` | `id` | 事故、受害服务、根因回写 |
+| `ops.change` | `id` | 部署/配置变更、风险、回滚 |
+| `ops.alert` | `id` | 告警目标、信号、触发时间 |
+
+所有实体都有：
+
+```json
+{
+  "__domain__": "svc",
+  "__entity_type__": "svc.service",
+  "__entity_id__": "32-char-md5",
+  "__category__": "entity",
+  "__method__": "Update",
+  "__first_observed_time__": 1793548800,
+  "__last_observed_time__": 1793552400,
+  "__keep_alive_seconds__": 600,
+  "id": "same-as-entity-id",
+  "display_name": "checkout-service"
+}
+```
+
+## 关系
+
+| 名称 | src → dest | 语义 |
+|---|---|---|
+| `infra.cluster_contains_infra.node` | cluster → node | 集群包含节点 |
+| `infra.namespace_contains_infra.workload` | namespace → workload | 命名空间包含工作负载 |
+| `infra.workload_contains_infra.pod` | workload → pod | 工作负载包含 Pod |
+| `infra.pod_scheduled_on_infra.node` | pod → node | Pod 调度到节点 |
+| `svc.service_runs_as_infra.workload` | service → workload | 服务由工作负载运行 |
+| `svc.service_exposes_svc.endpoint` | service → endpoint | 服务暴露端点 |
+| `svc.service_calls_svc.service` | service → service | eBPF 观测的服务调用 |
+| `svc.service_calls_svc.external_service` | service → external | eBPF 观测的外部依赖 |
+| `svc.service_calls_endpoint_svc.endpoint` | service → endpoint | 端点级调用证据 |
+| `biz.journey_depends_on_svc.service` | journey → service | 业务依赖 |
+| `ops.incident_affects_svc.service` | incident → service | 事故影响服务 |
+| `ops.change_targets_svc.service` | change → service | 变更作用于服务 |
+| `ops.alert_targets_svc.service` | alert → service | 告警指向服务 |
+| `ops.alert_targets_infra.node` | alert → node | 告警指向节点 |
+
+### `calls` 关系字段
+
+| 字段 | 类型 | 含义 |
+|---|---|---|
+| `rps` | float | 窗口末分钟请求速率 |
+| `error_rate` | float | (client_error + server_error) / request |
+| `latency_p99_ms` | float | 请求级 P99（DeepFlow `quantile(0.99)(rrt)`） |
+| `baseline_p99_ms` | float | 前 10 分钟 P99 中位数 |
+| `p99_delta_pct` | float | 相对基线变化百分比 |
+| `onset_ts` | integer | 时延/错误异常起始（unix 秒） |
+| `observed` | boolean | 窗口内是否有流量 |
+| `declared` | boolean | 是否在声明拓扑中 |
+| `shadow` | boolean | 观测到但未声明 |
+| `evidence` | string | `deepflow.l7_flow_log` 或 `declared_topology` |
+| `confidence` | float | 观测置信度 |
+| `requests_per_min` | integer | requests / 分钟 |
+| `bytes_per_min` | integer | 双向字节数 / 分钟 |
+
+## ID 规则
+
+```text
+entity_id = md5("{domain}/{entity_type}/{natural_key}")[:32]
+```
+
+- service：`svc/svc.service/checkout-service`
+- external：`svc/svc.external_service/api.promo-flash.com`
+- endpoint：`svc/svc.endpoint/checkout-service:POST /api/v1/checkout`
+- pod：`infra/infra.pod/checkout-service-623e1-0`
+
+自然键稳定，所以重放、重跑、跨环境迁移都不会产生重复实体。
+
+## 导入顺序
+
+UModel 对关系做前向引用校验，因此 pipeline 分两步：
+
+```python
+client.import_model("model/entity_set")
+client.import_model("model/link")
+```
+
+然后：
+
+```python
+client.write_entities(entities)   # 400/批
+client.write_relations(relations) # 400/批
+```
+
+## 查询示例
+
+```bash
+# 列出实体集
+umctl query run opsgraph ".umodel with(kind='entity_set') | sort name | limit 20"
+
+# 查看某个服务的全部字段
+umctl query run opsgraph ".entity with(domain='svc', name='svc.service', query='checkout-service')"
+
+# 查看 checkout 的直接关系
+umctl query run opsgraph \
+  '.topo | graph-call getDirectRelations([(:"svc@svc.service" {__entity_id__: "<id>"})])'
+
+# 用 Cypher 拉全图（分页，避免 100 行上限）
+umctl query run opsgraph \
+  ".topo | graph-call cypher(\`MATCH (src)-[r]->(dest) RETURN src, r AS relation, dest SKIP 0 LIMIT 100\`)"
+```

@@ -1,0 +1,124 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "biz.journey",
+    "domain": "biz",
+    "display_name": {
+      "en_us": "Business Journey",
+      "zh_cn": "业务旅程"
+    },
+    "description": {
+      "en_us": "A revenue-bearing user journey that depends on services.",
+      "zh_cn": "依赖服务、承担营收的用户旅程。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Journey",
+          "zh_cn": "旅程"
+        }
+      },
+      {
+        "name": "tier",
+        "type": "string",
+        "display_name": {
+          "en_us": "Tier",
+          "zh_cn": "层级"
+        }
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "display_name": {
+          "en_us": "Owner",
+          "zh_cn": "负责团队"
+        }
+      },
+      {
+        "name": "services",
+        "type": "string",
+        "display_name": {
+          "en_us": "Services",
+          "zh_cn": "依赖服务"
+        }
+      },
+      {
+        "name": "conversion_impact",
+        "type": "string",
+        "display_name": {
+          "en_us": "Conversion Impact",
+          "zh_cn": "转化影响"
+        }
+      },
+      {
+        "name": "revenue_exposure",
+        "type": "string",
+        "display_name": {
+          "en_us": "Revenue Exposure",
+          "zh_cn": "营收敞口"
+        }
+      },
+      {
+        "name": "impacted",
+        "type": "boolean",
+        "display_name": {
+          "en_us": "Impacted",
+          "zh_cn": "是否受影响"
+        }
+      },
+      {
+        "name": "impacted_qps",
+        "type": "float",
+        "display_name": {
+          "en_us": "Impacted QPS",
+          "zh_cn": "受影响 QPS"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "tier",
+      "owner",
+      "services",
+      "conversion_impact",
+      "revenue_exposure",
+      "impacted",
+      "impacted_qps",
+      "status"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

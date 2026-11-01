@@ -1,0 +1,79 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "infra.namespace",
+    "domain": "infra",
+    "display_name": {
+      "en_us": "Namespace",
+      "zh_cn": "命名空间"
+    },
+    "description": {
+      "en_us": "A Kubernetes namespace boundary.",
+      "zh_cn": "Kubernetes 命名空间边界。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Name",
+          "zh_cn": "名称"
+        }
+      },
+      {
+        "name": "team",
+        "type": "string",
+        "display_name": {
+          "en_us": "Owning Team",
+          "zh_cn": "负责团队"
+        }
+      },
+      {
+        "name": "pod_count",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Pods",
+          "zh_cn": "Pod 数量"
+        }
+      },
+      {
+        "name": "service_count",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Services",
+          "zh_cn": "服务数量"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "team",
+      "pod_count",
+      "service_count"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}
