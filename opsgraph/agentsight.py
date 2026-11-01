@@ -316,8 +316,15 @@ def load_snapshot(path: str | Path) -> AgentSnapshot:
         raise ValueError(f"unsupported AgentSight snapshot schema_version={version}")
 
     sessions = [_session_from_row(row) for row in raw.get("sessions") or []]
-    _resource_peaks(raw, sessions)
     tool_calls = [_tool_from_row(row) for row in raw.get("tool_calls") or []]
+    aliases = {session.key: session for session in sessions}
+    for session in sessions:
+        aliases.setdefault(str(session.attributes.get("session_id") or ""), session)
+    for tool in tool_calls:
+        session = aliases.get(tool.session_key)
+        if session and not session.pid and tool.related_pid:
+            session.pid = tool.related_pid
+    _resource_peaks(raw, sessions)
     effects = [_effect_from_audit(row) for row in raw.get("audit_events") or []]
     models = _model_usages(raw.get("token_summary") or [])
     return AgentSnapshot(
