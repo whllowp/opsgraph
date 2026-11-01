@@ -1,15 +1,20 @@
+import tempfile
 import unittest
+from pathlib import Path
 
 from opsgraph.analysis import analyze
 from opsgraph.console_server import build_console_state
 from opsgraph.deepflow import load_dataset
 from opsgraph.materialize import Materializer
+from opsgraph.scenario import generate_replay
 
 
 class ConsoleStateTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        flows, nodes, declared = load_dataset("replay")
+        cls.tmp = tempfile.TemporaryDirectory()
+        generate_replay(Path(cls.tmp.name))
+        flows, nodes, declared = load_dataset("replay", replay_dir=cls.tmp.name)
         cls.snapshot = Materializer(flows, nodes, declared).build()
         cls.analysis = analyze(cls.snapshot)
         cls.state = build_console_state(
@@ -17,6 +22,10 @@ class ConsoleStateTests(unittest.TestCase):
             cls.analysis,
             {"addr": "http://127.0.0.1:18080", "connected": True, "provider": "memory"},
         )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
 
     def test_nodes_and_layout(self):
         names = {node["name"] for node in self.state["nodes"]}

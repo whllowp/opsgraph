@@ -1,16 +1,25 @@
+import tempfile
 import unittest
+from pathlib import Path
 
 from opsgraph.deepflow import load_dataset
 from opsgraph.materialize import Materializer
+from opsgraph.scenario import generate_replay
 
 
 class MaterializerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        flows, nodes, declared = load_dataset("replay")
+        cls.tmp = tempfile.TemporaryDirectory()
+        generate_replay(Path(cls.tmp.name))
+        flows, nodes, declared = load_dataset("replay", replay_dir=cls.tmp.name)
         cls.snapshot = Materializer(flows, nodes, declared).build()
         cls.entities = cls.snapshot["entities"]
         cls.relations = cls.snapshot["relations"]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
 
     def test_counts_and_ids(self):
         self.assertEqual(len(self.entities), 86)
