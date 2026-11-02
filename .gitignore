@@ -11,6 +11,10 @@ artifacts/*.md
 !artifacts/agents.json
 !artifacts/baseline.json
 !artifacts/policy.json
+!artifacts/code_rca.json
+!artifacts/code-rca-report.md
+!artifacts/code-fixes.patch
+data/code_rca/ebpf_samples.json
 .venv/
 .ruff_cache/
 

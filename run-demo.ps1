@@ -64,6 +64,10 @@ Write-Host "Loading model and telemetry into UModel ..."
 python -u -m opsgraph demo --addr $umodelUrl
 if ($LASTEXITCODE -ne 0) { throw "OpsGraph pipeline failed" }
 
+Write-Host "Running eBPF code-level RCA + REA loop ..."
+python -u -m opsgraph code-demo
+if ($LASTEXITCODE -ne 0) { throw "Code RCA/REA loop failed" }
+
 if (-not (Test-Url "$consoleUrl/api/health")) {
     $outLog = Join-Path $runtime "console.out.log"
     $errLog = Join-Path $runtime "console.err.log"

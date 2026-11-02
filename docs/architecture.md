@@ -6,11 +6,11 @@ OpsGraph 把「运维对象图」拆成五个可独立验证的层：
 
 | 层 | 职责 | 代码 |
 |---|---|---|
-| Observe | 从 eBPF 遥测得到 L7 调用与 Agent 行为 | `deepflow.py`, `scenario.py`, `agentsight.py`, `agentsight_demo.py` |
+| Observe | 从 eBPF 遥测得到 L7 调用、Agent 行为与代码栈 | `deepflow.py`, `scenario.py`, `agentsight.py`, `agentsight_demo.py`, `code_rca.py` |
 | Contract | 用 UModel 固化对象、关系与字段语义 | `ontology.py`, `model_pack.py` |
 | Materialize | 稳定 ID、证据边、声明/观测对账、Agent 意图→效果链 | `materialize.py`, `agent_graph.py` |
-| Reason | RCA、影响面、漂移、割点、模拟、Agent 风险/重试环/结论校验、历史基线、执行前门禁 | `analysis.py`, `agent_graph.py`, `history.py`, `policy.py` |
-| Act | 控制台、报告、UModel 查询、Agent | `console_server.py`, `pipeline.py` |
+| Reason | RCA、影响面、漂移、割点、模拟、Agent 风险/重试环/结论校验、历史基线、执行前门禁、代码行 RCA | `analysis.py`, `agent_graph.py`, `history.py`, `policy.py`, `code_rca.py` |
+| Act | 控制台、报告、UModel 查询、Agent、代码伪代码/补丁闭环 | `console_server.py`, `pipeline.py`, `code_rca.py` |
 
 关键不变式：
 

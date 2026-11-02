@@ -174,6 +174,7 @@ def build_console_state(
     agents: dict[str, Any] | None = None,
     baseline: dict[str, Any] | None = None,
     policy: list[dict[str, Any]] | None = None,
+    code_rca: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     visible_types = {
         "svc.service",
@@ -280,6 +281,7 @@ def build_console_state(
         "agents": agents or {},
         "baseline": baseline or {},
         "policy": policy or [],
+        "code_rca": code_rca or {},
         "incident": next(
             (
                 item
@@ -300,6 +302,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     agents: dict[str, Any] | None = None
     baseline: dict[str, Any] | None = None
     policy: list[dict[str, Any]] | None = None
+    code_rca: dict[str, Any] | None = None
     umodel_info: dict[str, Any] = {"addr": UMODEL_ADDR, "connected": False}
     lock = threading.Lock()
 
@@ -330,6 +333,8 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             cls.baseline = read_json(baseline_path) if baseline_path.exists() else {}
             policy_path = ARTIFACT_DIR / "policy.json"
             cls.policy = read_json(policy_path) if policy_path.exists() else []
+            code_path = ARTIFACT_DIR / "code_rca.json"
+            cls.code_rca = read_json(code_path) if code_path.exists() else {}
         return True
 
     def _state(self) -> dict[str, Any]:
@@ -342,6 +347,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             cls.agents,
             cls.baseline,
             cls.policy,
+            cls.code_rca,
         )
 
     def do_GET(self) -> None:

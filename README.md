@@ -1,11 +1,11 @@
-# OpsGraph · eBPF × UModel × AgentSight 运维图工程
+# OpsGraph · eBPF × UModel × AgentSight × Code RCA
 
 [![CI](https://github.com/whllowp/opsgraph/actions/workflows/ci.yml/badge.svg)](https://github.com/whllowp/opsgraph/actions/workflows/ci.yml)
 
 > GitHub: [whllowp/opsgraph](https://github.com/whllowp/opsgraph)
 >
-> 把 eBPF 观测到的服务调用与 AI Agent 行为，编译成 UModel 上可查询、可推理、可回写的运维对象图。
-> 不是再画一张拓扑图，而是把「图」当作运维系统的工程产物来设计、构建和演进。
+> 把 eBPF 观测到的服务调用、AI Agent 行为与代码栈，编译成 UModel 上可查询、可推理、可回写的运维对象图。
+> 不止定位到服务，还要定位到代码行，并用「伪代码 → 补丁 → 金融回归 → eBPF 复测」闭环修复。
 
 ![OpsGraph console](docs/console.png)
 
@@ -75,7 +75,8 @@ cd E:\ebpf\opsgraph
 2. 生成 DeepFlow 形态的服务回放与 AgentSight 形态的 Agent 会话；
 3. 导入 UModel 模型包，写入 130 个实体 / 200 条关系；
 4. 运行服务 RCA + Agent 风险/重试环/结论校验，并把角色回写 UModel；
-5. 启动控制台 `http://127.0.0.1:18088`。
+5. 运行 10 次代码级 RCA → 伪代码 → 补丁 → 金融回归 → eBPF 复测；
+6. 启动控制台 `http://127.0.0.1:18088`。
 
 停止：
 
@@ -93,7 +94,10 @@ E:\ebpf\bin\umodel-server.exe --graphstore file.memory `
 # 2. 生成回放 + 导入模型 + 写入实体关系 + RCA
 python -m opsgraph demo --addr http://127.0.0.1:18080
 
-# 3. 打开图控制台
+# 3. 代码级 RCA + 10 次 REA 闭环
+python -m opsgraph code-demo
+
+# 4. 打开图控制台
 python -m opsgraph serve --port 18088
 ```
 
@@ -300,6 +304,66 @@ python -m opsgraph demo --agentsight agentsight-2026-11-02.db
 
 AgentSight 快照包含 prompt、路径、命令等敏感内容。OpsGraph 只把摘要、风险与派生指标写入图；原始内容不要提交到仓库。详见 [AgentSight 接入](docs/agentsight.md)。
 
+## 代码级 RCA / REA：从 eBPF 栈到修复闭环
+
+服务 RCA 回答「哪个服务」，代码 RCA 回答「哪一行」。代码栈样本长这样：
+
+```json
+{
+  "kind": "oncpu",
+  "duration_us": 2800000,
+  "error": true,
+  "stack": [
+    {"symbol": "server.handle_request", "file": "server.py", "line": 8},
+    {"symbol": "payments.py:retry_charge", "file": "payments.py", "line": 22}
+  ]
+}
+```
+
+OpsGraph 按 `file:line` 聚合独占时间、p95 放大、错误亲和度、变更命中与 off-CPU 占比，输出代码行根因、置信度、证据样本和调用图。**RCA 不读取测试名/补丁/预期答案**。
+
+### REA：Remediation Engineering Automation
+
+10 个金融故障，10 次闭环：
+
+```text
+eBPF code stack -> 代码行 RCA -> 伪代码 before/after -> 补丁
+                -> 该故障回归 -> 全量回归 -> eBPF P99/错误率复测
+                -> 通过保留 / 失败回滚 -> 下一个故障
+```
+
+结果：
+
+```text
+10/10 fixed
+10/10 RCA matches
+final regression PASS
+```
+
+覆盖：重复扣款、换汇精度、费率边界、分账误差、退款去重、分页漏单、账本原子写、出款路由、风控超时、结算日周末。
+
+![Code RCA tab](docs/code-tab.png)
+
+控制台「代码」tab 用小白语言回答四件事：
+
+- 发生了什么：客户被重复扣款 / 换汇少 1 分 / 结算漏单；
+- 为什么：重试没有幂等键 / 浮点精度 / 分页提前退出；
+- 怎么修：伪代码 before/after；
+- 怎么验证：金融回归 + eBPF P99/错误率回落。
+
+```bash
+python -m opsgraph code-demo
+```
+
+产物：
+
+- `data/code_rca/ebpf_samples.json`：eBPF 代码栈回放；
+- `artifacts/code_rca.json`：10 次迭代、RCA、伪代码、测试、复测；
+- `artifacts/code-rca-report.md`：面向人的报告；
+- `artifacts/code-fixes.patch`：累计补丁。
+
+详见 [代码级 RCA / REA](docs/code-rca.md)。
+
 ## 图工程算子
 
 | 算子 | 输入 | 输出 | 说明 |
@@ -331,6 +395,7 @@ score = 0.28 * self_severity
 python -m opsgraph demo --addr http://127.0.0.1:18080   # 全链路（含 AgentSight demo）
 python -m opsgraph demo --agentsight agentsight_snapshot.json
 python -m opsgraph demo --no-agents                     # 只跑服务图
+python -m opsgraph code-demo                            # 10 次代码 RCA/REA 闭环
 python -m opsgraph analyze --source umodel              # 从 UModel 重新读图分析
 python -m opsgraph rca                                  # 打印根因排序
 python -m opsgraph gate --session sre-claude-01 --tool kubectl_apply \
@@ -339,7 +404,7 @@ python -m opsgraph baseline                             # 历史基线 + claim a
 python -m opsgraph serve --port 18088                   # 控制台
 python -m opsgraph doctor                               # UModel 连通性/计数
 python -m opsgraph query ".entity with(domain='svc', name='svc.service') | limit 5"
-python -m unittest discover -s tests -v                 # 41 个单测
+python -m unittest discover -s tests -v                 # 44 个单测
 ```
 
 ## UModel 查询示例
@@ -370,6 +435,8 @@ opsgraph/
 │   ├── agent_graph.py     # Agent 会话/工具/效果 -> UModel 图（含委派树）
 │   ├── policy.py          # 执行前策略门禁
 │   ├── history.py         # 历史基线与 claim accuracy
+│   ├── code_cases.py      # 10 个金融故障、补丁与伪代码
+│   ├── code_rca.py        # eBPF 代码栈 RCA + REA 闭环
 │   ├── ontology.py        # 图契约：16 EntitySet + 21 Link
 │   ├── model_pack.py      # 生成 UModel 模型包
 │   ├── materialize.py     # 观测 -> 实体/关系（证据边）
@@ -379,10 +446,12 @@ opsgraph/
 │   ├── umodel_client.py   # UModel 公共 REST 客户端
 │   └── cli.py
 ├── model/                 # 生成的 UModel 模型包
+├── demo/fintech/          # 金融故障代码库 + 10 个回归用例
 ├── data/replay/           # l7_flow_log.csv / agentsight_snapshot.json
 ├── data/history/          # agent_history.json（历史基线）
-├── console/               # 零依赖 SVG 图控制台（服务 + AI lane）
-├── artifacts/             # snapshot / analysis / agents / report
+├── data/code_rca/         # eBPF 代码栈回放
+├── console/               # 零依赖 SVG 图控制台（服务 + AI lane + 代码）
+├── artifacts/             # snapshot / analysis / agents / code_rca / report
 ├── docs/
 ├── tests/
 └── run-demo.ps1
@@ -411,6 +480,14 @@ python -m opsgraph doctor
 }
 ```
 
+代码级闭环验证：
+
+```powershell
+python -m opsgraph code-demo
+```
+
+输出应为：`10/10 fixed`、`10/10 RCA matches`、`final suite PASS`；详细结果在 `artifacts/code_rca.json`。
+
 ## 设计边界
 
 - **DeepFlow 是可替换的传感器。** 只要能把 L7 调用聚合到「客户端服务、服务端服务/域名、端点、时间、QPS、P99、错误」这些维度，就可以替换 `deepflow.py` 的适配层。
@@ -420,6 +497,8 @@ python -m opsgraph doctor
 - **Agent 结论不是事实。** `claim_status` 只表示 Agent 声称与图 RCA 是否一致；`remediation_status=pending_validation` 表示行动尚未被 eBPF 指标验证。
 - **Gate 当前是建议性的。** `require_approval`/`deny` 不会劫持 Agent 的 syscall；要强制执行必须接 tool proxy、MCP server 或 admission controller。
 - **历史基线是合成数据。** `data/history/agent_history.json` 仅用于离线演示；生产应写入真实根会话摘要并回填图 RCA 结果。
+- **代码栈当前是回放。** `data/code_rca/ebpf_samples.json` 是可复现的 eBPF 用户态栈样本；真实采集需要 Linux perf/bpftrace/DWARF。
+- **REA 不自动改生产。** 补丁只在临时 worktree 应用并跑测试；高风险资金改动仍需门禁与人工审批。
 - **敏感数据默认不图化。** AgentSight 快照可能含 prompt、路径、命令；写入图的是摘要与派生风险，原始快照不应提交到 Git。
 - **不是生产级采集器。** 生产化需要处理多集群、采样、卡片性、权限、长期存储与告警闭环；这些在 [架构文档](docs/architecture.md) 的「下一步」中列出。
 

@@ -1,0 +1,112 @@
+--- a/payments.py
++++ b/payments.py
+@@ -1,8 +1,8 @@
+ def retry_charge(gateway, customer_id, amount, attempts=3):
+-    # BUG: retries are not idempotent, so a timeout can charge the customer twice.
++    key = f"charge:{customer_id}:{amount}"
+     for _ in range(attempts):
+         try:
+-            return gateway.charge(customer_id, amount)
++            return gateway.charge(customer_id, amount, idempotency_key=key)
+         except TimeoutError:
+             continue
+     raise RuntimeError("gateway unavailable")--- a/money.py
++++ b/money.py
+@@ -1,3 +1,3 @@
+ def convert_currency(amount, rate):
+-    # BUG: float arithmetic loses cents before the ledger records the amount.
+-    return round(float(amount) * float(rate), 2)+    value = Decimal(str(amount)) * Decimal(str(rate))
++    return float(value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))--- a/money.py
++++ b/money.py
+@@ -1,7 +1,6 @@
+ def calculate_fee(amount, tier):
+-    # BUG: tier boundaries are exclusive, so exactly 1000/10000 is overcharged.
+-    if amount > 10000:
++    if amount >= 10000:
+         return round(amount * 0.005, 2)
+-    if amount > 1000:
++    if amount >= 1000:
+         return round(amount * 0.01, 2)
+     return round(amount * 0.015, 2)--- a/money.py
++++ b/money.py
+@@ -1,4 +1,14 @@
+ def allocate_amount(total, weights):
+-    # BUG: independent rounding loses or creates cents when splitting money.
+     total_weight = sum(weights)
+-    return [round(total * weight / total_weight, 2) for weight in weights]+    raw = [
++        Decimal(str(total)) * Decimal(weight) / Decimal(total_weight)
++        for weight in weights
++    ]
++    cents = [
++        int((value * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
++        for value in raw
++    ]
++    diff = int((Decimal(str(total)) * 100).quantize(Decimal("1"))) - sum(cents)
++    for index in range(abs(diff)):
++        cents[index % len(cents)] += 1 if diff > 0 else -1
++    return [float(Decimal(c) / 100) for c in cents]--- a/payments.py
++++ b/payments.py
+@@ -1,4 +1,6 @@
+ def refund(store, charge_id, amount, refund_id):
+-    # BUG: duplicate refund callbacks append a second refund for the same id.
++    for item in store.refunds:
++        if item["refund_id"] == refund_id:
++            return len(store.refunds)
+     store.refunds.append({"charge_id": charge_id, "amount": amount, "refund_id": refund_id})
+     return len(store.refunds)--- a/ledger.py
++++ b/ledger.py
+@@ -1,5 +1,4 @@
+ def settle_batch(fetch_page, page_size=2):
+-    # BUG: a full page is treated as the last page, so later pages are skipped.
+     page = 0
+     settled = []
+     while True:
+@@ -7,7 +6,7 @@
+         if not rows:
+             break
+         settled.extend(rows)
+-        if len(rows) <= page_size:
++        if len(rows) < page_size:
+             break
+         page += 1
+     return settled--- a/ledger.py
++++ b/ledger.py
+@@ -1,6 +1,7 @@
+ def append_entries(store, entries):
+-    # BUG: a mid-batch failure leaves the ledger partially written.
++    staged = []
+     for entry in entries:
+         if entry.get("fail"):
+             raise ValueError("ledger write failed")
+-        store.entries.append(entry)+        staged.append(entry)
++    store.entries.extend(staged)--- a/routing.py
++++ b/routing.py
+@@ -1,7 +1,8 @@
+ def route_payout(currency, country):
+-    # BUG: non-USD payouts fall through to a default rail with the wrong currency.
+-    if currency == "USD":
++    if currency == "USD" and country == "US":
+         return "us-bank"
+-    if country == "US":
+-        return "us-bank"
+-    return "default-bank"+    if currency == "EUR" and country in {"DE", "FR", "NL", "ES", "IT"}:
++        return "eu-bank"
++    if currency == "GBP" and country == "GB":
++        return "uk-bank"
++    raise ValueError("unsupported payout rail")--- a/risk.py
++++ b/risk.py
+@@ -1,3 +1,5 @@
+ def fraud_score(provider, txn):
+-    # BUG: provider timeout propagates and blocks every payment in the request.
+-    return provider.score(txn)+    try:
++        return {"score": provider.score(txn), "degraded": False}
++    except TimeoutError:
++        return {"score": 50, "degraded": True}--- a/scheduling.py
++++ b/scheduling.py
+@@ -1,3 +1,5 @@
+ def next_settlement_date(day):
+-    # BUG: weekends are treated as settlement days.
+-    return day + timedelta(days=1)+    candidate = day + timedelta(days=1)
++    while candidate.weekday() >= 5:
++        candidate += timedelta(days=1)
++    return candidate

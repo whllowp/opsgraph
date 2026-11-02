@@ -1,0 +1,4904 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-02T17:22:32+00:00",
+  "source": "ebpf.code_stack + REA",
+  "rea_definition": "Remediation Engineering Automation：用 eBPF 证据驱动补丁、测试与修复验证。",
+  "repo": "demo/fintech",
+  "iterations": [
+    {
+      "iteration": 1,
+      "case_id": "case-01",
+      "title": "重复扣款：重试没有幂等键",
+      "service": "payment-orchestrator",
+      "severity": "critical",
+      "symptom": "支付网关超时后客户被扣款两次，资金对账出现差额。",
+      "rca": {
+        "case_id": "case-01",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-02T17:22:30+00:00",
+        "finding": {
+          "file": "payments.py",
+          "line": 22,
+          "function": "retry_charge",
+          "qualname": "retry_charge",
+          "source": "# BUG: retries are not idempotent, so a timeout can charge the customer twice.",
+          "score": 0.8183,
+          "self_ms": 71997.1,
+          "self_ratio": 0.9696,
+          "p95_ms": 2830.5,
+          "baseline_p95_ms": 13.8,
+          "latency_delta": 203.72,
+          "error_rate": 0.133,
+          "offcpu_ratio": 0.27,
+          "changed": true,
+          "samples": [
+            "case-01-before-0000",
+            "case-01-before-0001",
+            "case-01-before-0002",
+            "case-01-before-0003",
+            "case-01-before-0004"
+          ],
+          "confidence": 0.887,
+          "reasons": [
+            "leaf frame accounts for 97% of incident exclusive time",
+            "p95 rises 14ms -> 2830ms (203.7x)",
+            "error affinity 13% on this line",
+            "line belongs to a recent change set",
+            "27% of time is off-CPU"
+          ],
+          "evidence": [
+            "case-01-before-0000",
+            "case-01-before-0001",
+            "case-01-before-0002",
+            "case-01-before-0003",
+            "case-01-before-0004"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "payments.py",
+            "line": 22,
+            "function": "retry_charge",
+            "qualname": "retry_charge",
+            "source": "# BUG: retries are not idempotent, so a timeout can charge the customer twice.",
+            "score": 0.8183,
+            "self_ms": 71997.1,
+            "self_ratio": 0.9696,
+            "p95_ms": 2830.5,
+            "baseline_p95_ms": 13.8,
+            "latency_delta": 203.72,
+            "error_rate": 0.133,
+            "offcpu_ratio": 0.27,
+            "changed": true,
+            "samples": [
+              "case-01-before-0000",
+              "case-01-before-0001",
+              "case-01-before-0002",
+              "case-01-before-0003",
+              "case-01-before-0004"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "def append_entries(store, entries):",
+            "score": 0.0022,
+            "self_ms": 324.2,
+            "self_ratio": 0.0044,
+            "p95_ms": 171.9,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-01-before-0091",
+              "case-01-before-0105"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "def convert_currency(amount, rate):",
+            "score": 0.002,
+            "self_ms": 293.7,
+            "self_ratio": 0.004,
+            "p95_ms": 163.1,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-01-before-0093",
+              "case-01-before-0107"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "def settle_batch(fetch_page, page_size=2):",
+            "score": 0.0019,
+            "self_ms": 289.1,
+            "self_ratio": 0.0039,
+            "p95_ms": 167.9,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-01-before-0090",
+              "case-01-before-0104"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0014,
+            "self_ms": 203.1,
+            "self_ratio": 0.0027,
+            "p95_ms": 112.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-01-before-0092",
+              "case-01-before-0106"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0011,
+            "self_ms": 169.8,
+            "self_ratio": 0.0023,
+            "p95_ms": 169.8,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-01-before-0097"
+            ]
+          },
+          {
+            "file": "server.py",
+            "line": 1,
+            "function": "handle_request",
+            "qualname": "handle_request",
+            "source": "def handle_request(request):",
+            "score": 0.0009,
+            "self_ms": 135.8,
+            "self_ratio": 0.0018,
+            "p95_ms": 135.8,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-01-before-0103"
+            ]
+          },
+          {
+            "file": "scheduling.py",
+            "line": 4,
+            "function": "next_settlement_date",
+            "qualname": "next_settlement_date",
+            "source": "def next_settlement_date(day):",
+            "score": 0.0009,
+            "self_ms": 135.3,
+            "self_ratio": 0.0018,
+            "p95_ms": 135.3,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-01-before-0102"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": "server.py:8",
+              "file": "server.py",
+              "line": 8,
+              "function": ""
+            },
+            {
+              "id": "payments.py:21",
+              "file": "payments.py",
+              "line": 21,
+              "function": "retry_charge"
+            },
+            {
+              "id": "payments.py:22",
+              "file": "payments.py",
+              "line": 22,
+              "function": "retry_charge"
+            },
+            {
+              "id": "ledger.py:6",
+              "file": "ledger.py",
+              "line": 6,
+              "function": "settle_batch"
+            },
+            {
+              "id": "ledger.py:21",
+              "file": "ledger.py",
+              "line": 21,
+              "function": "append_entries"
+            },
+            {
+              "id": "ledger.py:2",
+              "file": "ledger.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "money.py:4",
+              "file": "money.py",
+              "line": 4,
+              "function": "convert_currency"
+            },
+            {
+              "id": "money.py:9",
+              "file": "money.py",
+              "line": 9,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "money.py:18",
+              "file": "money.py",
+              "line": 18,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "payments.py:36",
+              "file": "payments.py",
+              "line": 36,
+              "function": "refund"
+            },
+            {
+              "id": "payments.py:2",
+              "file": "payments.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "payments.py:7",
+              "file": "payments.py",
+              "line": 7,
+              "function": "charge"
+            },
+            {
+              "id": "payments.py:32",
+              "file": "payments.py",
+              "line": 32,
+              "function": "__init__"
+            },
+            {
+              "id": "risk.py:1",
+              "file": "risk.py",
+              "line": 1,
+              "function": "fraud_score"
+            },
+            {
+              "id": "routing.py:1",
+              "file": "routing.py",
+              "line": 1,
+              "function": "route_payout"
+            },
+            {
+              "id": "scheduling.py:4",
+              "file": "scheduling.py",
+              "line": 4,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "server.py:1",
+              "file": "server.py",
+              "line": 1,
+              "function": "handle_request"
+            }
+          ],
+          "edges": [
+            {
+              "source": "server.py:8",
+              "target": "payments.py:21",
+              "count": 30
+            },
+            {
+              "source": "payments.py:21",
+              "target": "payments.py:22",
+              "count": 30
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:6",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:21",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:2",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:4",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:9",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:18",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:36",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:2",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:7",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:32",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "risk.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "routing.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "scheduling.py:4",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "server.py:1",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 payments.py:22 (retry_charge), confidence 89%."
+      },
+      "pseudocode": {
+        "strategy": "为每次扣款生成稳定幂等键，重试复用同一个键。",
+        "before": [
+          "for attempt in 1..3:",
+          "    gateway.charge(customer, amount)   # no request identity",
+          "    if timeout: retry"
+        ],
+        "after": [
+          "key = stable_id(customer, amount, intent)",
+          "for attempt in 1..3:",
+          "    gateway.charge(customer, amount, idempotency_key=key)",
+          "    if timeout: retry with same key"
+        ],
+        "target": {
+          "file": "payments.py",
+          "line": 22,
+          "function": "retry_charge"
+        },
+        "invariant": "重复回调后只保留 1 笔 charge，资金不再多扣。"
+      },
+      "patch": {
+        "file": "payments.py",
+        "diff": "--- a/payments.py\n+++ b/payments.py\n@@ -1,8 +1,8 @@\n def retry_charge(gateway, customer_id, amount, attempts=3):\n-    # BUG: retries are not idempotent, so a timeout can charge the customer twice.\n+    key = f\"charge:{customer_id}:{amount}\"\n     for _ in range(attempts):\n         try:\n-            return gateway.charge(customer_id, amount)\n+            return gateway.charge(customer_id, amount, idempotency_key=key)\n         except TimeoutError:\n             continue\n     raise RuntimeError(\"gateway unavailable\")",
+        "applied": true
+      },
+      "tests": {
+        "case": {
+          "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_retry_charge_is_idempotent",
+          "passed": true,
+          "returncode": 0,
+          "ran": 1,
+          "failures": 0,
+          "errors": 0,
+          "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+          "duration_ms": 104.0
+        },
+        "suite": {
+          "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+          "passed": false,
+          "returncode": 1,
+          "ran": 10,
+          "failures": 8,
+          "errors": 1,
+          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=8, errors=1)",
+          "duration_ms": 106.8
+        }
+      },
+      "verification": {
+        "source": "ebpf.code_stack.replay",
+        "p99_before_ms": 2400,
+        "p99_after_ms": 203.1,
+        "error_before": 0.18,
+        "error_after": 0.0,
+        "slo_p99_ms": 800,
+        "passed": true,
+        "verdict": "fixed"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "客户被重复扣款，常见于网关超时后的自动重试。",
+        "why": "重试请求没有幂等键，网关无法判断这是同一次扣款。",
+        "fix": "每次扣款生成稳定幂等键，所有重试复用同一个键。",
+        "verify": "重复回调后只保留 1 笔 charge，资金不再多扣。"
+      },
+      "duration_ms": 336.7
+    },
+    {
+      "iteration": 2,
+      "case_id": "case-02",
+      "title": "金额换算差 1 分钱：浮点精度",
+      "service": "fx-pricing",
+      "severity": "high",
+      "symptom": "外币换算在 1.005 等边界少 1 分，日终对账出现分差。",
+      "rca": {
+        "case_id": "case-02",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-02T17:22:30+00:00",
+        "finding": {
+          "file": "money.py",
+          "line": 5,
+          "function": "convert_currency",
+          "qualname": "convert_currency",
+          "source": "# BUG: float arithmetic loses cents before the ledger records the amount.",
+          "score": 0.7959,
+          "self_ms": 35017.6,
+          "self_ratio": 0.935,
+          "p95_ms": 1427.7,
+          "baseline_p95_ms": 13.3,
+          "latency_delta": 106.12,
+          "error_rate": 0.1,
+          "offcpu_ratio": 0.268,
+          "changed": true,
+          "samples": [
+            "case-02-before-0000",
+            "case-02-before-0001",
+            "case-02-before-0002",
+            "case-02-before-0003",
+            "case-02-before-0004"
+          ],
+          "confidence": 0.872,
+          "reasons": [
+            "leaf frame accounts for 94% of incident exclusive time",
+            "p95 rises 13ms -> 1428ms (106.1x)",
+            "error affinity 10% on this line",
+            "line belongs to a recent change set",
+            "27% of time is off-CPU"
+          ],
+          "evidence": [
+            "case-02-before-0000",
+            "case-02-before-0001",
+            "case-02-before-0002",
+            "case-02-before-0003",
+            "case-02-before-0004"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "money.py",
+            "line": 5,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "# BUG: float arithmetic loses cents before the ledger records the amount.",
+            "score": 0.7959,
+            "self_ms": 35017.6,
+            "self_ratio": 0.935,
+            "p95_ms": 1427.7,
+            "baseline_p95_ms": 13.3,
+            "latency_delta": 106.12,
+            "error_rate": 0.1,
+            "offcpu_ratio": 0.268,
+            "changed": true,
+            "samples": [
+              "case-02-before-0000",
+              "case-02-before-0001",
+              "case-02-before-0002",
+              "case-02-before-0003",
+              "case-02-before-0004"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0044,
+            "self_ms": 328.3,
+            "self_ratio": 0.0088,
+            "p95_ms": 170.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-02-before-0092",
+              "case-02-before-0106"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 9,
+            "function": "calculate_fee",
+            "qualname": "calculate_fee",
+            "source": "def calculate_fee(amount, tier):",
+            "score": 0.0032,
+            "self_ms": 237.9,
+            "self_ratio": 0.0064,
+            "p95_ms": 158.2,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-02-before-0093",
+              "case-02-before-0107"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "def append_entries(store, entries):",
+            "score": 0.0031,
+            "self_ms": 228.7,
+            "self_ratio": 0.0061,
+            "p95_ms": 136.6,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-02-before-0091",
+              "case-02-before-0105"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "def settle_batch(fetch_page, page_size=2):",
+            "score": 0.0026,
+            "self_ms": 193.2,
+            "self_ratio": 0.0052,
+            "p95_ms": 98.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-02-before-0090",
+              "case-02-before-0104"
+            ]
+          },
+          {
+            "file": "scheduling.py",
+            "line": 4,
+            "function": "next_settlement_date",
+            "qualname": "next_settlement_date",
+            "source": "def next_settlement_date(day):",
+            "score": 0.0024,
+            "self_ms": 179.2,
+            "self_ratio": 0.0048,
+            "p95_ms": 179.2,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-02-before-0102"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 7,
+            "function": "charge",
+            "qualname": "charge",
+            "source": "def charge(self, customer_id, amount, idempotency_key=None):",
+            "score": 0.0024,
+            "self_ms": 178.4,
+            "self_ratio": 0.0048,
+            "p95_ms": 178.4,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-02-before-0098"
+            ]
+          },
+          {
+            "file": "server.py",
+            "line": 1,
+            "function": "handle_request",
+            "qualname": "handle_request",
+            "source": "def handle_request(request):",
+            "score": 0.0024,
+            "self_ms": 177.4,
+            "self_ratio": 0.0047,
+            "p95_ms": 177.4,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-02-before-0103"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "money.py",
+            "line": 9,
+            "function": "calculate_fee",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": "server.py:8",
+              "file": "server.py",
+              "line": 8,
+              "function": ""
+            },
+            {
+              "id": "money.py:4",
+              "file": "money.py",
+              "line": 4,
+              "function": "convert_currency"
+            },
+            {
+              "id": "money.py:5",
+              "file": "money.py",
+              "line": 5,
+              "function": "convert_currency"
+            },
+            {
+              "id": "ledger.py:6",
+              "file": "ledger.py",
+              "line": 6,
+              "function": "settle_batch"
+            },
+            {
+              "id": "ledger.py:21",
+              "file": "ledger.py",
+              "line": 21,
+              "function": "append_entries"
+            },
+            {
+              "id": "ledger.py:2",
+              "file": "ledger.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "money.py:9",
+              "file": "money.py",
+              "line": 9,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "money.py:18",
+              "file": "money.py",
+              "line": 18,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "payments.py:21",
+              "file": "payments.py",
+              "line": 21,
+              "function": "retry_charge"
+            },
+            {
+              "id": "payments.py:36",
+              "file": "payments.py",
+              "line": 36,
+              "function": "refund"
+            },
+            {
+              "id": "payments.py:2",
+              "file": "payments.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "payments.py:7",
+              "file": "payments.py",
+              "line": 7,
+              "function": "charge"
+            },
+            {
+              "id": "payments.py:32",
+              "file": "payments.py",
+              "line": 32,
+              "function": "__init__"
+            },
+            {
+              "id": "risk.py:1",
+              "file": "risk.py",
+              "line": 1,
+              "function": "fraud_score"
+            },
+            {
+              "id": "routing.py:1",
+              "file": "routing.py",
+              "line": 1,
+              "function": "route_payout"
+            },
+            {
+              "id": "scheduling.py:4",
+              "file": "scheduling.py",
+              "line": 4,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "server.py:1",
+              "file": "server.py",
+              "line": 1,
+              "function": "handle_request"
+            }
+          ],
+          "edges": [
+            {
+              "source": "server.py:8",
+              "target": "money.py:4",
+              "count": 30
+            },
+            {
+              "source": "money.py:4",
+              "target": "money.py:5",
+              "count": 30
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:6",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:21",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:2",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:9",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:18",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:21",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:36",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:2",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:7",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:32",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "risk.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "routing.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "scheduling.py:4",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "server.py:1",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 money.py:5 (convert_currency), confidence 87%."
+      },
+      "pseudocode": {
+        "strategy": "用 Decimal 做金额运算，显式 HALF_UP 到分。",
+        "before": [
+          "return round(float(amount) * float(rate), 2)"
+        ],
+        "after": [
+          "value = Decimal(str(amount)) * Decimal(str(rate))",
+          "return quantize(value, 2, HALF_UP)"
+        ],
+        "target": {
+          "file": "money.py",
+          "line": 5,
+          "function": "convert_currency"
+        },
+        "invariant": "1.005 换算为 1.01，边界金额与账本一致。"
+      },
+      "patch": {
+        "file": "money.py",
+        "diff": "--- a/money.py\n+++ b/money.py\n@@ -1,3 +1,3 @@\n def convert_currency(amount, rate):\n-    # BUG: float arithmetic loses cents before the ledger records the amount.\n-    return round(float(amount) * float(rate), 2)+    value = Decimal(str(amount)) * Decimal(str(rate))\n+    return float(value.quantize(Decimal(\"0.01\"), rounding=ROUND_HALF_UP))",
+        "applied": true
+      },
+      "tests": {
+        "case": {
+          "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_convert_currency_rounds_half_up",
+          "passed": true,
+          "returncode": 0,
+          "ran": 1,
+          "failures": 0,
+          "errors": 0,
+          "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+          "duration_ms": 94.4
+        },
+        "suite": {
+          "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+          "passed": false,
+          "returncode": 1,
+          "ran": 10,
+          "failures": 7,
+          "errors": 1,
+          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=7, errors=1)",
+          "duration_ms": 95.2
+        }
+      },
+      "verification": {
+        "source": "ebpf.code_stack.replay",
+        "p99_before_ms": 1200,
+        "p99_after_ms": 151.4,
+        "error_before": 0.12,
+        "error_after": 0.0,
+        "slo_p99_ms": 500,
+        "passed": true,
+        "verdict": "fixed"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "换汇金额在分位边界少 1 分，长期累积成对账差额。",
+        "why": "二进制浮点无法精确表示 1.005，round 会向下取整。",
+        "fix": "金额用 Decimal 字符串构造，按 HALF_UP 显式量化到分。",
+        "verify": "1.005 换算为 1.01，边界金额与账本一致。"
+      },
+      "duration_ms": 529.1
+    },
+    {
+      "iteration": 3,
+      "case_id": "case-03",
+      "title": "费率档位错算：边界用了大于号",
+      "service": "billing",
+      "severity": "high",
+      "symptom": "金额刚好 1000/10000 的客户被按上一档费率多收费。",
+      "rca": {
+        "case_id": "case-03",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-02T17:22:30+00:00",
+        "finding": {
+          "file": "money.py",
+          "line": 10,
+          "function": "calculate_fee",
+          "qualname": "calculate_fee",
+          "source": "# BUG: tier boundaries are exclusive, so exactly 1000/10000 is overcharged.",
+          "score": 0.7881,
+          "self_ms": 25608.4,
+          "self_ratio": 0.9187,
+          "p95_ms": 1075.0,
+          "baseline_p95_ms": 13.5,
+          "latency_delta": 78.39,
+          "error_rate": 0.1,
+          "offcpu_ratio": 0.275,
+          "changed": true,
+          "samples": [
+            "case-03-before-0000",
+            "case-03-before-0001",
+            "case-03-before-0002",
+            "case-03-before-0003",
+            "case-03-before-0004"
+          ],
+          "confidence": 0.868,
+          "reasons": [
+            "leaf frame accounts for 92% of incident exclusive time",
+            "p95 rises 14ms -> 1075ms (78.4x)",
+            "error affinity 10% on this line",
+            "line belongs to a recent change set",
+            "28% of time is off-CPU"
+          ],
+          "evidence": [
+            "case-03-before-0000",
+            "case-03-before-0001",
+            "case-03-before-0002",
+            "case-03-before-0003",
+            "case-03-before-0004"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "money.py",
+            "line": 10,
+            "function": "calculate_fee",
+            "qualname": "calculate_fee",
+            "source": "# BUG: tier boundaries are exclusive, so exactly 1000/10000 is overcharged.",
+            "score": 0.7881,
+            "self_ms": 25608.4,
+            "self_ratio": 0.9187,
+            "p95_ms": 1075.0,
+            "baseline_p95_ms": 13.5,
+            "latency_delta": 78.39,
+            "error_rate": 0.1,
+            "offcpu_ratio": 0.275,
+            "changed": true,
+            "samples": [
+              "case-03-before-0000",
+              "case-03-before-0001",
+              "case-03-before-0002",
+              "case-03-before-0003",
+              "case-03-before-0004"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "def settle_batch(fetch_page, page_size=2):",
+            "score": 0.0056,
+            "self_ms": 312.4,
+            "self_ratio": 0.0112,
+            "p95_ms": 159.6,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-03-before-0090",
+              "case-03-before-0104"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "def append_entries(store, entries):",
+            "score": 0.0046,
+            "self_ms": 255.4,
+            "self_ratio": 0.0092,
+            "p95_ms": 129.5,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-03-before-0091",
+              "case-03-before-0105"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "def convert_currency(amount, rate):",
+            "score": 0.0045,
+            "self_ms": 252.4,
+            "self_ratio": 0.0091,
+            "p95_ms": 174.1,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-03-before-0093",
+              "case-03-before-0107"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0043,
+            "self_ms": 241.1,
+            "self_ratio": 0.0087,
+            "p95_ms": 146.3,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-03-before-0092",
+              "case-03-before-0106"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.003,
+            "self_ms": 169.2,
+            "self_ratio": 0.0061,
+            "p95_ms": 169.2,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-03-before-0097"
+            ]
+          },
+          {
+            "file": "routing.py",
+            "line": 1,
+            "function": "route_payout",
+            "qualname": "route_payout",
+            "source": "def route_payout(currency, country):",
+            "score": 0.0028,
+            "self_ms": 157.3,
+            "self_ratio": 0.0056,
+            "p95_ms": 157.3,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-03-before-0101"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 32,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0027,
+            "self_ms": 150.2,
+            "self_ratio": 0.0054,
+            "p95_ms": 150.2,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-03-before-0099"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": "server.py:8",
+              "file": "server.py",
+              "line": 8,
+              "function": ""
+            },
+            {
+              "id": "money.py:9",
+              "file": "money.py",
+              "line": 9,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "money.py:10",
+              "file": "money.py",
+              "line": 10,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "ledger.py:6",
+              "file": "ledger.py",
+              "line": 6,
+              "function": "settle_batch"
+            },
+            {
+              "id": "ledger.py:21",
+              "file": "ledger.py",
+              "line": 21,
+              "function": "append_entries"
+            },
+            {
+              "id": "ledger.py:2",
+              "file": "ledger.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "money.py:4",
+              "file": "money.py",
+              "line": 4,
+              "function": "convert_currency"
+            },
+            {
+              "id": "money.py:18",
+              "file": "money.py",
+              "line": 18,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "payments.py:21",
+              "file": "payments.py",
+              "line": 21,
+              "function": "retry_charge"
+            },
+            {
+              "id": "payments.py:36",
+              "file": "payments.py",
+              "line": 36,
+              "function": "refund"
+            },
+            {
+              "id": "payments.py:2",
+              "file": "payments.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "payments.py:7",
+              "file": "payments.py",
+              "line": 7,
+              "function": "charge"
+            },
+            {
+              "id": "payments.py:32",
+              "file": "payments.py",
+              "line": 32,
+              "function": "__init__"
+            },
+            {
+              "id": "risk.py:1",
+              "file": "risk.py",
+              "line": 1,
+              "function": "fraud_score"
+            },
+            {
+              "id": "routing.py:1",
+              "file": "routing.py",
+              "line": 1,
+              "function": "route_payout"
+            },
+            {
+              "id": "scheduling.py:4",
+              "file": "scheduling.py",
+              "line": 4,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "server.py:1",
+              "file": "server.py",
+              "line": 1,
+              "function": "handle_request"
+            }
+          ],
+          "edges": [
+            {
+              "source": "server.py:8",
+              "target": "money.py:9",
+              "count": 30
+            },
+            {
+              "source": "money.py:9",
+              "target": "money.py:10",
+              "count": 30
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:6",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:21",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:2",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:4",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:18",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:21",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:36",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:2",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:7",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:32",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "risk.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "routing.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "scheduling.py:4",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "server.py:1",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 money.py:10 (calculate_fee), confidence 87%."
+      },
+      "pseudocode": {
+        "strategy": "档位边界改为包含等号，并补边界测试。",
+        "before": [
+          "if amount > 10000: 0.5%",
+          "elif amount > 1000: 1.0%",
+          "else: 1.5%"
+        ],
+        "after": [
+          "if amount >= 10000: 0.5%",
+          "elif amount >= 1000: 1.0%",
+          "else: 1.5%"
+        ],
+        "target": {
+          "file": "money.py",
+          "line": 10,
+          "function": "calculate_fee"
+        },
+        "invariant": "1000 元收 10 元，10000 元收 50 元。"
+      },
+      "patch": {
+        "file": "money.py",
+        "diff": "--- a/money.py\n+++ b/money.py\n@@ -1,7 +1,6 @@\n def calculate_fee(amount, tier):\n-    # BUG: tier boundaries are exclusive, so exactly 1000/10000 is overcharged.\n-    if amount > 10000:\n+    if amount >= 10000:\n         return round(amount * 0.005, 2)\n-    if amount > 1000:\n+    if amount >= 1000:\n         return round(amount * 0.01, 2)\n     return round(amount * 0.015, 2)",
+        "applied": true
+      },
+      "tests": {
+        "case": {
+          "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_fee_boundary_is_inclusive",
+          "passed": true,
+          "returncode": 0,
+          "ran": 1,
+          "failures": 0,
+          "errors": 0,
+          "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+          "duration_ms": 99.9
+        },
+        "suite": {
+          "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+          "passed": false,
+          "returncode": 1,
+          "ran": 10,
+          "failures": 6,
+          "errors": 1,
+          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=6, errors=1)",
+          "duration_ms": 99.3
+        }
+      },
+      "verification": {
+        "source": "ebpf.code_stack.replay",
+        "p99_before_ms": 900,
+        "p99_after_ms": 168.1,
+        "error_before": 0.09,
+        "error_after": 0.0,
+        "slo_p99_ms": 400,
+        "passed": true,
+        "verdict": "fixed"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "刚好 1000 元的交易被收了 1.5% 而不是 1.0%。",
+        "why": "档位判断使用 ``>``，把边界金额归到了上一档。",
+        "fix": "边界改为 ``>=``，并为 1000/10000 加回归用例。",
+        "verify": "1000 元收 10 元，10000 元收 50 元。"
+      },
+      "duration_ms": 731.1
+    },
+    {
+      "iteration": 4,
+      "case_id": "case-04",
+      "title": "分账多出 1 分钱：逐笔四舍五入",
+      "service": "settlement",
+      "severity": "high",
+      "symptom": "0.05 元分给 3 个商户，每笔 0.02，合计 0.06。",
+      "rca": {
+        "case_id": "case-04",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-02T17:22:31+00:00",
+        "finding": {
+          "file": "money.py",
+          "line": 19,
+          "function": "allocate_amount",
+          "qualname": "allocate_amount",
+          "source": "total_weight = sum(weights)",
+          "score": 0.6722,
+          "self_ms": 20932.4,
+          "self_ratio": 0.8988,
+          "p95_ms": 895.1,
+          "baseline_p95_ms": 13.4,
+          "latency_delta": 65.96,
+          "error_rate": 0.067,
+          "offcpu_ratio": 0.256,
+          "changed": false,
+          "samples": [
+            "case-04-before-0000",
+            "case-04-before-0001",
+            "case-04-before-0002",
+            "case-04-before-0003",
+            "case-04-before-0004"
+          ],
+          "confidence": 0.778,
+          "reasons": [
+            "leaf frame accounts for 90% of incident exclusive time",
+            "p95 rises 13ms -> 895ms (66.0x)",
+            "error affinity 7% on this line",
+            "26% of time is off-CPU"
+          ],
+          "evidence": [
+            "case-04-before-0000",
+            "case-04-before-0001",
+            "case-04-before-0002",
+            "case-04-before-0003",
+            "case-04-before-0004"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "money.py",
+            "line": 19,
+            "function": "allocate_amount",
+            "qualname": "allocate_amount",
+            "source": "total_weight = sum(weights)",
+            "score": 0.6722,
+            "self_ms": 20932.4,
+            "self_ratio": 0.8988,
+            "p95_ms": 895.1,
+            "baseline_p95_ms": 13.4,
+            "latency_delta": 65.96,
+            "error_rate": 0.067,
+            "offcpu_ratio": 0.256,
+            "changed": false,
+            "samples": [
+              "case-04-before-0000",
+              "case-04-before-0001",
+              "case-04-before-0002",
+              "case-04-before-0003",
+              "case-04-before-0004"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0063,
+            "self_ms": 294.0,
+            "self_ratio": 0.0126,
+            "p95_ms": 179.8,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-04-before-0092",
+              "case-04-before-0106"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "def append_entries(store, entries):",
+            "score": 0.0053,
+            "self_ms": 244.8,
+            "self_ratio": 0.0105,
+            "p95_ms": 131.9,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-04-before-0091",
+              "case-04-before-0105"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "def settle_batch(fetch_page, page_size=2):",
+            "score": 0.0052,
+            "self_ms": 240.2,
+            "self_ratio": 0.0103,
+            "p95_ms": 160.7,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-04-before-0090",
+              "case-04-before-0104"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "def convert_currency(amount, rate):",
+            "score": 0.0047,
+            "self_ms": 219.6,
+            "self_ratio": 0.0094,
+            "p95_ms": 121.8,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-04-before-0093",
+              "case-04-before-0107"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 36,
+            "function": "refund",
+            "qualname": "refund",
+            "source": "def refund(store, charge_id, amount, refund_id):",
+            "score": 0.0037,
+            "self_ms": 172.2,
+            "self_ratio": 0.0074,
+            "p95_ms": 172.2,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-04-before-0096"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 9,
+            "function": "calculate_fee",
+            "qualname": "calculate_fee",
+            "source": "def calculate_fee(amount, tier):",
+            "score": 0.0035,
+            "self_ms": 161.1,
+            "self_ratio": 0.0069,
+            "p95_ms": 161.1,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-04-before-0094"
+            ]
+          },
+          {
+            "file": "risk.py",
+            "line": 1,
+            "function": "fraud_score",
+            "qualname": "fraud_score",
+            "source": "def fraud_score(provider, txn):",
+            "score": 0.0034,
+            "self_ms": 158.7,
+            "self_ratio": 0.0068,
+            "p95_ms": 158.7,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-04-before-0100"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": "server.py:8",
+              "file": "server.py",
+              "line": 8,
+              "function": ""
+            },
+            {
+              "id": "money.py:18",
+              "file": "money.py",
+              "line": 18,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "money.py:19",
+              "file": "money.py",
+              "line": 19,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "ledger.py:6",
+              "file": "ledger.py",
+              "line": 6,
+              "function": "settle_batch"
+            },
+            {
+              "id": "ledger.py:21",
+              "file": "ledger.py",
+              "line": 21,
+              "function": "append_entries"
+            },
+            {
+              "id": "ledger.py:2",
+              "file": "ledger.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "money.py:4",
+              "file": "money.py",
+              "line": 4,
+              "function": "convert_currency"
+            },
+            {
+              "id": "money.py:9",
+              "file": "money.py",
+              "line": 9,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "payments.py:21",
+              "file": "payments.py",
+              "line": 21,
+              "function": "retry_charge"
+            },
+            {
+              "id": "payments.py:36",
+              "file": "payments.py",
+              "line": 36,
+              "function": "refund"
+            },
+            {
+              "id": "payments.py:2",
+              "file": "payments.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "payments.py:7",
+              "file": "payments.py",
+              "line": 7,
+              "function": "charge"
+            },
+            {
+              "id": "payments.py:32",
+              "file": "payments.py",
+              "line": 32,
+              "function": "__init__"
+            },
+            {
+              "id": "risk.py:1",
+              "file": "risk.py",
+              "line": 1,
+              "function": "fraud_score"
+            },
+            {
+              "id": "routing.py:1",
+              "file": "routing.py",
+              "line": 1,
+              "function": "route_payout"
+            },
+            {
+              "id": "scheduling.py:4",
+              "file": "scheduling.py",
+              "line": 4,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "server.py:1",
+              "file": "server.py",
+              "line": 1,
+              "function": "handle_request"
+            }
+          ],
+          "edges": [
+            {
+              "source": "server.py:8",
+              "target": "money.py:18",
+              "count": 30
+            },
+            {
+              "source": "money.py:18",
+              "target": "money.py:19",
+              "count": 30
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:6",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:21",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:2",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:4",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:9",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:21",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:36",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:2",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:7",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:32",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "risk.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "routing.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "scheduling.py:4",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "server.py:1",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 money.py:19 (allocate_amount), confidence 78%."
+      },
+      "pseudocode": {
+        "strategy": "先按分取整，再用最大余数法分配差额。",
+        "before": [
+          "shares = [round(total * w / sum(weights), 2) for w in weights]",
+          "return shares  # sum may not equal total"
+        ],
+        "after": [
+          "raw = total * w / sum(weights)",
+          "cents = round_half_up(raw * 100)",
+          "distribute (total_cents - sum(cents)) by largest remainder",
+          "return cents / 100"
+        ],
+        "target": {
+          "file": "money.py",
+          "line": 19,
+          "function": "allocate_amount"
+        },
+        "invariant": "0.05 元分 3 份得到 0.01/0.02/0.02，合计仍是 0.05。"
+      },
+      "patch": {
+        "file": "money.py",
+        "diff": "--- a/money.py\n+++ b/money.py\n@@ -1,4 +1,14 @@\n def allocate_amount(total, weights):\n-    # BUG: independent rounding loses or creates cents when splitting money.\n     total_weight = sum(weights)\n-    return [round(total * weight / total_weight, 2) for weight in weights]+    raw = [\n+        Decimal(str(total)) * Decimal(weight) / Decimal(total_weight)\n+        for weight in weights\n+    ]\n+    cents = [\n+        int((value * 100).quantize(Decimal(\"1\"), rounding=ROUND_HALF_UP))\n+        for value in raw\n+    ]\n+    diff = int((Decimal(str(total)) * 100).quantize(Decimal(\"1\"))) - sum(cents)\n+    for index in range(abs(diff)):\n+        cents[index % len(cents)] += 1 if diff > 0 else -1\n+    return [float(Decimal(c) / 100) for c in cents]",
+        "applied": true
+      },
+      "tests": {
+        "case": {
+          "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_allocate_amount_preserves_total",
+          "passed": true,
+          "returncode": 0,
+          "ran": 1,
+          "failures": 0,
+          "errors": 0,
+          "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+          "duration_ms": 103.5
+        },
+        "suite": {
+          "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+          "passed": false,
+          "returncode": 1,
+          "ran": 10,
+          "failures": 5,
+          "errors": 1,
+          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=5, errors=1)",
+          "duration_ms": 103.0
+        }
+      },
+      "verification": {
+        "source": "ebpf.code_stack.replay",
+        "p99_before_ms": 750,
+        "p99_after_ms": 167.0,
+        "error_before": 0.07,
+        "error_after": 0.0,
+        "slo_p99_ms": 600,
+        "passed": true,
+        "verdict": "fixed"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "分账后各商户金额之和比原金额多 1 分。",
+        "why": "每笔独立四舍五入，误差不会自动回冲。",
+        "fix": "先转成整数分，再用最大余数法把差额分给前几笔。",
+        "verify": "0.05 元分 3 份得到 0.01/0.02/0.02，合计仍是 0.05。"
+      },
+      "duration_ms": 940.3
+    },
+    {
+      "iteration": 5,
+      "case_id": "case-05",
+      "title": "退款重复入账：回调没有去重",
+      "service": "refund-service",
+      "severity": "critical",
+      "symptom": "支付网关重放退款回调，同一笔退款入账两次。",
+      "rca": {
+        "case_id": "case-05",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-02T17:22:31+00:00",
+        "finding": {
+          "file": "payments.py",
+          "line": 37,
+          "function": "refund",
+          "qualname": "refund",
+          "source": "# BUG: duplicate refund callbacks append a second refund for the same id.",
+          "score": 0.7996,
+          "self_ms": 41969.4,
+          "self_ratio": 0.9512,
+          "p95_ms": 1688.7,
+          "baseline_p95_ms": 13.4,
+          "latency_delta": 124.59,
+          "error_rate": 0.067,
+          "offcpu_ratio": 0.279,
+          "changed": true,
+          "samples": [
+            "case-05-before-0000",
+            "case-05-before-0001",
+            "case-05-before-0002",
+            "case-05-before-0003",
+            "case-05-before-0004"
+          ],
+          "confidence": 0.873,
+          "reasons": [
+            "leaf frame accounts for 95% of incident exclusive time",
+            "p95 rises 13ms -> 1689ms (124.6x)",
+            "error affinity 7% on this line",
+            "line belongs to a recent change set",
+            "28% of time is off-CPU"
+          ],
+          "evidence": [
+            "case-05-before-0000",
+            "case-05-before-0001",
+            "case-05-before-0002",
+            "case-05-before-0003",
+            "case-05-before-0004"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "payments.py",
+            "line": 37,
+            "function": "refund",
+            "qualname": "refund",
+            "source": "# BUG: duplicate refund callbacks append a second refund for the same id.",
+            "score": 0.7996,
+            "self_ms": 41969.4,
+            "self_ratio": 0.9512,
+            "p95_ms": 1688.7,
+            "baseline_p95_ms": 13.4,
+            "latency_delta": 124.59,
+            "error_rate": 0.067,
+            "offcpu_ratio": 0.279,
+            "changed": true,
+            "samples": [
+              "case-05-before-0000",
+              "case-05-before-0001",
+              "case-05-before-0002",
+              "case-05-before-0003",
+              "case-05-before-0004"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "def append_entries(store, entries):",
+            "score": 0.0031,
+            "self_ms": 271.2,
+            "self_ratio": 0.0061,
+            "p95_ms": 157.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-05-before-0091",
+              "case-05-before-0105"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0028,
+            "self_ms": 243.2,
+            "self_ratio": 0.0055,
+            "p95_ms": 157.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-05-before-0092",
+              "case-05-before-0106"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 32,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.002,
+            "self_ms": 174.4,
+            "self_ratio": 0.004,
+            "p95_ms": 174.4,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-05-before-0099"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "def convert_currency(amount, rate):",
+            "score": 0.0019,
+            "self_ms": 168.0,
+            "self_ratio": 0.0038,
+            "p95_ms": 96.8,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-05-before-0093",
+              "case-05-before-0107"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "def settle_batch(fetch_page, page_size=2):",
+            "score": 0.0019,
+            "self_ms": 163.3,
+            "self_ratio": 0.0037,
+            "p95_ms": 89.4,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-05-before-0090",
+              "case-05-before-0104"
+            ]
+          },
+          {
+            "file": "routing.py",
+            "line": 1,
+            "function": "route_payout",
+            "qualname": "route_payout",
+            "source": "def route_payout(currency, country):",
+            "score": 0.0018,
+            "self_ms": 157.2,
+            "self_ratio": 0.0036,
+            "p95_ms": 157.2,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-05-before-0101"
+            ]
+          },
+          {
+            "file": "risk.py",
+            "line": 1,
+            "function": "fraud_score",
+            "qualname": "fraud_score",
+            "source": "def fraud_score(provider, txn):",
+            "score": 0.0016,
+            "self_ms": 140.4,
+            "self_ratio": 0.0032,
+            "p95_ms": 140.4,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-05-before-0100"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "payments.py",
+            "line": 32,
+            "function": "__init__",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": "server.py:8",
+              "file": "server.py",
+              "line": 8,
+              "function": ""
+            },
+            {
+              "id": "payments.py:36",
+              "file": "payments.py",
+              "line": 36,
+              "function": "refund"
+            },
+            {
+              "id": "payments.py:37",
+              "file": "payments.py",
+              "line": 37,
+              "function": "refund"
+            },
+            {
+              "id": "ledger.py:6",
+              "file": "ledger.py",
+              "line": 6,
+              "function": "settle_batch"
+            },
+            {
+              "id": "ledger.py:21",
+              "file": "ledger.py",
+              "line": 21,
+              "function": "append_entries"
+            },
+            {
+              "id": "ledger.py:2",
+              "file": "ledger.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "money.py:4",
+              "file": "money.py",
+              "line": 4,
+              "function": "convert_currency"
+            },
+            {
+              "id": "money.py:9",
+              "file": "money.py",
+              "line": 9,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "money.py:18",
+              "file": "money.py",
+              "line": 18,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "payments.py:21",
+              "file": "payments.py",
+              "line": 21,
+              "function": "retry_charge"
+            },
+            {
+              "id": "payments.py:2",
+              "file": "payments.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "payments.py:7",
+              "file": "payments.py",
+              "line": 7,
+              "function": "charge"
+            },
+            {
+              "id": "payments.py:32",
+              "file": "payments.py",
+              "line": 32,
+              "function": "__init__"
+            },
+            {
+              "id": "risk.py:1",
+              "file": "risk.py",
+              "line": 1,
+              "function": "fraud_score"
+            },
+            {
+              "id": "routing.py:1",
+              "file": "routing.py",
+              "line": 1,
+              "function": "route_payout"
+            },
+            {
+              "id": "scheduling.py:4",
+              "file": "scheduling.py",
+              "line": 4,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "server.py:1",
+              "file": "server.py",
+              "line": 1,
+              "function": "handle_request"
+            }
+          ],
+          "edges": [
+            {
+              "source": "server.py:8",
+              "target": "payments.py:36",
+              "count": 30
+            },
+            {
+              "source": "payments.py:36",
+              "target": "payments.py:37",
+              "count": 30
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:6",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:21",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:2",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:4",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:9",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:18",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:21",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:2",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:7",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:32",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "risk.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "routing.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "scheduling.py:4",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "server.py:1",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 payments.py:37 (refund), confidence 87%."
+      },
+      "pseudocode": {
+        "strategy": "按 refund_id 去重，重复回调直接返回已有结果。",
+        "before": [
+          "append refund(refund_id)",
+          "return count"
+        ],
+        "after": [
+          "if refund_id already in store: return existing count",
+          "append refund(refund_id)",
+          "return count"
+        ],
+        "target": {
+          "file": "payments.py",
+          "line": 37,
+          "function": "refund"
+        },
+        "invariant": "同一 refund_id 调用两次，只产生 1 条退款记录。"
+      },
+      "patch": {
+        "file": "payments.py",
+        "diff": "--- a/payments.py\n+++ b/payments.py\n@@ -1,4 +1,6 @@\n def refund(store, charge_id, amount, refund_id):\n-    # BUG: duplicate refund callbacks append a second refund for the same id.\n+    for item in store.refunds:\n+        if item[\"refund_id\"] == refund_id:\n+            return len(store.refunds)\n     store.refunds.append({\"charge_id\": charge_id, \"amount\": amount, \"refund_id\": refund_id})\n     return len(store.refunds)",
+        "applied": true
+      },
+      "tests": {
+        "case": {
+          "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_refund_is_idempotent",
+          "passed": true,
+          "returncode": 0,
+          "ran": 1,
+          "failures": 0,
+          "errors": 0,
+          "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+          "duration_ms": 92.7
+        },
+        "suite": {
+          "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+          "passed": false,
+          "returncode": 1,
+          "ran": 10,
+          "failures": 4,
+          "errors": 1,
+          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=4, errors=1)",
+          "duration_ms": 99.2
+        }
+      },
+      "verification": {
+        "source": "ebpf.code_stack.replay",
+        "p99_before_ms": 1400,
+        "p99_after_ms": 156.9,
+        "error_before": 0.11,
+        "error_after": 0.0,
+        "slo_p99_ms": 700,
+        "passed": true,
+        "verdict": "fixed"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "同一笔退款被处理两次，商户余额被多退。",
+        "why": "回调处理只追加记录，没有按 refund_id 去重。",
+        "fix": "先查 refund_id，已存在则直接返回，保证幂等。",
+        "verify": "同一 refund_id 调用两次，只产生 1 条退款记录。"
+      },
+      "duration_ms": 1135.2
+    },
+    {
+      "iteration": 6,
+      "case_id": "case-06",
+      "title": "批量结算漏掉最后一页",
+      "service": "settlement",
+      "severity": "high",
+      "symptom": "结算批次只处理第一页，后续页的商户当天没有入账。",
+      "rca": {
+        "case_id": "case-06",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-02T17:22:31+00:00",
+        "finding": {
+          "file": "ledger.py",
+          "line": 7,
+          "function": "settle_batch",
+          "qualname": "settle_batch",
+          "source": "# BUG: a full page is treated as the last page, so later pages are skipped.",
+          "score": 0.817,
+          "self_ms": 92109.2,
+          "self_ratio": 0.9773,
+          "p95_ms": 3695.5,
+          "baseline_p95_ms": 13.4,
+          "latency_delta": 275.32,
+          "error_rate": 0.1,
+          "offcpu_ratio": 0.266,
+          "changed": true,
+          "samples": [
+            "case-06-before-0000",
+            "case-06-before-0001",
+            "case-06-before-0002",
+            "case-06-before-0003",
+            "case-06-before-0004"
+          ],
+          "confidence": 0.885,
+          "reasons": [
+            "leaf frame accounts for 98% of incident exclusive time",
+            "p95 rises 13ms -> 3696ms (275.3x)",
+            "error affinity 10% on this line",
+            "line belongs to a recent change set",
+            "27% of time is off-CPU"
+          ],
+          "evidence": [
+            "case-06-before-0000",
+            "case-06-before-0001",
+            "case-06-before-0002",
+            "case-06-before-0003",
+            "case-06-before-0004"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "ledger.py",
+            "line": 7,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "# BUG: a full page is treated as the last page, so later pages are skipped.",
+            "score": 0.817,
+            "self_ms": 92109.2,
+            "self_ratio": 0.9773,
+            "p95_ms": 3695.5,
+            "baseline_p95_ms": 13.4,
+            "latency_delta": 275.32,
+            "error_rate": 0.1,
+            "offcpu_ratio": 0.266,
+            "changed": true,
+            "samples": [
+              "case-06-before-0000",
+              "case-06-before-0001",
+              "case-06-before-0002",
+              "case-06-before-0003",
+              "case-06-before-0004"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "def append_entries(store, entries):",
+            "score": 0.0016,
+            "self_ms": 292.4,
+            "self_ratio": 0.0031,
+            "p95_ms": 152.3,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-06-before-0090",
+              "case-06-before-0104"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 9,
+            "function": "calculate_fee",
+            "qualname": "calculate_fee",
+            "source": "def calculate_fee(amount, tier):",
+            "score": 0.0014,
+            "self_ms": 260.3,
+            "self_ratio": 0.0028,
+            "p95_ms": 156.3,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-06-before-0093",
+              "case-06-before-0107"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0013,
+            "self_ms": 251.7,
+            "self_ratio": 0.0027,
+            "p95_ms": 142.8,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-06-before-0091",
+              "case-06-before-0105"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "def convert_currency(amount, rate):",
+            "score": 0.0013,
+            "self_ms": 238.5,
+            "self_ratio": 0.0025,
+            "p95_ms": 156.8,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-06-before-0092",
+              "case-06-before-0106"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 32,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0009,
+            "self_ms": 171.0,
+            "self_ratio": 0.0018,
+            "p95_ms": 171.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-06-before-0099"
+            ]
+          },
+          {
+            "file": "routing.py",
+            "line": 1,
+            "function": "route_payout",
+            "qualname": "route_payout",
+            "source": "def route_payout(currency, country):",
+            "score": 0.0009,
+            "self_ms": 163.9,
+            "self_ratio": 0.0017,
+            "p95_ms": 163.9,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-06-before-0101"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 18,
+            "function": "allocate_amount",
+            "qualname": "allocate_amount",
+            "source": "total_weight = sum(weights)",
+            "score": 0.0008,
+            "self_ms": 150.9,
+            "self_ratio": 0.0016,
+            "p95_ms": 150.9,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-06-before-0094"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "money.py",
+            "line": 9,
+            "function": "calculate_fee",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": "server.py:8",
+              "file": "server.py",
+              "line": 8,
+              "function": ""
+            },
+            {
+              "id": "ledger.py:6",
+              "file": "ledger.py",
+              "line": 6,
+              "function": "settle_batch"
+            },
+            {
+              "id": "ledger.py:7",
+              "file": "ledger.py",
+              "line": 7,
+              "function": "settle_batch"
+            },
+            {
+              "id": "ledger.py:21",
+              "file": "ledger.py",
+              "line": 21,
+              "function": "append_entries"
+            },
+            {
+              "id": "ledger.py:2",
+              "file": "ledger.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "money.py:4",
+              "file": "money.py",
+              "line": 4,
+              "function": "convert_currency"
+            },
+            {
+              "id": "money.py:9",
+              "file": "money.py",
+              "line": 9,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "money.py:18",
+              "file": "money.py",
+              "line": 18,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "payments.py:21",
+              "file": "payments.py",
+              "line": 21,
+              "function": "retry_charge"
+            },
+            {
+              "id": "payments.py:36",
+              "file": "payments.py",
+              "line": 36,
+              "function": "refund"
+            },
+            {
+              "id": "payments.py:2",
+              "file": "payments.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "payments.py:7",
+              "file": "payments.py",
+              "line": 7,
+              "function": "charge"
+            },
+            {
+              "id": "payments.py:32",
+              "file": "payments.py",
+              "line": 32,
+              "function": "__init__"
+            },
+            {
+              "id": "risk.py:1",
+              "file": "risk.py",
+              "line": 1,
+              "function": "fraud_score"
+            },
+            {
+              "id": "routing.py:1",
+              "file": "routing.py",
+              "line": 1,
+              "function": "route_payout"
+            },
+            {
+              "id": "scheduling.py:4",
+              "file": "scheduling.py",
+              "line": 4,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "server.py:1",
+              "file": "server.py",
+              "line": 1,
+              "function": "handle_request"
+            }
+          ],
+          "edges": [
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:6",
+              "count": 30
+            },
+            {
+              "source": "ledger.py:6",
+              "target": "ledger.py:7",
+              "count": 30
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:21",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:2",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:4",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:9",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:18",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:21",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:36",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:2",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:7",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:32",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "risk.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "routing.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "scheduling.py:4",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "server.py:1",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 ledger.py:7 (settle_batch), confidence 89%."
+      },
+      "pseudocode": {
+        "strategy": "只有空页才结束，满页继续翻页。",
+        "before": [
+          "rows = fetch(page)",
+          "append rows",
+          "if len(rows) <= page_size: stop"
+        ],
+        "after": [
+          "rows = fetch(page)",
+          "append rows",
+          "if not rows: stop",
+          "if len(rows) < page_size: stop",
+          "page += 1"
+        ],
+        "target": {
+          "file": "ledger.py",
+          "line": 7,
+          "function": "settle_batch"
+        },
+        "invariant": "3 页数据全部进入结算列表，不再漏单。"
+      },
+      "patch": {
+        "file": "ledger.py",
+        "diff": "--- a/ledger.py\n+++ b/ledger.py\n@@ -1,5 +1,4 @@\n def settle_batch(fetch_page, page_size=2):\n-    # BUG: a full page is treated as the last page, so later pages are skipped.\n     page = 0\n     settled = []\n     while True:\n@@ -7,7 +6,7 @@\n         if not rows:\n             break\n         settled.extend(rows)\n-        if len(rows) <= page_size:\n+        if len(rows) < page_size:\n             break\n         page += 1\n     return settled",
+        "applied": true
+      },
+      "tests": {
+        "case": {
+          "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_settle_batch_reads_all_pages",
+          "passed": true,
+          "returncode": 0,
+          "ran": 1,
+          "failures": 0,
+          "errors": 0,
+          "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+          "duration_ms": 112.0
+        },
+        "suite": {
+          "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+          "passed": false,
+          "returncode": 1,
+          "ran": 10,
+          "failures": 3,
+          "errors": 1,
+          "output_tail": "? - -- --\n+ eu-bank\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=3, errors=1)",
+          "duration_ms": 115.7
+        }
+      },
+      "verification": {
+        "source": "ebpf.code_stack.replay",
+        "p99_before_ms": 3200,
+        "p99_after_ms": 255.8,
+        "error_before": 0.15,
+        "error_after": 0.0,
+        "slo_p99_ms": 1000,
+        "passed": true,
+        "verdict": "fixed"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "结算只处理了第一页，后面的商户漏结算。",
+        "why": "代码把「满页」当成「最后一页」，提前退出循环。",
+        "fix": "只有空页或不足一页才结束，满页继续翻页。",
+        "verify": "3 页数据全部进入结算列表，不再漏单。"
+      },
+      "duration_ms": 1366.1
+    },
+    {
+      "iteration": 7,
+      "case_id": "case-07",
+      "title": "账本部分写入：批次中途失败",
+      "service": "ledger",
+      "severity": "critical",
+      "symptom": "批次写账本时第 2 条失败，但第 1 条已经落库，账不平。",
+      "rca": {
+        "case_id": "case-07",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-02T17:22:31+00:00",
+        "finding": {
+          "file": "ledger.py",
+          "line": 22,
+          "function": "append_entries",
+          "qualname": "append_entries",
+          "source": "for entry in entries:",
+          "score": 0.7075,
+          "self_ms": 52685.8,
+          "self_ratio": 0.9575,
+          "p95_ms": 2086.3,
+          "baseline_p95_ms": 13.7,
+          "latency_delta": 151.35,
+          "error_rate": 0.1,
+          "offcpu_ratio": 0.275,
+          "changed": false,
+          "samples": [
+            "case-07-before-0000",
+            "case-07-before-0001",
+            "case-07-before-0002",
+            "case-07-before-0003",
+            "case-07-before-0004"
+          ],
+          "confidence": 0.799,
+          "reasons": [
+            "leaf frame accounts for 96% of incident exclusive time",
+            "p95 rises 14ms -> 2086ms (151.3x)",
+            "error affinity 10% on this line",
+            "28% of time is off-CPU"
+          ],
+          "evidence": [
+            "case-07-before-0000",
+            "case-07-before-0001",
+            "case-07-before-0002",
+            "case-07-before-0003",
+            "case-07-before-0004"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "ledger.py",
+            "line": 22,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "for entry in entries:",
+            "score": 0.7075,
+            "self_ms": 52685.8,
+            "self_ratio": 0.9575,
+            "p95_ms": 2086.3,
+            "baseline_p95_ms": 13.7,
+            "latency_delta": 151.35,
+            "error_rate": 0.1,
+            "offcpu_ratio": 0.275,
+            "changed": false,
+            "samples": [
+              "case-07-before-0000",
+              "case-07-before-0001",
+              "case-07-before-0002",
+              "case-07-before-0003",
+              "case-07-before-0004"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0028,
+            "self_ms": 309.2,
+            "self_ratio": 0.0056,
+            "p95_ms": 160.7,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-07-before-0091",
+              "case-07-before-0105"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 9,
+            "function": "calculate_fee",
+            "qualname": "calculate_fee",
+            "source": "def calculate_fee(amount, tier):",
+            "score": 0.0027,
+            "self_ms": 302.0,
+            "self_ratio": 0.0055,
+            "p95_ms": 175.3,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-07-before-0093",
+              "case-07-before-0107"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "def settle_batch(fetch_page, page_size=2):",
+            "score": 0.0023,
+            "self_ms": 247.9,
+            "self_ratio": 0.0045,
+            "p95_ms": 135.9,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-07-before-0090",
+              "case-07-before-0104"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "def convert_currency(amount, rate):",
+            "score": 0.0021,
+            "self_ms": 234.4,
+            "self_ratio": 0.0043,
+            "p95_ms": 142.4,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-07-before-0092",
+              "case-07-before-0106"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 32,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0016,
+            "self_ms": 178.4,
+            "self_ratio": 0.0032,
+            "p95_ms": 178.4,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-07-before-0099"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0015,
+            "self_ms": 169.1,
+            "self_ratio": 0.0031,
+            "p95_ms": 169.1,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-07-before-0097"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 18,
+            "function": "allocate_amount",
+            "qualname": "allocate_amount",
+            "source": "total_weight = sum(weights)",
+            "score": 0.0014,
+            "self_ms": 154.6,
+            "self_ratio": 0.0028,
+            "p95_ms": 154.6,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-07-before-0094"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "money.py",
+            "line": 9,
+            "function": "calculate_fee",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": "server.py:8",
+              "file": "server.py",
+              "line": 8,
+              "function": ""
+            },
+            {
+              "id": "ledger.py:21",
+              "file": "ledger.py",
+              "line": 21,
+              "function": "append_entries"
+            },
+            {
+              "id": "ledger.py:22",
+              "file": "ledger.py",
+              "line": 22,
+              "function": "append_entries"
+            },
+            {
+              "id": "ledger.py:6",
+              "file": "ledger.py",
+              "line": 6,
+              "function": "settle_batch"
+            },
+            {
+              "id": "ledger.py:2",
+              "file": "ledger.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "money.py:4",
+              "file": "money.py",
+              "line": 4,
+              "function": "convert_currency"
+            },
+            {
+              "id": "money.py:9",
+              "file": "money.py",
+              "line": 9,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "money.py:18",
+              "file": "money.py",
+              "line": 18,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "payments.py:21",
+              "file": "payments.py",
+              "line": 21,
+              "function": "retry_charge"
+            },
+            {
+              "id": "payments.py:36",
+              "file": "payments.py",
+              "line": 36,
+              "function": "refund"
+            },
+            {
+              "id": "payments.py:2",
+              "file": "payments.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "payments.py:7",
+              "file": "payments.py",
+              "line": 7,
+              "function": "charge"
+            },
+            {
+              "id": "payments.py:32",
+              "file": "payments.py",
+              "line": 32,
+              "function": "__init__"
+            },
+            {
+              "id": "risk.py:1",
+              "file": "risk.py",
+              "line": 1,
+              "function": "fraud_score"
+            },
+            {
+              "id": "routing.py:1",
+              "file": "routing.py",
+              "line": 1,
+              "function": "route_payout"
+            },
+            {
+              "id": "scheduling.py:4",
+              "file": "scheduling.py",
+              "line": 4,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "server.py:1",
+              "file": "server.py",
+              "line": 1,
+              "function": "handle_request"
+            }
+          ],
+          "edges": [
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:21",
+              "count": 30
+            },
+            {
+              "source": "ledger.py:21",
+              "target": "ledger.py:22",
+              "count": 30
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:6",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:2",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:4",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:9",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:18",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:21",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:36",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:2",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:7",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:32",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "risk.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "routing.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "scheduling.py:4",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "server.py:1",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 ledger.py:22 (append_entries), confidence 80%."
+      },
+      "pseudocode": {
+        "strategy": "先全量校验并暂存，全部通过后再一次性提交。",
+        "before": [
+          "for entry in entries:",
+          "    if invalid: raise",
+          "    store.append(entry)   # partial write"
+        ],
+        "after": [
+          "staged = []",
+          "for entry in entries:",
+          "    if invalid: raise",
+          "    staged.append(entry)",
+          "store.extend(staged)   # all-or-nothing"
+        ],
+        "target": {
+          "file": "ledger.py",
+          "line": 22,
+          "function": "append_entries"
+        },
+        "invariant": "失败批次不改变账本，重试后账目一致。"
+      },
+      "patch": {
+        "file": "ledger.py",
+        "diff": "--- a/ledger.py\n+++ b/ledger.py\n@@ -1,6 +1,7 @@\n def append_entries(store, entries):\n-    # BUG: a mid-batch failure leaves the ledger partially written.\n+    staged = []\n     for entry in entries:\n         if entry.get(\"fail\"):\n             raise ValueError(\"ledger write failed\")\n-        store.entries.append(entry)+        staged.append(entry)\n+    store.entries.extend(staged)",
+        "applied": true
+      },
+      "tests": {
+        "case": {
+          "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_append_entries_is_atomic",
+          "passed": true,
+          "returncode": 0,
+          "ran": 1,
+          "failures": 0,
+          "errors": 0,
+          "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+          "duration_ms": 101.9
+        },
+        "suite": {
+          "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+          "passed": false,
+          "returncode": 1,
+          "ran": 10,
+          "failures": 2,
+          "errors": 1,
+          "output_tail": "? - -- --\n+ eu-bank\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nFAILED (failures=2, errors=1)",
+          "duration_ms": 100.5
+        }
+      },
+      "verification": {
+        "source": "ebpf.code_stack.replay",
+        "p99_before_ms": 1800,
+        "p99_after_ms": 171.0,
+        "error_before": 0.2,
+        "error_after": 0.0,
+        "slo_p99_ms": 500,
+        "passed": true,
+        "verdict": "fixed"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "一次批量记账失败后，账本里多出一条半截数据。",
+        "why": "边校验边写入，异常发生时前面的条目已经提交。",
+        "fix": "先暂存并通过全部校验，再一次性写入。",
+        "verify": "失败批次不改变账本，重试后账目一致。"
+      },
+      "duration_ms": 1571.5
+    },
+    {
+      "iteration": 8,
+      "case_id": "case-08",
+      "title": "欧元出款走错通道",
+      "service": "payout-router",
+      "severity": "high",
+      "symptom": "EUR/DE 出款被路由到美元通道，产生退汇和手续费。",
+      "rca": {
+        "case_id": "case-08",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-02T17:22:31+00:00",
+        "finding": {
+          "file": "routing.py",
+          "line": 2,
+          "function": "route_payout",
+          "qualname": "route_payout",
+          "source": "# BUG: non-USD payouts fall through to a default rail with the wrong currency.",
+          "score": 0.8021,
+          "self_ms": 32349.6,
+          "self_ratio": 0.9386,
+          "p95_ms": 1327.2,
+          "baseline_p95_ms": 13.5,
+          "latency_delta": 97.5,
+          "error_rate": 0.133,
+          "offcpu_ratio": 0.256,
+          "changed": true,
+          "samples": [
+            "case-08-before-0000",
+            "case-08-before-0001",
+            "case-08-before-0002",
+            "case-08-before-0003",
+            "case-08-before-0004"
+          ],
+          "confidence": 0.878,
+          "reasons": [
+            "leaf frame accounts for 94% of incident exclusive time",
+            "p95 rises 14ms -> 1327ms (97.5x)",
+            "error affinity 13% on this line",
+            "line belongs to a recent change set",
+            "26% of time is off-CPU"
+          ],
+          "evidence": [
+            "case-08-before-0000",
+            "case-08-before-0001",
+            "case-08-before-0002",
+            "case-08-before-0003",
+            "case-08-before-0004"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "routing.py",
+            "line": 2,
+            "function": "route_payout",
+            "qualname": "route_payout",
+            "source": "# BUG: non-USD payouts fall through to a default rail with the wrong currency.",
+            "score": 0.8021,
+            "self_ms": 32349.6,
+            "self_ratio": 0.9386,
+            "p95_ms": 1327.2,
+            "baseline_p95_ms": 13.5,
+            "latency_delta": 97.5,
+            "error_rate": 0.133,
+            "offcpu_ratio": 0.256,
+            "changed": true,
+            "samples": [
+              "case-08-before-0000",
+              "case-08-before-0001",
+              "case-08-before-0002",
+              "case-08-before-0003",
+              "case-08-before-0004"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "staged = []",
+            "score": 0.0042,
+            "self_ms": 289.9,
+            "self_ratio": 0.0084,
+            "p95_ms": 162.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-08-before-0091",
+              "case-08-before-0105"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0038,
+            "self_ms": 263.6,
+            "self_ratio": 0.0076,
+            "p95_ms": 150.6,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-08-before-0092",
+              "case-08-before-0106"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "def settle_batch(fetch_page, page_size=2):",
+            "score": 0.0033,
+            "self_ms": 225.9,
+            "self_ratio": 0.0066,
+            "p95_ms": 122.2,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-08-before-0090",
+              "case-08-before-0104"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "def convert_currency(amount, rate):",
+            "score": 0.0028,
+            "self_ms": 189.7,
+            "self_ratio": 0.0055,
+            "p95_ms": 107.9,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-08-before-0093",
+              "case-08-before-0107"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0024,
+            "self_ms": 165.8,
+            "self_ratio": 0.0048,
+            "p95_ms": 165.8,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-08-before-0098"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 32,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0019,
+            "self_ms": 128.0,
+            "self_ratio": 0.0037,
+            "p95_ms": 128.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-08-before-0100"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 36,
+            "function": "refund",
+            "qualname": "refund",
+            "source": "def refund(store, charge_id, amount, refund_id):",
+            "score": 0.0018,
+            "self_ms": 125.4,
+            "self_ratio": 0.0036,
+            "p95_ms": 125.4,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-08-before-0097"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": "server.py:8",
+              "file": "server.py",
+              "line": 8,
+              "function": ""
+            },
+            {
+              "id": "routing.py:1",
+              "file": "routing.py",
+              "line": 1,
+              "function": "route_payout"
+            },
+            {
+              "id": "routing.py:2",
+              "file": "routing.py",
+              "line": 2,
+              "function": "route_payout"
+            },
+            {
+              "id": "ledger.py:6",
+              "file": "ledger.py",
+              "line": 6,
+              "function": "settle_batch"
+            },
+            {
+              "id": "ledger.py:21",
+              "file": "ledger.py",
+              "line": 21,
+              "function": "append_entries"
+            },
+            {
+              "id": "ledger.py:2",
+              "file": "ledger.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "money.py:4",
+              "file": "money.py",
+              "line": 4,
+              "function": "convert_currency"
+            },
+            {
+              "id": "money.py:9",
+              "file": "money.py",
+              "line": 9,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "money.py:18",
+              "file": "money.py",
+              "line": 18,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "payments.py:21",
+              "file": "payments.py",
+              "line": 21,
+              "function": "retry_charge"
+            },
+            {
+              "id": "payments.py:36",
+              "file": "payments.py",
+              "line": 36,
+              "function": "refund"
+            },
+            {
+              "id": "payments.py:2",
+              "file": "payments.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "payments.py:7",
+              "file": "payments.py",
+              "line": 7,
+              "function": "charge"
+            },
+            {
+              "id": "payments.py:32",
+              "file": "payments.py",
+              "line": 32,
+              "function": "__init__"
+            },
+            {
+              "id": "risk.py:1",
+              "file": "risk.py",
+              "line": 1,
+              "function": "fraud_score"
+            },
+            {
+              "id": "scheduling.py:4",
+              "file": "scheduling.py",
+              "line": 4,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "server.py:1",
+              "file": "server.py",
+              "line": 1,
+              "function": "handle_request"
+            }
+          ],
+          "edges": [
+            {
+              "source": "server.py:8",
+              "target": "routing.py:1",
+              "count": 30
+            },
+            {
+              "source": "routing.py:1",
+              "target": "routing.py:2",
+              "count": 30
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:6",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:21",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:2",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:4",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:9",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:18",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:21",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:36",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:2",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:7",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:32",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "risk.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "scheduling.py:4",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "server.py:1",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 routing.py:2 (route_payout), confidence 88%."
+      },
+      "pseudocode": {
+        "strategy": "按币种+国家选择本地清算通道，不支持的组合显式拒绝。",
+        "before": [
+          "if currency == USD: return us-bank",
+          "if country == US: return us-bank",
+          "return default-bank"
+        ],
+        "after": [
+          "match (currency, country):",
+          "  (USD, US) -> us-bank",
+          "  (EUR, EU) -> eu-bank",
+          "  (GBP, GB) -> uk-bank",
+          "  _ -> reject"
+        ],
+        "target": {
+          "file": "routing.py",
+          "line": 2,
+          "function": "route_payout"
+        },
+        "invariant": "EUR/DE 走 eu-bank，GBP/GB 走 uk-bank。"
+      },
+      "patch": {
+        "file": "routing.py",
+        "diff": "--- a/routing.py\n+++ b/routing.py\n@@ -1,7 +1,8 @@\n def route_payout(currency, country):\n-    # BUG: non-USD payouts fall through to a default rail with the wrong currency.\n-    if currency == \"USD\":\n+    if currency == \"USD\" and country == \"US\":\n         return \"us-bank\"\n-    if country == \"US\":\n-        return \"us-bank\"\n-    return \"default-bank\"+    if currency == \"EUR\" and country in {\"DE\", \"FR\", \"NL\", \"ES\", \"IT\"}:\n+        return \"eu-bank\"\n+    if currency == \"GBP\" and country == \"GB\":\n+        return \"uk-bank\"\n+    raise ValueError(\"unsupported payout rail\")",
+        "applied": true
+      },
+      "tests": {
+        "case": {
+          "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_route_payout_uses_local_rail",
+          "passed": true,
+          "returncode": 0,
+          "ran": 1,
+          "failures": 0,
+          "errors": 0,
+          "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+          "duration_ms": 98.0
+        },
+        "suite": {
+          "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+          "passed": false,
+          "returncode": 1,
+          "ran": 10,
+          "failures": 1,
+          "errors": 1,
+          "output_tail": "    self.assertEqual(next_settlement_date(date(2026, 11, 6)), date(2026, 11, 9))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: datetime.date(2026, 11, 7) != datetime.date(2026, 11, 9)\n\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nFAILED (failures=1, errors=1)",
+          "duration_ms": 99.5
+        }
+      },
+      "verification": {
+        "source": "ebpf.code_stack.replay",
+        "p99_before_ms": 1100,
+        "p99_after_ms": 173.8,
+        "error_before": 0.1,
+        "error_after": 0.0,
+        "slo_p99_ms": 600,
+        "passed": true,
+        "verdict": "fixed"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "欧元区出款被送到美元通道，资金被退回。",
+        "why": "路由只判断了 USD 或 US，其他组合落入 default。",
+        "fix": "用币种+国家匹配本地通道，未知组合直接拒绝。",
+        "verify": "EUR/DE 走 eu-bank，GBP/GB 走 uk-bank。"
+      },
+      "duration_ms": 1771.9
+    },
+    {
+      "iteration": 9,
+      "case_id": "case-09",
+      "title": "风控超时拖垮支付",
+      "service": "risk-gateway",
+      "severity": "critical",
+      "symptom": "风控供应商超时，整条支付链路 500，所有交易被阻断。",
+      "rca": {
+        "case_id": "case-09",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-02T17:22:32+00:00",
+        "finding": {
+          "file": "risk.py",
+          "line": 2,
+          "function": "fraud_score",
+          "qualname": "fraud_score",
+          "source": "# BUG: provider timeout propagates and blocks every payment in the request.",
+          "score": 0.8341,
+          "self_ms": 75360.9,
+          "self_ratio": 0.9709,
+          "p95_ms": 2990.4,
+          "baseline_p95_ms": 13.6,
+          "latency_delta": 219.4,
+          "error_rate": 0.233,
+          "offcpu_ratio": 0.272,
+          "changed": true,
+          "samples": [
+            "case-09-before-0000",
+            "case-09-before-0001",
+            "case-09-before-0002",
+            "case-09-before-0003",
+            "case-09-before-0004"
+          ],
+          "confidence": 0.899,
+          "reasons": [
+            "leaf frame accounts for 97% of incident exclusive time",
+            "p95 rises 14ms -> 2990ms (219.4x)",
+            "error affinity 23% on this line",
+            "line belongs to a recent change set",
+            "27% of time is off-CPU"
+          ],
+          "evidence": [
+            "case-09-before-0000",
+            "case-09-before-0001",
+            "case-09-before-0002",
+            "case-09-before-0003",
+            "case-09-before-0004"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "risk.py",
+            "line": 2,
+            "function": "fraud_score",
+            "qualname": "fraud_score",
+            "source": "# BUG: provider timeout propagates and blocks every payment in the request.",
+            "score": 0.8341,
+            "self_ms": 75360.9,
+            "self_ratio": 0.9709,
+            "p95_ms": 2990.4,
+            "baseline_p95_ms": 13.6,
+            "latency_delta": 219.4,
+            "error_rate": 0.233,
+            "offcpu_ratio": 0.272,
+            "changed": true,
+            "samples": [
+              "case-09-before-0000",
+              "case-09-before-0001",
+              "case-09-before-0002",
+              "case-09-before-0003",
+              "case-09-before-0004"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "def convert_currency(amount, rate):",
+            "score": 0.0018,
+            "self_ms": 283.7,
+            "self_ratio": 0.0037,
+            "p95_ms": 167.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-09-before-0093",
+              "case-09-before-0107"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "staged = []",
+            "score": 0.0018,
+            "self_ms": 281.1,
+            "self_ratio": 0.0036,
+            "p95_ms": 143.8,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-09-before-0091",
+              "case-09-before-0105"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0014,
+            "self_ms": 221.3,
+            "self_ratio": 0.0029,
+            "p95_ms": 146.9,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-09-before-0092",
+              "case-09-before-0106"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "def settle_batch(fetch_page, page_size=2):",
+            "score": 0.0013,
+            "self_ms": 205.0,
+            "self_ratio": 0.0026,
+            "p95_ms": 119.1,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-09-before-0090",
+              "case-09-before-0104"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 9,
+            "function": "calculate_fee",
+            "qualname": "calculate_fee",
+            "source": "def calculate_fee(amount, tier):",
+            "score": 0.0011,
+            "self_ms": 174.5,
+            "self_ratio": 0.0022,
+            "p95_ms": 174.5,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-09-before-0094"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 32,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0011,
+            "self_ms": 164.5,
+            "self_ratio": 0.0021,
+            "p95_ms": 164.5,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-09-before-0100"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 36,
+            "function": "refund",
+            "qualname": "refund",
+            "source": "def refund(store, charge_id, amount, refund_id):",
+            "score": 0.001,
+            "self_ms": 163.0,
+            "self_ratio": 0.0021,
+            "p95_ms": 163.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-09-before-0097"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": "server.py:8",
+              "file": "server.py",
+              "line": 8,
+              "function": ""
+            },
+            {
+              "id": "risk.py:1",
+              "file": "risk.py",
+              "line": 1,
+              "function": "fraud_score"
+            },
+            {
+              "id": "risk.py:2",
+              "file": "risk.py",
+              "line": 2,
+              "function": "fraud_score"
+            },
+            {
+              "id": "ledger.py:6",
+              "file": "ledger.py",
+              "line": 6,
+              "function": "settle_batch"
+            },
+            {
+              "id": "ledger.py:21",
+              "file": "ledger.py",
+              "line": 21,
+              "function": "append_entries"
+            },
+            {
+              "id": "ledger.py:2",
+              "file": "ledger.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "money.py:4",
+              "file": "money.py",
+              "line": 4,
+              "function": "convert_currency"
+            },
+            {
+              "id": "money.py:9",
+              "file": "money.py",
+              "line": 9,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "money.py:18",
+              "file": "money.py",
+              "line": 18,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "payments.py:21",
+              "file": "payments.py",
+              "line": 21,
+              "function": "retry_charge"
+            },
+            {
+              "id": "payments.py:36",
+              "file": "payments.py",
+              "line": 36,
+              "function": "refund"
+            },
+            {
+              "id": "payments.py:2",
+              "file": "payments.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "payments.py:7",
+              "file": "payments.py",
+              "line": 7,
+              "function": "charge"
+            },
+            {
+              "id": "payments.py:32",
+              "file": "payments.py",
+              "line": 32,
+              "function": "__init__"
+            },
+            {
+              "id": "routing.py:1",
+              "file": "routing.py",
+              "line": 1,
+              "function": "route_payout"
+            },
+            {
+              "id": "scheduling.py:4",
+              "file": "scheduling.py",
+              "line": 4,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "server.py:1",
+              "file": "server.py",
+              "line": 1,
+              "function": "handle_request"
+            }
+          ],
+          "edges": [
+            {
+              "source": "server.py:8",
+              "target": "risk.py:1",
+              "count": 30
+            },
+            {
+              "source": "risk.py:1",
+              "target": "risk.py:2",
+              "count": 30
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:6",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:21",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:2",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:4",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:9",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:18",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:21",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:36",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:2",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:7",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:32",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "routing.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "scheduling.py:4",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "server.py:1",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 risk.py:2 (fraud_score), confidence 90%."
+      },
+      "pseudocode": {
+        "strategy": "超时降级为中间风险分并标记 degraded，恢复后再走完整风控。",
+        "before": [
+          "return provider.score(txn)   # timeout escapes"
+        ],
+        "after": [
+          "try:",
+          "    return {score: provider.score(txn), degraded: false}",
+          "except Timeout:",
+          "    return {score: 50, degraded: true}",
+          "    emit_metric('risk.degraded')"
+        ],
+        "target": {
+          "file": "risk.py",
+          "line": 2,
+          "function": "fraud_score"
+        },
+        "invariant": "供应商超时返回 score=50/degraded=true，支付继续。"
+      },
+      "patch": {
+        "file": "risk.py",
+        "diff": "--- a/risk.py\n+++ b/risk.py\n@@ -1,3 +1,5 @@\n def fraud_score(provider, txn):\n-    # BUG: provider timeout propagates and blocks every payment in the request.\n-    return provider.score(txn)+    try:\n+        return {\"score\": provider.score(txn), \"degraded\": False}\n+    except TimeoutError:\n+        return {\"score\": 50, \"degraded\": True}",
+        "applied": true
+      },
+      "tests": {
+        "case": {
+          "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_fraud_score_degrades_on_timeout",
+          "passed": true,
+          "returncode": 0,
+          "ran": 1,
+          "failures": 0,
+          "errors": 0,
+          "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+          "duration_ms": 116.9
+        },
+        "suite": {
+          "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+          "passed": false,
+          "returncode": 1,
+          "ran": 10,
+          "failures": 1,
+          "errors": 0,
+          "output_tail": "    self.assertEqual(next_settlement_date(date(2026, 11, 6)), date(2026, 11, 9))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: datetime.date(2026, 11, 7) != datetime.date(2026, 11, 9)\n\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nFAILED (failures=1)",
+          "duration_ms": 101.5
+        }
+      },
+      "verification": {
+        "source": "ebpf.code_stack.replay",
+        "p99_before_ms": 2600,
+        "p99_after_ms": 183.9,
+        "error_before": 0.22,
+        "error_after": 0.0,
+        "slo_p99_ms": 700,
+        "passed": true,
+        "verdict": "fixed"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "风控接口一超时，所有支付请求都失败。",
+        "why": "fraud_score 没有超时兜底，异常直接冒泡到支付主流程。",
+        "fix": "捕获超时，返回中间风险分并标记降级，保证支付可用。",
+        "verify": "供应商超时返回 score=50/degraded=true，支付继续。"
+      },
+      "duration_ms": 1993.3
+    },
+    {
+      "iteration": 10,
+      "case_id": "case-10",
+      "title": "结算日落在周末",
+      "service": "settlement-calendar",
+      "severity": "medium",
+      "symptom": "周五的结算被排到周六，清算所不上班导致延迟。",
+      "rca": {
+        "case_id": "case-10",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-02T17:22:32+00:00",
+        "finding": {
+          "file": "scheduling.py",
+          "line": 5,
+          "function": "next_settlement_date",
+          "qualname": "next_settlement_date",
+          "source": "# BUG: weekends are treated as settlement days.",
+          "score": 0.7772,
+          "self_ms": 23815.8,
+          "self_ratio": 0.9174,
+          "p95_ms": 937.2,
+          "baseline_p95_ms": 13.5,
+          "latency_delta": 68.67,
+          "error_rate": 0.033,
+          "offcpu_ratio": 0.269,
+          "changed": true,
+          "samples": [
+            "case-10-before-0000",
+            "case-10-before-0001",
+            "case-10-before-0002",
+            "case-10-before-0003",
+            "case-10-before-0004"
+          ],
+          "confidence": 0.859,
+          "reasons": [
+            "leaf frame accounts for 92% of incident exclusive time",
+            "p95 rises 14ms -> 937ms (68.7x)",
+            "error affinity 3% on this line",
+            "line belongs to a recent change set",
+            "27% of time is off-CPU"
+          ],
+          "evidence": [
+            "case-10-before-0000",
+            "case-10-before-0001",
+            "case-10-before-0002",
+            "case-10-before-0003",
+            "case-10-before-0004"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "scheduling.py",
+            "line": 5,
+            "function": "next_settlement_date",
+            "qualname": "next_settlement_date",
+            "source": "# BUG: weekends are treated as settlement days.",
+            "score": 0.7772,
+            "self_ms": 23815.8,
+            "self_ratio": 0.9174,
+            "p95_ms": 937.2,
+            "baseline_p95_ms": 13.5,
+            "latency_delta": 68.67,
+            "error_rate": 0.033,
+            "offcpu_ratio": 0.269,
+            "changed": true,
+            "samples": [
+              "case-10-before-0000",
+              "case-10-before-0001",
+              "case-10-before-0002",
+              "case-10-before-0003",
+              "case-10-before-0004"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "staged = []",
+            "score": 0.0058,
+            "self_ms": 300.8,
+            "self_ratio": 0.0116,
+            "p95_ms": 151.5,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-10-before-0091",
+              "case-10-before-0105"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.004,
+            "self_ms": 208.7,
+            "self_ratio": 0.008,
+            "p95_ms": 116.2,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-10-before-0092",
+              "case-10-before-0106"
+            ]
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "def convert_currency(amount, rate):",
+            "score": 0.0036,
+            "self_ms": 187.2,
+            "self_ratio": 0.0072,
+            "p95_ms": 96.5,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-10-before-0093",
+              "case-10-before-0107"
+            ]
+          },
+          {
+            "file": "ledger.py",
+            "line": 6,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "def settle_batch(fetch_page, page_size=2):",
+            "score": 0.0035,
+            "self_ms": 181.3,
+            "self_ratio": 0.007,
+            "p95_ms": 96.8,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-10-before-0090",
+              "case-10-before-0104"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 32,
+            "function": "__init__",
+            "qualname": "__init__",
+            "source": "def __init__(self):",
+            "score": 0.0034,
+            "self_ms": 174.1,
+            "self_ratio": 0.0067,
+            "p95_ms": 174.1,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-10-before-0100"
+            ]
+          },
+          {
+            "file": "payments.py",
+            "line": 21,
+            "function": "retry_charge",
+            "qualname": "retry_charge",
+            "source": "def retry_charge(gateway, customer_id, amount, attempts=3):",
+            "score": 0.0031,
+            "self_ms": 161.4,
+            "self_ratio": 0.0062,
+            "p95_ms": 161.4,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-10-before-0096"
+            ]
+          },
+          {
+            "file": "risk.py",
+            "line": 1,
+            "function": "fraud_score",
+            "qualname": "fraud_score",
+            "source": "def fraud_score(provider, txn):",
+            "score": 0.0031,
+            "self_ms": 159.2,
+            "self_ratio": 0.0061,
+            "p95_ms": 159.2,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "case-10-before-0101"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "ledger.py",
+            "line": 21,
+            "function": "append_entries",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "ledger.py",
+            "line": 2,
+            "function": "__init__",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "money.py",
+            "line": 4,
+            "function": "convert_currency",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": "server.py:8",
+              "file": "server.py",
+              "line": 8,
+              "function": ""
+            },
+            {
+              "id": "scheduling.py:4",
+              "file": "scheduling.py",
+              "line": 4,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "scheduling.py:5",
+              "file": "scheduling.py",
+              "line": 5,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "ledger.py:6",
+              "file": "ledger.py",
+              "line": 6,
+              "function": "settle_batch"
+            },
+            {
+              "id": "ledger.py:21",
+              "file": "ledger.py",
+              "line": 21,
+              "function": "append_entries"
+            },
+            {
+              "id": "ledger.py:2",
+              "file": "ledger.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "money.py:4",
+              "file": "money.py",
+              "line": 4,
+              "function": "convert_currency"
+            },
+            {
+              "id": "money.py:9",
+              "file": "money.py",
+              "line": 9,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "money.py:18",
+              "file": "money.py",
+              "line": 18,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "payments.py:21",
+              "file": "payments.py",
+              "line": 21,
+              "function": "retry_charge"
+            },
+            {
+              "id": "payments.py:36",
+              "file": "payments.py",
+              "line": 36,
+              "function": "refund"
+            },
+            {
+              "id": "payments.py:2",
+              "file": "payments.py",
+              "line": 2,
+              "function": "__init__"
+            },
+            {
+              "id": "payments.py:7",
+              "file": "payments.py",
+              "line": 7,
+              "function": "charge"
+            },
+            {
+              "id": "payments.py:32",
+              "file": "payments.py",
+              "line": 32,
+              "function": "__init__"
+            },
+            {
+              "id": "risk.py:1",
+              "file": "risk.py",
+              "line": 1,
+              "function": "fraud_score"
+            },
+            {
+              "id": "routing.py:1",
+              "file": "routing.py",
+              "line": 1,
+              "function": "route_payout"
+            },
+            {
+              "id": "server.py:1",
+              "file": "server.py",
+              "line": 1,
+              "function": "handle_request"
+            }
+          ],
+          "edges": [
+            {
+              "source": "server.py:8",
+              "target": "scheduling.py:4",
+              "count": 30
+            },
+            {
+              "source": "scheduling.py:4",
+              "target": "scheduling.py:5",
+              "count": 30
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:6",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:21",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "ledger.py:2",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:4",
+              "count": 2
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:9",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "money.py:18",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:21",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:36",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:2",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:7",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "payments.py:32",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "risk.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "routing.py:1",
+              "count": 1
+            },
+            {
+              "source": "server.py:8",
+              "target": "server.py:1",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 scheduling.py:5 (next_settlement_date), confidence 86%."
+      },
+      "pseudocode": {
+        "strategy": "结算日只取工作日，自动跳到下一个周一/工作日。",
+        "before": [
+          "return day + 1 day"
+        ],
+        "after": [
+          "candidate = day + 1 day",
+          "while candidate is Saturday/Sunday:",
+          "    candidate += 1 day",
+          "return candidate"
+        ],
+        "target": {
+          "file": "scheduling.py",
+          "line": 5,
+          "function": "next_settlement_date"
+        },
+        "invariant": "2026-11-06 周五结算日变为 2026-11-09 周一。"
+      },
+      "patch": {
+        "file": "scheduling.py",
+        "diff": "--- a/scheduling.py\n+++ b/scheduling.py\n@@ -1,3 +1,5 @@\n def next_settlement_date(day):\n-    # BUG: weekends are treated as settlement days.\n-    return day + timedelta(days=1)+    candidate = day + timedelta(days=1)\n+    while candidate.weekday() >= 5:\n+        candidate += timedelta(days=1)\n+    return candidate",
+        "applied": true
+      },
+      "tests": {
+        "case": {
+          "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_next_settlement_date_skips_weekend",
+          "passed": true,
+          "returncode": 0,
+          "ran": 1,
+          "failures": 0,
+          "errors": 0,
+          "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+          "duration_ms": 94.5
+        },
+        "suite": {
+          "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+          "passed": true,
+          "returncode": 0,
+          "ran": 10,
+          "failures": 0,
+          "errors": 0,
+          "output_tail": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.000s\n\nOK",
+          "duration_ms": 104.1
+        }
+      },
+      "verification": {
+        "source": "ebpf.code_stack.replay",
+        "p99_before_ms": 800,
+        "p99_after_ms": 170.0,
+        "error_before": 0.05,
+        "error_after": 0.0,
+        "slo_p99_ms": 300,
+        "passed": true,
+        "verdict": "fixed"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "周五的结算日被算成周六，资金晚到两天。",
+        "why": "日期计算只加 1 天，没有跳过周末。",
+        "fix": "循环跳过周六/周日，返回下一个工作日。",
+        "verify": "2026-11-06 周五结算日变为 2026-11-09 周一。"
+      },
+      "duration_ms": 2195.2
+    }
+  ],
+  "summary": {
+    "iterations": 10,
+    "fixed": 10,
+    "failed": 0,
+    "success_rate": 1.0,
+    "rca_matches": 10,
+    "before_suite": {
+      "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+      "passed": false,
+      "returncode": 1,
+      "ran": 10,
+      "failures": 9,
+      "errors": 1,
+      "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=9, errors=1)",
+      "duration_ms": 114.2
+    },
+    "final_suite": {
+      "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
+      "passed": true,
+      "returncode": 0,
+      "ran": 10,
+      "failures": 0,
+      "errors": 0,
+      "output_tail": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.000s\n\nOK",
+      "duration_ms": 90.0
+    },
+    "elapsed_ms": 2287.0,
+    "headline": "10/10 个金融故障已从 eBPF 代码栈定位并修复，最终回归 通过。"
+  },
+  "cumulative_diff": "--- a/payments.py\n+++ b/payments.py\n@@ -1,8 +1,8 @@\n def retry_charge(gateway, customer_id, amount, attempts=3):\n-    # BUG: retries are not idempotent, so a timeout can charge the customer twice.\n+    key = f\"charge:{customer_id}:{amount}\"\n     for _ in range(attempts):\n         try:\n-            return gateway.charge(customer_id, amount)\n+            return gateway.charge(customer_id, amount, idempotency_key=key)\n         except TimeoutError:\n             continue\n     raise RuntimeError(\"gateway unavailable\")--- a/money.py\n+++ b/money.py\n@@ -1,3 +1,3 @@\n def convert_currency(amount, rate):\n-    # BUG: float arithmetic loses cents before the ledger records the amount.\n-    return round(float(amount) * float(rate), 2)+    value = Decimal(str(amount)) * Decimal(str(rate))\n+    return float(value.quantize(Decimal(\"0.01\"), rounding=ROUND_HALF_UP))--- a/money.py\n+++ b/money.py\n@@ -1,7 +1,6 @@\n def calculate_fee(amount, tier):\n-    # BUG: tier boundaries are exclusive, so exactly 1000/10000 is overcharged.\n-    if amount > 10000:\n+    if amount >= 10000:\n         return round(amount * 0.005, 2)\n-    if amount > 1000:\n+    if amount >= 1000:\n         return round(amount * 0.01, 2)\n     return round(amount * 0.015, 2)--- a/money.py\n+++ b/money.py\n@@ -1,4 +1,14 @@\n def allocate_amount(total, weights):\n-    # BUG: independent rounding loses or creates cents when splitting money.\n     total_weight = sum(weights)\n-    return [round(total * weight / total_weight, 2) for weight in weights]+    raw = [\n+        Decimal(str(total)) * Decimal(weight) / Decimal(total_weight)\n+        for weight in weights\n+    ]\n+    cents = [\n+        int((value * 100).quantize(Decimal(\"1\"), rounding=ROUND_HALF_UP))\n+        for value in raw\n+    ]\n+    diff = int((Decimal(str(total)) * 100).quantize(Decimal(\"1\"))) - sum(cents)\n+    for index in range(abs(diff)):\n+        cents[index % len(cents)] += 1 if diff > 0 else -1\n+    return [float(Decimal(c) / 100) for c in cents]--- a/payments.py\n+++ b/payments.py\n@@ -1,4 +1,6 @@\n def refund(store, charge_id, amount, refund_id):\n-    # BUG: duplicate refund callbacks append a second refund for the same id.\n+    for item in store.refunds:\n+        if item[\"refund_id\"] == refund_id:\n+            return len(store.refunds)\n     store.refunds.append({\"charge_id\": charge_id, \"amount\": amount, \"refund_id\": refund_id})\n     return len(store.refunds)--- a/ledger.py\n+++ b/ledger.py\n@@ -1,5 +1,4 @@\n def settle_batch(fetch_page, page_size=2):\n-    # BUG: a full page is treated as the last page, so later pages are skipped.\n     page = 0\n     settled = []\n     while True:\n@@ -7,7 +6,7 @@\n         if not rows:\n             break\n         settled.extend(rows)\n-        if len(rows) <= page_size:\n+        if len(rows) < page_size:\n             break\n         page += 1\n     return settled--- a/ledger.py\n+++ b/ledger.py\n@@ -1,6 +1,7 @@\n def append_entries(store, entries):\n-    # BUG: a mid-batch failure leaves the ledger partially written.\n+    staged = []\n     for entry in entries:\n         if entry.get(\"fail\"):\n             raise ValueError(\"ledger write failed\")\n-        store.entries.append(entry)+        staged.append(entry)\n+    store.entries.extend(staged)--- a/routing.py\n+++ b/routing.py\n@@ -1,7 +1,8 @@\n def route_payout(currency, country):\n-    # BUG: non-USD payouts fall through to a default rail with the wrong currency.\n-    if currency == \"USD\":\n+    if currency == \"USD\" and country == \"US\":\n         return \"us-bank\"\n-    if country == \"US\":\n-        return \"us-bank\"\n-    return \"default-bank\"+    if currency == \"EUR\" and country in {\"DE\", \"FR\", \"NL\", \"ES\", \"IT\"}:\n+        return \"eu-bank\"\n+    if currency == \"GBP\" and country == \"GB\":\n+        return \"uk-bank\"\n+    raise ValueError(\"unsupported payout rail\")--- a/risk.py\n+++ b/risk.py\n@@ -1,3 +1,5 @@\n def fraud_score(provider, txn):\n-    # BUG: provider timeout propagates and blocks every payment in the request.\n-    return provider.score(txn)+    try:\n+        return {\"score\": provider.score(txn), \"degraded\": False}\n+    except TimeoutError:\n+        return {\"score\": 50, \"degraded\": True}--- a/scheduling.py\n+++ b/scheduling.py\n@@ -1,3 +1,5 @@\n def next_settlement_date(day):\n-    # BUG: weekends are treated as settlement days.\n-    return day + timedelta(days=1)+    candidate = day + timedelta(days=1)\n+    while candidate.weekday() >= 5:\n+        candidate += timedelta(days=1)\n+    return candidate",
+  "telemetry": {
+    "source": "ebpf.code_stack.replay",
+    "cases": 10,
+    "sample_count": 2160
+  }
+}

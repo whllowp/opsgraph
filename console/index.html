@@ -144,6 +144,7 @@
           <button class="tab" data-tab="blast" role="tab">影响面</button>
           <button class="tab" data-tab="timeline" role="tab">时间线</button>
           <button class="tab" data-tab="agents" role="tab">Agent</button>
+          <button class="tab" data-tab="code" role="tab">代码</button>
           <button class="tab" data-tab="queries" role="tab">查询</button>
         </div>
 
@@ -206,6 +207,21 @@
             <div class="section-head"><span>历史基线</span><em id="baseline-runs">—</em></div>
             <div class="agent-baseline" id="agent-baseline"></div>
             <div class="claim-accuracy" id="claim-accuracy"></div>
+          </section>
+        </div>
+
+        <div class="tab-panel" id="panel-code">
+          <section class="panel-block">
+            <div class="section-head"><span>代码级 RCA / REA</span><em id="code-iterations">—</em></div>
+            <div class="code-summary" id="code-summary"></div>
+            <p class="code-headline" id="code-headline">运行 code-demo 生成代码级闭环数据。</p>
+            <div class="code-list" id="code-list"></div>
+          </section>
+          <section class="panel-block">
+            <div class="section-head"><span>故障复盘</span><em id="code-detail-name">select a case</em></div>
+            <div class="code-detail" id="code-detail">
+              <p class="muted small">点击一个故障，查看 eBPF 证据、伪代码和修复结果。</p>
+            </div>
           </section>
         </div>
 

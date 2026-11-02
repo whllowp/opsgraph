@@ -181,6 +181,35 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 0 if result.get("status") == "ok" else 1
 
 
+def cmd_code_demo(args: argparse.Namespace) -> int:
+    from .code_rca import run_rea_loop, write_rea_artifacts, write_telemetry
+
+    telemetry_path = write_telemetry()
+    result = run_rea_loop(max_iterations=args.iterations)
+    paths = write_rea_artifacts(result, ARTIFACT_DIR)
+    summary = result["summary"]
+    print("=" * 78)
+    print("Code RCA / REA demo complete")
+    print("=" * 78)
+    print(f"Telemetry:       {telemetry_path}")
+    print(f"Iterations:      {summary['iterations']}")
+    print(f"Fixed:           {summary['fixed']}  ({summary['success_rate'] * 100:.0f}%)")
+    print(f"RCA matches:     {summary['rca_matches']}/{summary['iterations']}")
+    print(f"Final suite:     {'PASS' if summary['final_suite']['passed'] else 'FAIL'}")
+    print(f"Headline:        {summary['headline']}")
+    for item in result["iterations"]:
+        finding = item["rca"]["finding"]
+        print(
+            f"  {item['iteration']:>2}. {item['case_id']}  "
+            f"{finding.get('file')}:{finding.get('line')} {finding.get('function')}  "
+            f"{item['verification']['p99_before_ms']}ms -> {item['verification']['p99_after_ms']}ms  "
+            f"{item['status']}"
+        )
+    print(f"Artifacts:       {paths['json']}")
+    print(f"Report:          {paths['report']}")
+    return 0 if summary["failed"] == 0 else 1
+
+
 def cmd_gate(args: argparse.Namespace) -> int:
     from .policy import evaluate_gate
 
@@ -303,6 +332,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("doctor", help="check the UModel connection and graph counts")
     _add_common(p)
     p.set_defaults(func=cmd_doctor)
+
+    p = sub.add_parser("code-demo", help="run eBPF code-level RCA and 10-iteration REA loop")
+    _add_common(p)
+    p.add_argument("--iterations", type=int, default=10)
+    p.set_defaults(func=cmd_code_demo)
 
     p = sub.add_parser("gate", help="evaluate a proposed agent action before execution")
     _add_common(p)

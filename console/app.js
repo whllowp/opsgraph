@@ -4,6 +4,7 @@ const state = {
   data: null,
   selected: null,
   selectedAgent: null,
+  selectedCode: null,
   tab: "diagnosis",
   filters: { calls: true, business: true, agents: true, ops: false, observedOnly: false },
   transform: { x: 0, y: 0, k: 1 },
@@ -125,6 +126,7 @@ function renderAll() {
   renderBlast();
   renderTimeline();
   renderAgents();
+  renderCodeRca();
   renderQueries();
   renderGraph();
 }
@@ -465,6 +467,85 @@ function selectAgent(key) {
   }
   renderAgents();
   renderGraph();
+}
+
+function renderCodeRca() {
+  const data = state.data.code_rca || {};
+  const iterations = data.iterations || [];
+  const summary = data.summary || {};
+  $("#code-iterations").textContent = `${iterations.length} iterations`;
+  if (!iterations.length) {
+    $("#code-summary").innerHTML = "";
+    $("#code-headline").textContent = "运行 `python -m opsgraph code-demo` 生成代码级 RCA/REA 数据。";
+    $("#code-list").innerHTML = "";
+    $("#code-detail").innerHTML = '<p class="muted small">暂无代码级数据。</p>';
+    return;
+  }
+  $("#code-summary").innerHTML = `
+    <div><strong>${summary.fixed ?? 0}</strong><span>fixed</span></div>
+    <div><strong>${Math.round((summary.success_rate || 0) * 100)}%</strong><span>success</span></div>
+    <div><strong>${summary.rca_matches ?? 0}/${summary.iterations ?? 0}</strong><span>rca match</span></div>
+    <div><strong>${summary.final_suite?.passed ? "PASS" : "FAIL"}</strong><span>regression</span></div>`;
+  $("#code-headline").textContent = summary.headline || "";
+  if (!state.selectedCode) state.selectedCode = iterations[0].case_id;
+  $("#code-list").innerHTML = iterations
+    .map((item) => {
+      const finding = item.rca?.finding || {};
+      return `
+        <div class="code-card ${item.case_id === state.selectedCode ? "active" : ""}" data-code="${escapeHtml(item.case_id)}">
+          <div class="code-card-head">
+            <strong>${item.iteration}. ${escapeHtml(item.title)}</strong>
+            <span class="code-card-status ${escapeHtml(item.status)}">${escapeHtml(item.status)}</span>
+          </div>
+          <div class="code-card-meta">
+            <span>${escapeHtml(finding.file || "")}:${finding.line || ""}</span>
+            <span><b>${escapeHtml(finding.function || "")}</b></span>
+            <span>${item.verification?.p99_before_ms} → ${item.verification?.p99_after_ms}ms</span>
+          </div>
+        </div>`;
+    })
+    .join("");
+  $$("#code-list .code-card").forEach((card) => {
+    card.addEventListener("click", () => selectCode(card.dataset.code));
+  });
+  const selected = iterations.find((item) => item.case_id === state.selectedCode) || iterations[0];
+  renderCodeDetail(selected);
+}
+
+function selectCode(caseId) {
+  state.selectedCode = caseId;
+  renderCodeRca();
+}
+
+function renderCodeDetail(item) {
+  const finding = item.rca?.finding || {};
+  const verification = item.verification || {};
+  const test = item.tests?.case || {};
+  $("#code-detail-name").textContent = item.case_id;
+  const before = (item.pseudocode?.before || []).map((line) => escapeHtml(line)).join("\n");
+  const after = (item.pseudocode?.after || []).map((line) => escapeHtml(line)).join("\n");
+  const reasons = (finding.reasons || []).map((reason) => `<li>${escapeHtml(reason)}</li>`).join("");
+  const evidence = (finding.evidence || []).slice(0, 4).map((id) => escapeHtml(id)).join(", ");
+  $("#code-detail").innerHTML = `
+    <h4>${escapeHtml(item.title)}</h4>
+    <p>${escapeHtml(item.symptom)}</p>
+    <div class="code-loc">${escapeHtml(finding.file || "")}:${finding.line || ""} · ${escapeHtml(finding.function || "")} · ${Math.round((finding.confidence || 0) * 100)}% confidence</div>
+    <div class="code-evidence">
+      <b>eBPF 证据</b>
+      <ul>${reasons}</ul>
+      <div>samples: ${evidence || "—"}</div>
+    </div>
+    <div class="code-pseudo">
+      <div><span>伪代码 · 修复前</span><code>${before}</code></div>
+      <div><span>伪代码 · 修复后</span><code>${after}</code></div>
+    </div>
+    <div class="code-verify">
+      <div><b>${test.passed ? "PASS" : "FAIL"}</b>case test</div>
+      <div><b>${verification.p99_after_ms}ms</b>${verification.p99_before_ms}ms → SLO ${verification.slo_p99_ms}ms</div>
+      <div><b>${Math.round((verification.error_after || 0) * 100)}%</b>error after</div>
+    </div>
+    <p><b>小白解释：</b>${escapeHtml(item.novice?.what || "")} ${escapeHtml(item.novice?.why || "")}</p>
+    <p><b>修复：</b>${escapeHtml(item.novice?.fix || "")} ${escapeHtml(item.novice?.verify || "")}</p>`;
 }
 
 function renderQueries() {  const queries = state.data.queries || [];
