@@ -66,7 +66,7 @@ class ConsoleStateTests(unittest.TestCase):
         self.assertEqual(self.state["analysis"]["root_cause"], "checkout-service")
 
     def test_metadata(self):
-        self.assertEqual(self.state["meta"]["model"]["entity_sets"], 16)
+        self.assertEqual(self.state["meta"]["model"]["entity_sets"], 22)
         self.assertEqual(self.state["meta"]["graph_counts"]["entities"], 130)
         self.assertEqual(self.state["queries"][0]["label"], "在 UModel 中定位受害服务")
 

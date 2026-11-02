@@ -181,12 +181,72 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 0 if result.get("status") == "ok" else 1
 
 
+def cmd_code_ingest(args: argparse.Namespace) -> int:
+    from .code_cases import CASE_BY_ID
+    from .code_rca import analyze_code
+    from .ebpf_stacks import load_stacks, parse_collapsed, parse_perf_script
+
+    case = CASE_BY_ID.get(args.case)
+    if not case:
+        print(f"unknown case: {args.case}", file=sys.stderr)
+        return 1
+    text = Path(args.input).read_text(encoding="utf-8", errors="replace")
+    if args.format == "folded":
+        samples = parse_collapsed(text, case_id=case["id"])
+    elif args.format == "perf":
+        samples = parse_perf_script(text, case_id=case["id"])
+    else:
+        samples = load_stacks(args.input, case_id=case["id"])
+    rca = analyze_code(samples, args.repo, case)
+    _print_json(
+        {
+            "source": "ebpf.external",
+            "input": args.input,
+            "case": case["id"],
+            "samples": len(samples),
+            "finding": rca["finding"],
+            "ranking": rca["ranking"][:3],
+        }
+    )
+    return 0
+
+
 def cmd_code_demo(args: argparse.Namespace) -> int:
+    from .code_cases import FINTECH_ROOT
+    from .code_graph import build_code_graph
     from .code_rca import run_rea_loop, write_rea_artifacts, write_telemetry
+    from .model_pack import build_model_pack
+    from .umodel_client import UModelClient
 
     telemetry_path = write_telemetry()
     result = run_rea_loop(max_iterations=args.iterations)
+    snapshot_path = ARTIFACT_DIR / "snapshot.json"
+    snapshot = read_json(snapshot_path) if snapshot_path.exists() else {}
+    entities, relations, graph_summary = build_code_graph(result, FINTECH_ROOT, snapshot)
+    result["code_graph"] = graph_summary
     paths = write_rea_artifacts(result, ARTIFACT_DIR)
+    write_json(
+        ARTIFACT_DIR / "code_graph.json",
+        {"summary": graph_summary, "entities": entities, "relations": relations},
+    )
+    umodel = {"status": "skipped"}
+    if not args.no_umodel:
+        client = UModelClient(args.addr, args.workspace)
+        try:
+            if client.health().get("status") == "ok":
+                build_model_pack(MODEL_DIR)
+                client.import_model(str(MODEL_DIR / "entity_set"))
+                client.import_model(str(MODEL_DIR / "link"))
+                umodel = {
+                    "status": "ok",
+                    "entity_write": client.write_entities(entities),
+                    "relation_write": client.write_relations(relations),
+                }
+            else:
+                umodel = {"status": "umodel-unavailable"}
+        except Exception as exc:
+            umodel = {"status": "skipped", "error": str(exc)}
+    result["umodel"] = umodel
     summary = result["summary"]
     print("=" * 78)
     print("Code RCA / REA demo complete")
@@ -196,6 +256,10 @@ def cmd_code_demo(args: argparse.Namespace) -> int:
     print(f"Fixed:           {summary['fixed']}  ({summary['success_rate'] * 100:.0f}%)")
     print(f"RCA matches:     {summary['rca_matches']}/{summary['iterations']}")
     print(f"Final suite:     {'PASS' if summary['final_suite']['passed'] else 'FAIL'}")
+    print(
+        f"Code graph:      {graph_summary['entities']} entities / {graph_summary['relations']} relations"
+    )
+    print(f"UModel:          {umodel.get('status')}")
     print(f"Headline:        {summary['headline']}")
     for item in result["iterations"]:
         finding = item["rca"]["finding"]
@@ -336,7 +400,16 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("code-demo", help="run eBPF code-level RCA and 10-iteration REA loop")
     _add_common(p)
     p.add_argument("--iterations", type=int, default=10)
+    p.add_argument("--no-umodel", action="store_true", help="skip writing the code graph to UModel")
     p.set_defaults(func=cmd_code_demo)
+
+    p = sub.add_parser("code-ingest", help="ingest real perf/bpftrace stacks into code RCA")
+    _add_common(p)
+    p.add_argument("--input", required=True, help="perf script or folded stack file")
+    p.add_argument("--format", choices=["auto", "folded", "perf"], default="auto")
+    p.add_argument("--case", default="case-01")
+    p.add_argument("--repo", default="demo/fintech")
+    p.set_defaults(func=cmd_code_ingest)
 
     p = sub.add_parser("gate", help="evaluate a proposed agent action before execution")
     _add_common(p)

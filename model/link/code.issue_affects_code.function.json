@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "code.issue_affects_code.function",
+    "domain": "code",
+    "display_name": {
+      "en_us": "Issue affects Function",
+      "zh_cn": "故障影响函数"
+    },
+    "description": {
+      "en_us": "The incident's code-level root cause is this function.",
+      "zh_cn": "事故的代码级根因是该函数。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "code",
+      "kind": "entity_set",
+      "name": "code.issue"
+    },
+    "dest": {
+      "domain": "code",
+      "kind": "entity_set",
+      "name": "code.function"
+    },
+    "entity_link_type": "affects"
+  }
+}

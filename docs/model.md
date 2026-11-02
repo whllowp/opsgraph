@@ -35,6 +35,12 @@ model/
 | `ai.model` | `id` | LLM provider/model、调用数、tokens、成本 |
 | `ai.tool_call` | `id` | 工具决策、输入/输出摘要、目标、状态、重试序号、风险 |
 | `ai.effect` | `id` | file/process/network/llm 效果、目标、风险、置信度 |
+| `code.repository` | `id` | 代码仓库、分支、commit、语言 |
+| `code.file` | `id` | 源码文件、行数、变更状态 |
+| `code.function` | `id` | 函数限定名、起止行 |
+| `code.line` | `id` | eBPF 归因行、独占时间、P95、错误率、RCA 分数 |
+| `code.issue` | `id` | 代码级金融故障、SLO、修复前后指标 |
+| `code.patch` | `id` | 伪代码策略、diff、回归、eBPF 复测 |
 
 所有实体都有：
 
@@ -78,6 +84,14 @@ model/
 | `ai.agent_session_investigates_ops.incident` | agent_session → incident | Agent 排查事件 |
 | `ai.effect_affects_svc.service` | effect → service | 系统效果影响服务 |
 | `ai.agent_session_delegates_to_ai.agent_session` | agent_session → agent_session | Agent 委派子会话 |
+| `code.repository_contains_code.file` | repository → file | 仓库包含文件 |
+| `code.file_contains_code.function` | file → function | 文件包含函数 |
+| `code.function_has_code.line` | function → line | 函数包含采样行 |
+| `code.line_observed_in_code.issue` | line → issue | 代码行出现于故障 |
+| `code.issue_affects_code.function` | issue → function | 故障根因函数 |
+| `code.patch_fixes_code.issue` | patch → issue | 补丁修复故障 |
+| `code.patch_modifies_code.file` | patch → file | 补丁修改文件 |
+| `code.issue_affects_svc.service` | issue → service | 代码故障影响服务 |
 
 ### `calls` 关系字段
 
@@ -114,6 +128,12 @@ AI 实体核心字段：
 - `ai.agent_session`: `session_key`, `model`, `total_tokens`, `cost_usd`, `tool_calls`, `failed_tool_calls`, `retry_loops`, `risk_score`, `friction_score`, `claim_status`, `remediation_status`, `parent_session`, `root_session`, `depth`, `delegation_role`, `child_sessions`, `subtree_tokens`, `subtree_cost_usd`, `subtree_risk_score`
 - `ai.tool_call`: `tool_name`, `status`, `target`, `command`, `retry_index`, `retry_of`, `risk`
 - `ai.effect`: `effect_type`, `action`, `target`, `status`, `risk`, `confidence`
+
+代码域核心字段：
+
+- `code.line`: `file`, `line`, `function`, `source`, `self_ms`, `p95_ms`, `error_rate`, `changed`, `score`, `confidence`
+- `code.issue`: `case_id`, `severity`, `symptom`, `status`, `slo_p99_ms`, `p99_before_ms`, `p99_after_ms`, `error_before`, `error_after`
+- `code.patch`: `case_id`, `file`, `function`, `strategy`, `diff`, `test`, `verification`, `status`
 
 ## ID 规则
 
@@ -167,4 +187,8 @@ umctl query run opsgraph \
 # Agent 会话与风险
 umctl query run opsgraph \
   ".entity with(domain='ai', name='ai.agent_session') | sort risk_score desc | project display_name,total_tokens,cost_usd,risk_level,claim_status"
+
+# 代码级 RCA 故障
+umctl query run opsgraph \
+  ".entity with(domain='code', name='code.issue') | sort p99_before_ms desc | project display_name,case_id,status,p99_before_ms,p99_after_ms"
 ```

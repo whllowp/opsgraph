@@ -77,3 +77,27 @@ def tool_call_id(key: str) -> str:
 
 def effect_id(key: str) -> str:
     return entity_id("ai", "ai.effect", key)
+
+
+def code_repo_id(name: str) -> str:
+    return entity_id("code", "code.repository", name)
+
+
+def code_file_id(path: str) -> str:
+    return entity_id("code", "code.file", path)
+
+
+def code_function_id(file: str, qualname: str) -> str:
+    return entity_id("code", "code.function", f"{file}:{qualname}")
+
+
+def code_line_id(file: str, line: int) -> str:
+    return entity_id("code", "code.line", f"{file}:{line}")
+
+
+def code_issue_id(case_id: str) -> str:
+    return entity_id("code", "code.issue", case_id)
+
+
+def code_patch_id(case_id: str) -> str:
+    return entity_id("code", "code.patch", case_id)

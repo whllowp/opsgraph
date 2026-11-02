@@ -38,7 +38,7 @@ OpsGraph 用 **DeepFlow eBPF** 构建服务事实边，用 **AgentSight eBPF** �
 ┌─────────────────────────────┐   ┌──────────────────────────┐   ┌──────────────────────────┐
 │ 1. Observe                  │   │ 2. Model                 │   │ 3. Materialize           │
 │ DeepFlow + AgentSight       │──►│ UModel pack              │──►│ service graph + AI graph │
-│ normalize / window          │   │ 16 EntitySet / 21 Link   │   │ evidence on edges        │
+│ normalize / window          │   │ 22 EntitySet / 29 Link   │   │ evidence on edges        │
 └─────────────────────────────┘   └──────────────────────────┘   └────────────┬─────────────┘
                                                                               │
                                            ┌──────────────────────────────────▼─────────────┐
@@ -73,9 +73,9 @@ cd E:\ebpf\opsgraph
 
 1. 构建/启动 UModel（`file.memory`，`127.0.0.1:18080`）；
 2. 生成 DeepFlow 形态的服务回放与 AgentSight 形态的 Agent 会话；
-3. 导入 UModel 模型包，写入 130 个实体 / 200 条关系；
+3. 导入 UModel 模型包，写入 130 个服务实体 / 200 条关系；
 4. 运行服务 RCA + Agent 风险/重试环/结论校验，并把角色回写 UModel；
-5. 运行 10 次代码级 RCA → 伪代码 → 补丁 → 金融回归 → eBPF 复测；
+5. 运行 10 次代码级 RCA → 伪代码 → 补丁 → 金融回归 → eBPF 复测，并写入 47 个代码实体 / 76 条代码关系；
 6. 启动控制台 `http://127.0.0.1:18088`。
 
 停止：
@@ -155,7 +155,7 @@ Gate: deny / require_approval / allow
 
 完整报告：`artifacts/incident-report.md`；Agent 专项数据：`artifacts/agents.json`、`artifacts/baseline.json`、`artifacts/policy.json`。
 
-## 图模型：16 个实体集 / 21 条关系
+## 图模型：22 个实体集 / 29 条关系
 
 模型定义在 `model/`，由 `opsgraph/ontology.py` 生成；导入后可在 UModel 里按 `.umodel` 查询。
 
@@ -171,8 +171,10 @@ Gate: deny / require_approval / allow
 | ai | `ai.model` | provider/model、调用数、tokens、成本 |
 | ai | `ai.tool_call` | 工具名、输入/输出摘要、目标、状态、重试序号、风险 |
 | ai | `ai.effect` | 文件/进程/网络/模型效果、目标、风险、置信度 |
+| code | `code.repository` / `code.file` / `code.function` / `code.line` | 仓库、文件、函数、被 eBPF 归因的代码行 |
+| code | `code.issue` / `code.patch` | 代码级故障、伪代码/补丁、回归与 eBPF 复测 |
 
-关系：`contains`、`scheduled_on`、`runs_as`、`exposes`、`calls`、`calls_endpoint`、`depends_on`、`affects`、`targets`，以及 AI 域的 `uses_model`、`invokes`、`produces`、`acts_on`、`investigates`、`delegates_to`。
+关系：`contains`、`scheduled_on`、`runs_as`、`exposes`、`calls`、`calls_endpoint`、`depends_on`、`affects`、`targets`，以及 AI 域的 `uses_model`、`invokes`、`produces`、`acts_on`、`investigates`、`delegates_to`，代码域的 `has_line`、`observed_in`、`fixes`、`modifies`。
 
 **边即证据。** `calls` 关系自带：
 
@@ -359,8 +361,17 @@ python -m opsgraph code-demo
 
 - `data/code_rca/ebpf_samples.json`：eBPF 代码栈回放；
 - `artifacts/code_rca.json`：10 次迭代、RCA、伪代码、测试、复测；
+- `artifacts/code_graph.json`：47 个代码实体 / 76 条代码关系（写入 UModel）；
 - `artifacts/code-rca-report.md`：面向人的报告；
 - `artifacts/code-fixes.patch`：累计补丁。
+
+真实 eBPF 栈可先导出再接入：
+
+```bash
+sudo perf record -F 99 -g --call-graph dwarf -p <pid> -- sleep 30
+sudo perf script > perf-stacks.txt
+python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
+```
 
 详见 [代码级 RCA / REA](docs/code-rca.md)。
 
@@ -396,6 +407,7 @@ python -m opsgraph demo --addr http://127.0.0.1:18080   # 全链路（含 AgentS
 python -m opsgraph demo --agentsight agentsight_snapshot.json
 python -m opsgraph demo --no-agents                     # 只跑服务图
 python -m opsgraph code-demo                            # 10 次代码 RCA/REA 闭环
+python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
 python -m opsgraph analyze --source umodel              # 从 UModel 重新读图分析
 python -m opsgraph rca                                  # 打印根因排序
 python -m opsgraph gate --session sre-claude-01 --tool kubectl_apply \
@@ -404,7 +416,7 @@ python -m opsgraph baseline                             # 历史基线 + claim a
 python -m opsgraph serve --port 18088                   # 控制台
 python -m opsgraph doctor                               # UModel 连通性/计数
 python -m opsgraph query ".entity with(domain='svc', name='svc.service') | limit 5"
-python -m unittest discover -s tests -v                 # 44 个单测
+python -m unittest discover -s tests -v                 # 50 个单测
 ```
 
 ## UModel 查询示例
@@ -437,7 +449,9 @@ opsgraph/
 │   ├── history.py         # 历史基线与 claim accuracy
 │   ├── code_cases.py      # 10 个金融故障、补丁与伪代码
 │   ├── code_rca.py        # eBPF 代码栈 RCA + REA 闭环
-│   ├── ontology.py        # 图契约：16 EntitySet + 21 Link
+│   ├── code_graph.py      # 代码域 -> UModel 实体/关系
+│   ├── ebpf_stacks.py     # perf/bpftrace 栈文本接入
+│   ├── ontology.py        # 图契约：22 EntitySet + 29 Link
 │   ├── model_pack.py      # 生成 UModel 模型包
 │   ├── materialize.py     # 观测 -> 实体/关系（证据边）
 │   ├── analysis.py        # RCA / 影响面 / 漂移 / SPOF
@@ -486,7 +500,8 @@ python -m opsgraph doctor
 python -m opsgraph code-demo
 ```
 
-输出应为：`10/10 fixed`、`10/10 RCA matches`、`final suite PASS`；详细结果在 `artifacts/code_rca.json`。
+输出应为：`10/10 fixed`、`10/10 RCA matches`、`final suite PASS`；详细结果在 `artifacts/code_rca.json`。  
+UModel 代码图：`22 EntitySet / 29 Link`，`47` 个代码实体 / `76` 条代码关系。
 
 ## 设计边界
 
@@ -497,8 +512,9 @@ python -m opsgraph code-demo
 - **Agent 结论不是事实。** `claim_status` 只表示 Agent 声称与图 RCA 是否一致；`remediation_status=pending_validation` 表示行动尚未被 eBPF 指标验证。
 - **Gate 当前是建议性的。** `require_approval`/`deny` 不会劫持 Agent 的 syscall；要强制执行必须接 tool proxy、MCP server 或 admission controller。
 - **历史基线是合成数据。** `data/history/agent_history.json` 仅用于离线演示；生产应写入真实根会话摘要并回填图 RCA 结果。
-- **代码栈当前是回放。** `data/code_rca/ebpf_samples.json` 是可复现的 eBPF 用户态栈样本；真实采集需要 Linux perf/bpftrace/DWARF。
+- **代码栈当前是回放。** `data/code_rca/ebpf_samples.json` 是可复现的 eBPF 用户态栈样本；真实采集需要 Linux perf/bpftrace/DWARF，可用 `code-ingest` 接入。
 - **REA 不自动改生产。** 补丁只在临时 worktree 应用并跑测试；高风险资金改动仍需门禁与人工审批。
+- **代码图只物化命中的位置。** 当前 10 个故障对应 6 个文件、10 个函数、10 行、10 个补丁，不是整仓 AST 图。
 - **敏感数据默认不图化。** AgentSight 快照可能含 prompt、路径、命令；写入图的是摘要与派生风险，原始快照不应提交到 Git。
 - **不是生产级采集器。** 生产化需要处理多集群、采样、卡片性、权限、长期存储与告警闭环；这些在 [架构文档](docs/architecture.md) 的「下一步」中列出。
 

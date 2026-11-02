@@ -1,0 +1,124 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "code.patch",
+    "domain": "code",
+    "display_name": {
+      "en_us": "Code Patch",
+      "zh_cn": "代码补丁"
+    },
+    "description": {
+      "en_us": "A pseudocode-guided patch, its financial regression, and eBPF verification.",
+      "zh_cn": "由伪代码驱动的补丁，及其金融回归与 eBPF 复测。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Patch",
+          "zh_cn": "补丁"
+        }
+      },
+      {
+        "name": "case_id",
+        "type": "string",
+        "display_name": {
+          "en_us": "Case ID",
+          "zh_cn": "案例 ID"
+        }
+      },
+      {
+        "name": "file",
+        "type": "string",
+        "display_name": {
+          "en_us": "File",
+          "zh_cn": "文件"
+        }
+      },
+      {
+        "name": "function",
+        "type": "string",
+        "display_name": {
+          "en_us": "Function",
+          "zh_cn": "函数"
+        }
+      },
+      {
+        "name": "strategy",
+        "type": "string",
+        "display_name": {
+          "en_us": "Strategy",
+          "zh_cn": "修复策略"
+        }
+      },
+      {
+        "name": "diff",
+        "type": "string",
+        "display_name": {
+          "en_us": "Diff",
+          "zh_cn": "差异"
+        }
+      },
+      {
+        "name": "test",
+        "type": "string",
+        "display_name": {
+          "en_us": "Test",
+          "zh_cn": "回归测试"
+        }
+      },
+      {
+        "name": "verification",
+        "type": "string",
+        "display_name": {
+          "en_us": "Verification",
+          "zh_cn": "eBPF 复测"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "case_id",
+      "file",
+      "function",
+      "strategy",
+      "diff",
+      "test",
+      "verification",
+      "status"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

@@ -142,8 +142,45 @@ python -m opsgraph code-demo --iterations 10
 
 - `data/code_rca/ebpf_samples.json`：eBPF 代码栈回放；
 - `artifacts/code_rca.json`：10 次迭代、RCA、伪代码、测试、复测；
+- `artifacts/code_graph.json`：47 个代码实体 / 76 条代码关系；
 - `artifacts/code-rca-report.md`：人类可读报告；
 - `artifacts/code-fixes.patch`：累计补丁。
+
+## 6.1 UModel 代码图
+
+`code-demo` 会把代码域写入 UModel：
+
+```text
+code.repository --contains--> code.file --contains--> code.function
+code.function --has_line--> code.line
+code.line --observed_in--> code.issue
+code.patch --fixes--> code.issue
+code.patch --modifies--> code.file
+code.issue --affects--> code.function
+code.issue --affects--> svc.service
+```
+
+规模：`22 EntitySet / 29 Link`，`47` 个代码实体 / `76` 条关系。  
+控制台「代码」tab 会显示 `UModel code graph · 47 entities / 76 relations`，查询 tab 可直接查 `code.issue`。
+
+## 6.2 真实 eBPF 栈接入
+
+```bash
+# Linux: 99Hz 用户态栈 + DWARF
+sudo perf record -F 99 -g --call-graph dwarf -p <pid> -- sleep 30
+sudo perf script > perf-stacks.txt
+
+# 导入并做代码行 RCA
+python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
+```
+
+也支持 folded stacks：
+
+```bash
+python -m opsgraph code-ingest --input stacks.folded --format folded --case case-01
+```
+
+`code-ingest` 只做 RCA，不自动改代码；它输出根因行、置信度、Top 3 代码行，供 REA 或人工继续。
 
 控制台：`http://127.0.0.1:18088/?tab=code`
 

@@ -1,0 +1,97 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "code.repository",
+    "domain": "code",
+    "display_name": {
+      "en_us": "Code Repository",
+      "zh_cn": "代码仓库"
+    },
+    "description": {
+      "en_us": "A source repository observed by the code-level RCA pipeline.",
+      "zh_cn": "代码级 RCA 流水线观测到的源码仓库。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Repository",
+          "zh_cn": "仓库"
+        }
+      },
+      {
+        "name": "repo_path",
+        "type": "string",
+        "display_name": {
+          "en_us": "Repository Path",
+          "zh_cn": "仓库路径"
+        }
+      },
+      {
+        "name": "branch",
+        "type": "string",
+        "display_name": {
+          "en_us": "Branch",
+          "zh_cn": "分支"
+        }
+      },
+      {
+        "name": "commit",
+        "type": "string",
+        "display_name": {
+          "en_us": "Commit",
+          "zh_cn": "提交"
+        }
+      },
+      {
+        "name": "language",
+        "type": "string",
+        "display_name": {
+          "en_us": "Language",
+          "zh_cn": "语言"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "repo_path",
+      "branch",
+      "commit",
+      "language",
+      "status"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

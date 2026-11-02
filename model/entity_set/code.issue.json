@@ -1,0 +1,142 @@
+{
+  "kind": "entity_set",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "code.issue",
+    "domain": "code",
+    "display_name": {
+      "en_us": "Code Issue",
+      "zh_cn": "代码级故障"
+    },
+    "description": {
+      "en_us": "A financial incident localized to code and closed by REA.",
+      "zh_cn": "定位到代码并由 REA 闭环的金融故障。"
+    }
+  },
+  "spec": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "display_name": {
+          "en_us": "ID",
+          "zh_cn": "ID"
+        }
+      },
+      {
+        "name": "display_name",
+        "type": "string",
+        "display_name": {
+          "en_us": "Code Issue",
+          "zh_cn": "代码故障"
+        }
+      },
+      {
+        "name": "case_id",
+        "type": "string",
+        "display_name": {
+          "en_us": "Case ID",
+          "zh_cn": "案例 ID"
+        }
+      },
+      {
+        "name": "severity",
+        "type": "string",
+        "display_name": {
+          "en_us": "Severity",
+          "zh_cn": "严重级别"
+        }
+      },
+      {
+        "name": "symptom",
+        "type": "string",
+        "display_name": {
+          "en_us": "Symptom",
+          "zh_cn": "现象"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "display_name": {
+          "en_us": "Status",
+          "zh_cn": "状态"
+        }
+      },
+      {
+        "name": "slo_p99_ms",
+        "type": "float",
+        "display_name": {
+          "en_us": "SLO P99 (ms)",
+          "zh_cn": "SLO P99（ms）"
+        }
+      },
+      {
+        "name": "p99_before_ms",
+        "type": "float",
+        "display_name": {
+          "en_us": "P99 Before (ms)",
+          "zh_cn": "修复前 P99（ms）"
+        }
+      },
+      {
+        "name": "p99_after_ms",
+        "type": "float",
+        "display_name": {
+          "en_us": "P99 After (ms)",
+          "zh_cn": "修复后 P99（ms）"
+        }
+      },
+      {
+        "name": "error_before",
+        "type": "float",
+        "display_name": {
+          "en_us": "Error Rate Before",
+          "zh_cn": "修复前错误率"
+        }
+      },
+      {
+        "name": "error_after",
+        "type": "float",
+        "display_name": {
+          "en_us": "Error Rate After",
+          "zh_cn": "修复后错误率"
+        }
+      },
+      {
+        "name": "confidence",
+        "type": "float",
+        "display_name": {
+          "en_us": "Confidence",
+          "zh_cn": "置信度"
+        }
+      }
+    ],
+    "primary_key_fields": [
+      "id"
+    ],
+    "id_generator": "id",
+    "name_fields": [
+      "display_name"
+    ],
+    "ordered_fields": [
+      "id",
+      "display_name",
+      "case_id",
+      "severity",
+      "symptom",
+      "status",
+      "slo_p99_ms",
+      "p99_before_ms",
+      "p99_after_ms",
+      "error_before",
+      "error_after",
+      "confidence"
+    ],
+    "first_observed_time_field": "__first_observed_time__",
+    "last_observed_time_field": "__last_observed_time__"
+  }
+}

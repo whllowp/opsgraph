@@ -175,6 +175,7 @@ def build_console_state(
     baseline: dict[str, Any] | None = None,
     policy: list[dict[str, Any]] | None = None,
     code_rca: dict[str, Any] | None = None,
+    code_graph: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     visible_types = {
         "svc.service",
@@ -262,6 +263,10 @@ def build_console_state(
             "label": "读取 AgentSight 的 Agent 会话与风险",
             "spl": ".entity with(domain='ai', name='ai.agent_session') | sort risk_score desc | project display_name,model,total_tokens,cost_usd,risk_score,claim_status,remediation_status",
         },
+        {
+            "label": "读取 UModel 代码级 RCA 图",
+            "spl": ".entity with(domain='code', name='code.issue') | sort p99_before_ms desc | project display_name,case_id,status,p99_before_ms,p99_after_ms",
+        },
     ]
     return {
         "meta": {
@@ -274,6 +279,7 @@ def build_console_state(
             "umodel": umodel_info or {"addr": UMODEL_ADDR, "connected": False},
             "source": "UModel Query Service + DeepFlow l7_flow_log + AgentSight",
             "agents": (agents or {}).get("summary", {}),
+            "code_graph": (code_graph or {}).get("summary", {}),
         },
         "nodes": nodes,
         "edges": edges,
@@ -282,6 +288,7 @@ def build_console_state(
         "baseline": baseline or {},
         "policy": policy or [],
         "code_rca": code_rca or {},
+        "code_graph": code_graph or {},
         "incident": next(
             (
                 item
@@ -303,6 +310,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     baseline: dict[str, Any] | None = None
     policy: list[dict[str, Any]] | None = None
     code_rca: dict[str, Any] | None = None
+    code_graph: dict[str, Any] | None = None
     umodel_info: dict[str, Any] = {"addr": UMODEL_ADDR, "connected": False}
     lock = threading.Lock()
 
@@ -335,6 +343,8 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             cls.policy = read_json(policy_path) if policy_path.exists() else []
             code_path = ARTIFACT_DIR / "code_rca.json"
             cls.code_rca = read_json(code_path) if code_path.exists() else {}
+            code_graph_path = ARTIFACT_DIR / "code_graph.json"
+            cls.code_graph = read_json(code_graph_path) if code_graph_path.exists() else {}
         return True
 
     def _state(self) -> dict[str, Any]:
@@ -348,6 +358,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             cls.baseline,
             cls.policy,
             cls.code_rca,
+            cls.code_graph,
         )
 
     def do_GET(self) -> None:

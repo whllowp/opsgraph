@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "code.patch_fixes_code.issue",
+    "domain": "code",
+    "display_name": {
+      "en_us": "Patch fixes Issue",
+      "zh_cn": "补丁修复故障"
+    },
+    "description": {
+      "en_us": "A REA patch whose regression and eBPF verification passed.",
+      "zh_cn": "通过回归与 eBPF 复测的 REA 补丁。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "code",
+      "kind": "entity_set",
+      "name": "code.patch"
+    },
+    "dest": {
+      "domain": "code",
+      "kind": "entity_set",
+      "name": "code.issue"
+    },
+    "entity_link_type": "fixes"
+  }
+}

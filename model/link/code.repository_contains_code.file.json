@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "code.repository_contains_code.file",
+    "domain": "code",
+    "display_name": {
+      "en_us": "Repository contains File",
+      "zh_cn": "仓库包含文件"
+    },
+    "description": {
+      "en_us": "A source file belongs to a repository.",
+      "zh_cn": "源码文件属于某个代码仓库。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "code",
+      "kind": "entity_set",
+      "name": "code.repository"
+    },
+    "dest": {
+      "domain": "code",
+      "kind": "entity_set",
+      "name": "code.file"
+    },
+    "entity_link_type": "contains"
+  }
+}

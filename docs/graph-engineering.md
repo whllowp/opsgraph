@@ -21,7 +21,7 @@
 
 ## 2. 图契约
 
-`opsgraph/ontology.py` 定义 16 个 EntitySet 与 21 条 Link。约束：
+`opsgraph/ontology.py` 定义 22 个 EntitySet 与 29 条 Link。约束：
 
 - 一个服务必须能通过 `runs_as` 落到 workload，再通过 `contains`/`scheduled_on` 落到 pod/node。
 - 一条调用必须用 `calls`，端点级证据用 `calls_endpoint`。

@@ -4,7 +4,7 @@ OpsGraph is a Python reference implementation of eBPF-observed operational graph
 
 ## Project In One Minute
 
-- `opsgraph/ontology.py` — the graph contract (16 EntitySets, 21 Links, incl. AI domain + delegation).
+- `opsgraph/ontology.py` — the graph contract (22 EntitySets, 29 Links, incl. AI + code domains).
 - `opsgraph/agentsight.py` — AgentSight snapshot/SQLite adapter.
 - `opsgraph/agent_graph.py` — agent session/tool/effect graph + delegation tree + AI graph operators.
 - `opsgraph/policy.py` — pre-execution allow/require_approval/deny gate.
@@ -24,6 +24,7 @@ python -m opsgraph demo --addr http://127.0.0.1:18080
 python -m opsgraph gate --session sre-claude-01 --tool kubectl_apply --target "kubectl apply -f checkout-retry-policy.yaml -n shop"
 python -m opsgraph baseline
 python -m opsgraph code-demo
+python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
 python -m opsgraph analyze --source umodel
 python -m opsgraph serve --port 18088
 python -m unittest discover -s tests -v

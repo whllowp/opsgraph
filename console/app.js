@@ -487,6 +487,10 @@ function renderCodeRca() {
     <div><strong>${summary.rca_matches ?? 0}/${summary.iterations ?? 0}</strong><span>rca match</span></div>
     <div><strong>${summary.final_suite?.passed ? "PASS" : "FAIL"}</strong><span>regression</span></div>`;
   $("#code-headline").textContent = summary.headline || "";
+  const codeGraph = state.data.code_graph?.summary || {};
+  $("#code-graph-line").textContent = codeGraph.entities
+    ? `UModel code graph · ${codeGraph.entities} entities / ${codeGraph.relations} relations · ${codeGraph.files} files / ${codeGraph.functions} functions`
+    : "";
   if (!state.selectedCode) state.selectedCode = iterations[0].case_id;
   $("#code-list").innerHTML = iterations
     .map((item) => {
