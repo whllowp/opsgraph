@@ -37,11 +37,26 @@ eBPF code stack -> 代码行 RCA -> 伪代码方案 -> 补丁 -> 金融回归 ->
 
 ```bash
 # Linux: 99Hz 用户态栈采样，带 PID/符号
-sudo perf record -F 99 -g -p <pid> -- sleep 30
-sudo perf script > perf-stacks.txt
+sudo perf record -F 99 -g --call-graph dwarf -p <pid> -- sleep 30
+sudo perf script -i perf.data -F comm,pid,period,ip,sym,dso,srcline > perf-stacks.txt
 
 # 或 bpftrace uprobe/uretprobe 聚合
 sudo bpftrace -e 'profile:hz:99 /pid == <pid>/ { @[ustack] = count(); }'
+```
+
+本仓库已包含一份真实 `perf script` 样本 `data/code_rca/perf-sample.txt`：在 WSL Ubuntu 用 `perf` 采集一个 C 微服务，输出包含 `retry_charge` + `fintech_demo.c:5`。`ebpf_stacks.py` 会把 perf 的 leaf-first 栈反转成 root→leaf，并把它映射到：
+
+```text
+fintech_demo.c:5  retry_charge  total += amount * 0.01;
+```
+
+`code-ingest` 可复现：
+
+```bash
+python -m opsgraph code-ingest \
+  --input data/code_rca/perf-sample.txt \
+  --case case-01 \
+  --repo demo/fintech
 ```
 
 生产接入需要：

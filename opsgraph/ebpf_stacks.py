@@ -16,8 +16,9 @@ import re
 from pathlib import Path
 from typing import Any
 
-SOURCE_RE = re.compile(r"([\w./\\-]+\.(?:py|go|java|js|ts)):(\d+)")
+SOURCE_RE = re.compile(r"([\w./\\-]+\.(?:py|go|java|js|ts|c|cc|cpp|h|rs)):(\d+)")
 FRAME_FILE_RE = re.compile(r"^(.*?)\s*\(([^()]+):(\d+)\)$")
+ADDRESS_FRAME_RE = re.compile(r"^([0-9a-f]{6,})\s+(\S+)(?:\s+\(([^)]*)\))?$")
 
 
 def _frame(symbol: str, file: str = "", line: int = 0) -> dict[str, Any]:
@@ -103,21 +104,35 @@ def parse_perf_script(
         for line in lines[1:]:
             stripped = line.strip()
             source = SOURCE_RE.search(stripped)
-            if source and frames:
-                frames[-1]["file"] = source.group(1)
-                frames[-1]["line"] = int(source.group(2))
-                continue
             if source:
-                frames.append(_frame(source.group(1), source.group(1), int(source.group(2))))
+                source_file = source.group(1)
+                if source_file.startswith("??"):
+                    continue
+                if frames:
+                    frames[-1]["file"] = source_file
+                    frames[-1]["line"] = int(source.group(2))
+                else:
+                    frames.append(_frame(source_file, source_file, int(source.group(2))))
                 continue
-            if re.match(r"^[0-9a-f]{8,}\s", stripped) or re.match(r"^[\w.$@<>+~-]+\+0x", stripped):
-                symbol = stripped.split()[0]
-                frames.append(_frame(symbol))
+            address = ADDRESS_FRAME_RE.match(stripped)
+            if address:
+                symbol = address.group(2).split("+0x", 1)[0]
+                if symbol and symbol not in {"[unknown]", "[NULL]"}:
+                    frames.append(_frame(symbol))
                 continue
-            if stripped and not stripped.startswith("["):
+            if re.match(r"^[\w.$@<>+~-]+\+0x", stripped):
+                frames.append(_frame(stripped.split("+0x", 1)[0]))
+                continue
+            if stripped in {"??:0", "??"}:
+                continue
+            if re.match(r"^[^\s]+\.so(?:\.\d+)?\[[0-9a-f]+\]$", stripped):
+                continue
+            if stripped and not stripped.startswith("[") and not stripped.startswith("("):
                 frames.append(_frame(stripped))
         if not frames:
             continue
+        # perf script prints leaf-first; OpsGraph's canonical order is root -> leaf.
+        frames.reverse()
         samples.append(
             {
                 "id": f"{case_id}-perf-{block_index:04d}",

@@ -40,6 +40,10 @@ SCHEMA_VERSION = 1
 BASELINE_SAMPLES = 60
 INCIDENT_SAMPLES = 30
 NOISE_SAMPLES = 18
+C_FUNCTION_RE = re.compile(
+    r"^\s*(?:__attribute__\s*\(\([^)]*\)\)\s*)?(?:static\s+)?(?:inline\s+)?"
+    r"[\w*\s]+?\b(\w+)\s*\([^;]*\)\s*\{"
+)
 
 
 def _now_iso() -> str:
@@ -55,29 +59,65 @@ class CodeIndex:
         self._scan()
 
     def _scan(self) -> None:
-        for path in sorted(self.root.rglob("*.py")):
+        for path in sorted(self.root.rglob("*")):
             if "__pycache__" in path.parts or "tests" in path.parts:
                 continue
-            relative = path.relative_to(self.root).as_posix()
-            lines = path.read_text(encoding="utf-8").splitlines()
-            self.files[relative] = lines
-            try:
-                tree = ast.parse("\n".join(lines))
-            except SyntaxError:
+            if path.suffix not in {".py", ".c", ".h"}:
                 continue
-            for node in ast.walk(tree):
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    item = {
-                        "file": relative,
-                        "name": node.name,
-                        "line": node.lineno,
-                        "end_line": getattr(node, "end_lineno", node.lineno),
-                        "qualname": node.name,
-                    }
-                    self.functions.append(item)
-                    self._by_file[relative].append(item)
+            relative = path.relative_to(self.root).as_posix()
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+            self.files[relative] = lines
+            if path.suffix == ".py":
+                self._scan_python(relative, lines)
+            else:
+                self._scan_c(relative, lines)
         for items in self._by_file.values():
             items.sort(key=lambda item: (item["line"], item["end_line"]))
+
+    def _scan_python(self, relative: str, lines: list[str]) -> None:
+        try:
+            tree = ast.parse("\n".join(lines))
+        except SyntaxError:
+            return
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                item = {
+                    "file": relative,
+                    "name": node.name,
+                    "line": node.lineno,
+                    "end_line": getattr(node, "end_lineno", node.lineno),
+                    "qualname": node.name,
+                }
+                self.functions.append(item)
+                self._by_file[relative].append(item)
+
+    def _scan_c(self, relative: str, lines: list[str]) -> None:
+        current: dict[str, Any] | None = None
+        depth = 0
+        for number, line in enumerate(lines, start=1):
+            if current is None:
+                match = C_FUNCTION_RE.match(line)
+                if not match or "{" not in line:
+                    continue
+                depth = line.count("{") - line.count("}")
+                current = {
+                    "file": relative,
+                    "name": match.group(1),
+                    "line": number,
+                    "end_line": number,
+                    "qualname": match.group(1),
+                }
+                if depth <= 0:
+                    self.functions.append(current)
+                    self._by_file[relative].append(current)
+                    current = None
+                continue
+            depth += line.count("{") - line.count("}")
+            current["end_line"] = number
+            if depth <= 0:
+                self.functions.append(current)
+                self._by_file[relative].append(current)
+                current = None
 
     def function_at(self, file: str, line: int) -> dict[str, Any]:
         for item in self._by_file.get(file, []):

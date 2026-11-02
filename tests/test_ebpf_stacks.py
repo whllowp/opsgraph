@@ -2,6 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from opsgraph.code_cases import CASES, FINTECH_ROOT
+from opsgraph.code_rca import analyze_code
 from opsgraph.ebpf_stacks import load_stacks, parse_collapsed, parse_perf_script
 
 
@@ -18,9 +20,9 @@ class EBPFStackTests(unittest.TestCase):
 
     def test_perf_script(self):
         text = """python 1234 [001] 1.000: 100000 cycles:
-    ffffffff81000000 native_write_msr+0x10
     PyEval_EvalFrameDefault+0x20
         payments.py:22
+    ffffffff81000000 native_write_msr+0x10
 
 """
         samples = parse_perf_script(text)
@@ -36,6 +38,23 @@ class EBPFStackTests(unittest.TestCase):
             samples = load_stacks(path)
             self.assertEqual(len(samples), 7)
             self.assertEqual(samples[0]["stack"][-1]["file"], "b.py")
+
+    def test_real_perf_fixture(self):
+        path = Path(__file__).resolve().parent.parent / "data" / "code_rca" / "perf-sample.txt"
+        samples = load_stacks(path)
+        self.assertEqual(len(samples), 2)
+        self.assertEqual(samples[0]["pid"], 952)
+        self.assertEqual(samples[0]["stack"][-1]["symbol"], "retry_charge")
+        self.assertEqual(samples[0]["stack"][-1]["file"], "fintech_demo.c")
+        self.assertEqual(samples[0]["stack"][-1]["line"], 5)
+
+    def test_real_perf_stack_maps_to_code_rca(self):
+        path = Path(__file__).resolve().parent.parent / "data" / "code_rca" / "perf-sample.txt"
+        samples = load_stacks(path)
+        rca = analyze_code(samples, FINTECH_ROOT, CASES[0])
+        self.assertEqual(rca["finding"]["file"], "fintech_demo.c")
+        self.assertEqual(rca["finding"]["function"], "retry_charge")
+        self.assertEqual(rca["finding"]["line"], 5)
 
 
 if __name__ == "__main__":

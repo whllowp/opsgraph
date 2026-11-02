@@ -44,7 +44,7 @@ node --check console/app.js
 - Do not commit raw AgentSight snapshots; they contain prompts, paths, and commands. Commit only derived `artifacts/agents.json`.
 - Gate decisions are advisory: do not claim the gate enforces syscalls unless a tool proxy/admission layer is actually wired.
 - Baseline history is synthetic in the demo; never present it as production telemetry.
-- Code-RCA eBPF stacks are replay data; do not claim live kernel capture without a Linux perf/bpftrace run.
+- Code-RCA 10-iteration demo uses replay data; `data/code_rca/perf-sample.txt` is a real perf calibration, not a live end-to-end capture. Do not claim live kernel capture without a Linux perf/bpftrace run.
 - REA applies patches only in a temp worktree; never auto-commit or auto-deploy a generated fix.
 - Rejected candidate patches must stay visible in `candidates`; do not silently discard failed attempts.
 - Update `docs/en`-style paired docs only if the project gains bilingual docs; currently Chinese README plus English code comments is intentional.

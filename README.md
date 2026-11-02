@@ -372,9 +372,11 @@ python -m opsgraph code-demo
 
 ```bash
 sudo perf record -F 99 -g --call-graph dwarf -p <pid> -- sleep 30
-sudo perf script > perf-stacks.txt
+sudo perf script -i perf.data -F comm,pid,period,ip,sym,dso,srcline > perf-stacks.txt
 python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
 ```
+
+仓库内已有真实 `perf script` 样本 `data/code_rca/perf-sample.txt`，可映射到 `fintech_demo.c:5 retry_charge`；`code-ingest` 会把 perf 的 leaf-first 栈反转成 root→leaf，并支持 `.py/.c/.go/.rs` 等源码后缀。
 
 详见 [代码级 RCA / REA](docs/code-rca.md)。
 
@@ -419,7 +421,7 @@ python -m opsgraph baseline                             # 历史基线 + claim a
 python -m opsgraph serve --port 18088                   # 控制台
 python -m opsgraph doctor                               # UModel 连通性/计数
 python -m opsgraph query ".entity with(domain='svc', name='svc.service') | limit 5"
-python -m unittest discover -s tests -v                 # 50 个单测
+python -m unittest discover -s tests -v                 # 52 个单测
 ```
 
 ## UModel 查询示例
@@ -516,7 +518,7 @@ UModel 代码图：`22 EntitySet / 29 Link`，`47` 个代码实体 / `76` 条代
 - **Agent 结论不是事实。** `claim_status` 只表示 Agent 声称与图 RCA 是否一致；`remediation_status=pending_validation` 表示行动尚未被 eBPF 指标验证。
 - **Gate 当前是建议性的。** `require_approval`/`deny` 不会劫持 Agent 的 syscall；要强制执行必须接 tool proxy、MCP server 或 admission controller。
 - **历史基线是合成数据。** `data/history/agent_history.json` 仅用于离线演示；生产应写入真实根会话摘要并回填图 RCA 结果。
-- **代码栈当前是回放。** `data/code_rca/ebpf_samples.json` 是可复现的 eBPF 用户态栈样本；真实采集需要 Linux perf/bpftrace/DWARF，可用 `code-ingest` 接入。
+- **代码栈有真实 perf 校准。** `data/code_rca/perf-sample.txt` 来自 WSL Linux `perf` 的 C 微服务采样，已验证可映射到 `fintech_demo.c:5`；10 次 REA 迭代仍使用可复现回放，以便离线稳定运行。
 - **REA 不自动改生产。** 补丁只在临时 worktree 应用并跑测试；高风险资金改动仍需门禁与人工审批。
 - **代码图只物化命中的位置。** 当前 10 个故障对应 6 个文件、10 个函数、10 行、10 个补丁，不是整仓 AST 图。
 - **敏感数据默认不图化。** AgentSight 快照可能含 prompt、路径、命令；写入图的是摘要与派生风险，原始快照不应提交到 Git。
