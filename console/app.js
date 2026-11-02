@@ -489,7 +489,7 @@ function renderCodeRca() {
   $("#code-headline").textContent = summary.headline || "";
   const codeGraph = state.data.code_graph?.summary || {};
   $("#code-graph-line").textContent = codeGraph.entities
-    ? `UModel code graph · ${codeGraph.entities} entities / ${codeGraph.relations} relations · ${codeGraph.files} files / ${codeGraph.functions} functions`
+    ? `UModel code graph · ${codeGraph.entities} entities / ${codeGraph.relations} relations · ${codeGraph.files} files / ${codeGraph.functions} functions · ${summary.candidate_attempts || 0} candidates (${summary.rejected_candidates || 0} rejected)`
     : "";
   if (!state.selectedCode) state.selectedCode = iterations[0].case_id;
   $("#code-list").innerHTML = iterations
@@ -530,6 +530,9 @@ function renderCodeDetail(item) {
   const after = (item.pseudocode?.after || []).map((line) => escapeHtml(line)).join("\n");
   const reasons = (finding.reasons || []).map((reason) => `<li>${escapeHtml(reason)}</li>`).join("");
   const evidence = (finding.evidence || []).slice(0, 4).map((id) => escapeHtml(id)).join(", ");
+  const candidates = (item.candidates || [])
+    .map((candidate) => `${candidate.candidate_id}:${candidate.status}`)
+    .join(" · ");
   $("#code-detail").innerHTML = `
     <h4>${escapeHtml(item.title)}</h4>
     <p>${escapeHtml(item.symptom)}</p>
@@ -548,6 +551,7 @@ function renderCodeDetail(item) {
       <div><b>${verification.p99_after_ms}ms</b>${verification.p99_before_ms}ms → SLO ${verification.slo_p99_ms}ms</div>
       <div><b>${Math.round((verification.error_after || 0) * 100)}%</b>error after</div>
     </div>
+    ${candidates ? `<p><b>候选补丁：</b>${escapeHtml(candidates)}</p>` : ""}
     <p><b>小白解释：</b>${escapeHtml(item.novice?.what || "")} ${escapeHtml(item.novice?.why || "")}</p>
     <p><b>修复：</b>${escapeHtml(item.novice?.fix || "")} ${escapeHtml(item.novice?.verify || "")}</p>`;
 }

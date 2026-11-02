@@ -10,6 +10,7 @@ OpsGraph is a Python reference implementation of eBPF-observed operational graph
 - `opsgraph/policy.py` — pre-execution allow/require_approval/deny gate.
 - `opsgraph/history.py` — historical baseline + claim accuracy.
 - `opsgraph/code_rca.py` — eBPF code-stack RCA + REA loop; `opsgraph/code_cases.py` — 10 fintech incidents.
+- `opsgraph/patch_engine.py` — candidate patch safety, test rejection, rollback.
 - `demo/fintech/` — intentionally buggy financial code + 10 regression tests.
 - `opsgraph/scenario.py` — deterministic DeepFlow-shaped replay with a retry-storm incident.
 - `opsgraph/materialize.py` — observations + declared topology -> UModel entities/relations with evidence.
@@ -45,6 +46,7 @@ node --check console/app.js
 - Baseline history is synthetic in the demo; never present it as production telemetry.
 - Code-RCA eBPF stacks are replay data; do not claim live kernel capture without a Linux perf/bpftrace run.
 - REA applies patches only in a temp worktree; never auto-commit or auto-deploy a generated fix.
+- Rejected candidate patches must stay visible in `candidates`; do not silently discard failed attempts.
 - Update `docs/en`-style paired docs only if the project gains bilingual docs; currently Chinese README plus English code comments is intentional.
 - Regenerate `model/` after changing `ontology.py` (`python -m opsgraph model`).
 

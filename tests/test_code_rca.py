@@ -54,6 +54,10 @@ class CodeRCATests(unittest.TestCase):
             self.assertEqual(item["status"], "fixed")
             self.assertTrue(item["tests"]["case"]["passed"])
             self.assertTrue(item["verification"]["passed"])
+        case_three = next(item for item in result["iterations"] if item["case_id"] == "case-03")
+        self.assertEqual(len(case_three["candidates"]), 2)
+        self.assertEqual(case_three["candidates"][0]["status"], "rejected-by-test")
+        self.assertEqual(case_three["candidates"][1]["status"], "accepted")
         json.dumps(result)
 
 

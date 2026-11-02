@@ -117,8 +117,21 @@ Demo 的 10 个故障：
 ```text
 10/10 fixed
 10/10 RCA matches
+11 candidates / 1 rejected by financial tests
 最终 10 个金融回归全部通过
 ```
+
+### 候选补丁与安全校验
+
+`opsgraph/patch_engine.py` 不直接信任候选补丁：
+
+- `old` 上下文必须精确匹配 1 次；
+- 不允许修改测试文件；
+- diff 行数有上限；
+- 失败候选立即回滚，再尝试下一个；
+- 通过回归后还要通过 eBPF P99/错误率复测。
+
+Demo 中 `case-03` 先尝试「只修 1000 边界」的部分补丁，回归拒绝后由完整补丁接管；这次拒绝会记录在 `candidates` 里，而不是被静默忽略。
 
 ## 5. 小白用户视图
 

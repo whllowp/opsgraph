@@ -255,6 +255,10 @@ def cmd_code_demo(args: argparse.Namespace) -> int:
     print(f"Iterations:      {summary['iterations']}")
     print(f"Fixed:           {summary['fixed']}  ({summary['success_rate'] * 100:.0f}%)")
     print(f"RCA matches:     {summary['rca_matches']}/{summary['iterations']}")
+    print(
+        f"Candidates:      {summary.get('candidate_attempts', 0)} "
+        f"({summary.get('rejected_candidates', 0)} rejected by tests)"
+    )
     print(f"Final suite:     {'PASS' if summary['final_suite']['passed'] else 'FAIL'}")
     print(
         f"Code graph:      {graph_summary['entities']} entities / {graph_summary['relations']} relations"

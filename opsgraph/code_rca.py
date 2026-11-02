@@ -29,6 +29,12 @@ from pathlib import Path
 from typing import Any
 
 from .code_cases import CASES, CODE_RCA_DIR, FINTECH_ROOT
+from .patch_engine import (
+    PatchCandidate,
+    apply_candidate,
+    candidates_for,
+    restore_candidate,
+)
 
 SCHEMA_VERSION = 1
 BASELINE_SAMPLES = 60
@@ -533,20 +539,64 @@ def run_rea_loop(
             samples = telemetry["cases"][case["id"]]["before"]
             rca = analyze_code(samples, work, case)
             plan = build_pseudocode(case, rca)
-            patch_text = diff_for(case)
-            apply_patch(work, case)
-            case_test = run_unittest(work, f"tests.test_finance.FinanceTests.{case['test']}")
-            suite = run_unittest(work)
-            verification = verify_after(case, telemetry["cases"][case["id"]]["after"])
-            fixed = case_test["passed"] and verification["passed"]
-            if not fixed:
-                path = work / case["file"]
-                path.write_text(
-                    path.read_text(encoding="utf-8").replace(
-                        case["patch"]["new"], case["patch"]["old"], 1
-                    ),
-                    encoding="utf-8",
-                )
+            source_path = work / case["file"]
+            source_text = source_path.read_text(encoding="utf-8")
+            candidates = candidates_for(case, source_text)
+            attempts = []
+            accepted: PatchCandidate | None = None
+            accepted_test: dict[str, Any] | None = None
+            for candidate in candidates:
+                application = apply_candidate(work, case["file"], candidate)
+                attempt = {
+                    "candidate_id": candidate.candidate_id,
+                    "source": candidate.source,
+                    "strategy": candidate.strategy,
+                    "applied": application["applied"],
+                    "safety": application["safety"],
+                    "test": None,
+                }
+                if not application["applied"]:
+                    attempt["status"] = "rejected-before-test"
+                    attempts.append(attempt)
+                    continue
+                case_test = run_unittest(work, f"tests.test_finance.FinanceTests.{case['test']}")
+                attempt["test"] = case_test
+                if case_test["passed"]:
+                    attempt["status"] = "accepted"
+                    accepted = candidate
+                    accepted_test = case_test
+                    attempts.append(attempt)
+                    break
+                attempt["status"] = "rejected-by-test"
+                attempts.append(attempt)
+                restore_candidate(work, case["file"], candidate)
+
+            if accepted is None:
+                verification = {
+                    "source": "ebpf.code_stack.replay",
+                    "p99_before_ms": case["before_p99_ms"],
+                    "p99_after_ms": case["before_p99_ms"],
+                    "error_before": case["before_error_rate"],
+                    "error_after": case["before_error_rate"],
+                    "slo_p99_ms": case["slo_p99_ms"],
+                    "passed": False,
+                    "verdict": "no candidate accepted",
+                }
+                case_test = accepted_test or {
+                    "passed": False,
+                    "output_tail": "no candidate accepted",
+                }
+                suite = run_unittest(work)
+                fixed = False
+                patch_text = ""
+            else:
+                case_test = accepted_test or {"passed": False}
+                suite = run_unittest(work)
+                verification = verify_after(case, telemetry["cases"][case["id"]]["after"])
+                fixed = case_test["passed"] and verification["passed"]
+                patch_text = accepted.diff(case["file"])
+                if not fixed:
+                    restore_candidate(work, case["file"], accepted)
             iterations.append(
                 {
                     "iteration": number,
@@ -560,8 +610,13 @@ def run_rea_loop(
                     "patch": {
                         "file": case["file"],
                         "diff": patch_text,
-                        "applied": True,
+                        "applied": accepted is not None and fixed,
+                        "candidate_id": accepted.candidate_id if accepted else "",
+                        "source": accepted.source if accepted else "",
+                        "strategy": accepted.strategy if accepted else "",
+                        "safety": accepted.safety if accepted else {},
                     },
+                    "candidates": attempts,
                     "tests": {"case": case_test, "suite": suite},
                     "verification": verification,
                     "status": "fixed" if fixed else "failed",
@@ -588,6 +643,13 @@ def run_rea_loop(
         "failed": len(iterations) - fixed_count,
         "success_rate": round(fixed_count / len(iterations), 3) if iterations else 0.0,
         "rca_matches": rca_matches,
+        "candidate_attempts": sum(len(item.get("candidates", [])) for item in iterations),
+        "rejected_candidates": sum(
+            1
+            for item in iterations
+            for candidate in item.get("candidates", [])
+            if candidate.get("status") != "accepted"
+        ),
         "before_suite": before_suite,
         "final_suite": final_suite,
         "elapsed_ms": round((time.perf_counter() - started) * 1000, 1),
@@ -650,16 +712,17 @@ def render_code_report(result: dict[str, Any]) -> str:
         f"- 迭代：{summary.get('iterations', 0)}",
         f"- 修复：{summary.get('fixed', 0)}",
         f"- 成功率：{(summary.get('success_rate') or 0) * 100:.0f}%",
+        f"- 候选补丁：{summary.get('candidate_attempts', 0)}，被测试拒绝：{summary.get('rejected_candidates', 0)}",
         f"- 最终回归：{'通过' if (summary.get('final_suite') or {}).get('passed') else '未通过'}",
         "",
-        "| # | 故障 | 根因代码 | 修复 | 测试 | eBPF 复测 |",
-        "|---:|---|---|---|---|---|",
+        "| # | 故障 | 根因代码 | 候选 | 修复 | 测试 | eBPF 复测 |",
+        "|---:|---|---|---:|---|---|---|",
     ]
     for item in result.get("iterations", []):
         finding = item["rca"].get("finding", {})
         lines.append(
             f"| {item['iteration']} | {item['title']} | `{finding.get('file')}:{finding.get('line')}` "
-            f"`{finding.get('function')}` | {item['status']} | "
+            f"`{finding.get('function')}` | {len(item.get('candidates', []))} | {item['status']} | "
             f"{'pass' if item['tests']['case']['passed'] else 'fail'} | "
             f"{item['verification']['p99_after_ms']}ms / {item['verification']['error_after'] * 100:.0f}% |"
         )
@@ -673,6 +736,11 @@ def render_code_report(result: dict[str, Any]) -> str:
             f"- 根因：`{finding.get('file')}:{finding.get('line')}` `{finding.get('function')}`（置信度 {float(finding.get('confidence') or 0) * 100:.0f}%）",
             f"- 证据：{'; '.join(finding.get('reasons') or [])}",
             f"- 方案：{item['pseudocode']['strategy']}",
+            "- 候选："
+            + "；".join(
+                f"`{candidate['candidate_id']}`={candidate['status']}"
+                for candidate in item.get("candidates", [])
+            ),
             f"- 修复前：`{' / '.join(item['pseudocode']['before'])}`",
             f"- 修复后：`{' / '.join(item['pseudocode']['after'])}`",
             f"- 验证：{item['verification']['p99_before_ms']}ms → {item['verification']['p99_after_ms']}ms，错误率 {item['verification']['error_before'] * 100:.0f}% → {item['verification']['error_after'] * 100:.0f}%",

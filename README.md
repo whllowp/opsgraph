@@ -339,8 +339,11 @@ eBPF code stack -> 代码行 RCA -> 伪代码 before/after -> 补丁
 ```text
 10/10 fixed
 10/10 RCA matches
+11 candidates / 1 rejected by financial tests
 final regression PASS
 ```
+
+候选补丁不是直接信任：必须精确匹配目标文件、不能改测试、diff 不能超限，然后通过金融回归和 eBPF 复测。Case-03 的「只修 1000 边界」候选被测试拒绝，再由完整补丁接管，记录在 `candidates` 中。
 
 覆盖：重复扣款、换汇精度、费率边界、分账误差、退款去重、分页漏单、账本原子写、出款路由、风控超时、结算日周末。
 
@@ -450,6 +453,7 @@ opsgraph/
 │   ├── code_cases.py      # 10 个金融故障、补丁与伪代码
 │   ├── code_rca.py        # eBPF 代码栈 RCA + REA 闭环
 │   ├── code_graph.py      # 代码域 -> UModel 实体/关系
+│   ├── patch_engine.py    # 候选补丁、安全校验、失败回滚
 │   ├── ebpf_stacks.py     # perf/bpftrace 栈文本接入
 │   ├── ontology.py        # 图契约：22 EntitySet + 29 Link
 │   ├── model_pack.py      # 生成 UModel 模型包

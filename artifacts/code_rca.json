@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-02T17:31:00+00:00",
+  "generated_at": "2026-11-02T17:36:02+00:00",
   "source": "ebpf.code_stack + REA",
   "rea_definition": "Remediation Engineering Automation：用 eBPF 证据驱动补丁、测试与修复验证。",
   "repo": "demo/fintech",
@@ -15,7 +15,7 @@
       "rca": {
         "case_id": "case-01",
         "source": "ebpf.code_stack",
-        "generated_at": "2026-11-02T17:30:57+00:00",
+        "generated_at": "2026-11-02T17:35:59+00:00",
         "finding": {
           "file": "payments.py",
           "line": 22,
@@ -449,8 +449,44 @@
       "patch": {
         "file": "payments.py",
         "diff": "--- a/payments.py\n+++ b/payments.py\n@@ -1,8 +1,8 @@\n def retry_charge(gateway, customer_id, amount, attempts=3):\n-    # BUG: retries are not idempotent, so a timeout can charge the customer twice.\n+    key = f\"charge:{customer_id}:{amount}\"\n     for _ in range(attempts):\n         try:\n-            return gateway.charge(customer_id, amount)\n+            return gateway.charge(customer_id, amount, idempotency_key=key)\n         except TimeoutError:\n             continue\n     raise RuntimeError(\"gateway unavailable\")",
-        "applied": true
+        "applied": true,
+        "candidate_id": "case-01-reviewed",
+        "source": "reviewed",
+        "strategy": "为每次扣款生成稳定幂等键，重试复用同一个键。",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 0,
+          "test_file_touched": false,
+          "reasons": []
+        }
       },
+      "candidates": [
+        {
+          "candidate_id": "case-01-reviewed",
+          "source": "reviewed",
+          "strategy": "为每次扣款生成稳定幂等键，重试复用同一个键。",
+          "applied": true,
+          "safety": {
+            "allowed": true,
+            "matched": 1,
+            "changed_lines": 0,
+            "test_file_touched": false,
+            "reasons": []
+          },
+          "test": {
+            "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_retry_charge_is_idempotent",
+            "passed": true,
+            "returncode": 0,
+            "ran": 1,
+            "failures": 0,
+            "errors": 0,
+            "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+            "duration_ms": 124.9
+          },
+          "status": "accepted"
+        }
+      ],
       "tests": {
         "case": {
           "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_retry_charge_is_idempotent",
@@ -460,7 +496,7 @@
           "failures": 0,
           "errors": 0,
           "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
-          "duration_ms": 149.0
+          "duration_ms": 124.9
         },
         "suite": {
           "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
@@ -469,8 +505,8 @@
           "ran": 10,
           "failures": 8,
           "errors": 1,
-          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.003s\n\nFAILED (failures=8, errors=1)",
-          "duration_ms": 161.8
+          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=8, errors=1)",
+          "duration_ms": 136.9
         }
       },
       "verification": {
@@ -490,7 +526,7 @@
         "fix": "每次扣款生成稳定幂等键，所有重试复用同一个键。",
         "verify": "重复回调后只保留 1 笔 charge，资金不再多扣。"
       },
-      "duration_ms": 492.5
+      "duration_ms": 414.3
     },
     {
       "iteration": 2,
@@ -502,7 +538,7 @@
       "rca": {
         "case_id": "case-02",
         "source": "ebpf.code_stack",
-        "generated_at": "2026-11-02T17:30:57+00:00",
+        "generated_at": "2026-11-02T17:35:59+00:00",
         "finding": {
           "file": "money.py",
           "line": 5,
@@ -932,8 +968,44 @@
       "patch": {
         "file": "money.py",
         "diff": "--- a/money.py\n+++ b/money.py\n@@ -1,3 +1,3 @@\n def convert_currency(amount, rate):\n-    # BUG: float arithmetic loses cents before the ledger records the amount.\n-    return round(float(amount) * float(rate), 2)+    value = Decimal(str(amount)) * Decimal(str(rate))\n+    return float(value.quantize(Decimal(\"0.01\"), rounding=ROUND_HALF_UP))",
-        "applied": true
+        "applied": true,
+        "candidate_id": "case-02-reviewed",
+        "source": "reviewed",
+        "strategy": "用 Decimal 做金额运算，显式 HALF_UP 到分。",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 0,
+          "test_file_touched": false,
+          "reasons": []
+        }
       },
+      "candidates": [
+        {
+          "candidate_id": "case-02-reviewed",
+          "source": "reviewed",
+          "strategy": "用 Decimal 做金额运算，显式 HALF_UP 到分。",
+          "applied": true,
+          "safety": {
+            "allowed": true,
+            "matched": 1,
+            "changed_lines": 0,
+            "test_file_touched": false,
+            "reasons": []
+          },
+          "test": {
+            "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_convert_currency_rounds_half_up",
+            "passed": true,
+            "returncode": 0,
+            "ran": 1,
+            "failures": 0,
+            "errors": 0,
+            "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+            "duration_ms": 179.1
+          },
+          "status": "accepted"
+        }
+      ],
       "tests": {
         "case": {
           "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_convert_currency_rounds_half_up",
@@ -943,7 +1015,7 @@
           "failures": 0,
           "errors": 0,
           "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
-          "duration_ms": 175.1
+          "duration_ms": 179.1
         },
         "suite": {
           "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
@@ -952,8 +1024,8 @@
           "ran": 10,
           "failures": 7,
           "errors": 1,
-          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.003s\n\nFAILED (failures=7, errors=1)",
-          "duration_ms": 149.6
+          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.004s\n\nFAILED (failures=7, errors=1)",
+          "duration_ms": 330.0
         }
       },
       "verification": {
@@ -973,7 +1045,7 @@
         "fix": "金额用 Decimal 字符串构造，按 HALF_UP 显式量化到分。",
         "verify": "1.005 换算为 1.01，边界金额与账本一致。"
       },
-      "duration_ms": 821.3
+      "duration_ms": 927.6
     },
     {
       "iteration": 3,
@@ -985,7 +1057,7 @@
       "rca": {
         "case_id": "case-03",
         "source": "ebpf.code_stack",
-        "generated_at": "2026-11-02T17:30:58+00:00",
+        "generated_at": "2026-11-02T17:35:59+00:00",
         "finding": {
           "file": "money.py",
           "line": 10,
@@ -1418,8 +1490,68 @@
       "patch": {
         "file": "money.py",
         "diff": "--- a/money.py\n+++ b/money.py\n@@ -1,7 +1,6 @@\n def calculate_fee(amount, tier):\n-    # BUG: tier boundaries are exclusive, so exactly 1000/10000 is overcharged.\n-    if amount > 10000:\n+    if amount >= 10000:\n         return round(amount * 0.005, 2)\n-    if amount > 1000:\n+    if amount >= 1000:\n         return round(amount * 0.01, 2)\n     return round(amount * 0.015, 2)",
-        "applied": true
+        "applied": true,
+        "candidate_id": "case-03-reviewed",
+        "source": "reviewed",
+        "strategy": "档位边界改为包含等号，并补边界测试。",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 1,
+          "test_file_touched": false,
+          "reasons": []
+        }
       },
+      "candidates": [
+        {
+          "candidate_id": "case-03-partial-boundary",
+          "source": "template",
+          "strategy": "fix only the 1000 boundary",
+          "applied": true,
+          "safety": {
+            "allowed": true,
+            "matched": 1,
+            "changed_lines": 0,
+            "test_file_touched": false,
+            "reasons": []
+          },
+          "test": {
+            "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_fee_boundary_is_inclusive",
+            "passed": false,
+            "returncode": 1,
+            "ran": 1,
+            "failures": 1,
+            "errors": 0,
+            "output_tail": "    self.assertEqual(calculate_fee(10000, \"platinum\"), 50.0)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 100.0 != 50.0\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+            "duration_ms": 148.7
+          },
+          "status": "rejected-by-test"
+        },
+        {
+          "candidate_id": "case-03-reviewed",
+          "source": "reviewed",
+          "strategy": "档位边界改为包含等号，并补边界测试。",
+          "applied": true,
+          "safety": {
+            "allowed": true,
+            "matched": 1,
+            "changed_lines": 1,
+            "test_file_touched": false,
+            "reasons": []
+          },
+          "test": {
+            "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_fee_boundary_is_inclusive",
+            "passed": true,
+            "returncode": 0,
+            "ran": 1,
+            "failures": 0,
+            "errors": 0,
+            "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+            "duration_ms": 150.6
+          },
+          "status": "accepted"
+        }
+      ],
       "tests": {
         "case": {
           "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_fee_boundary_is_inclusive",
@@ -1429,7 +1561,7 @@
           "failures": 0,
           "errors": 0,
           "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
-          "duration_ms": 142.1
+          "duration_ms": 150.6
         },
         "suite": {
           "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
@@ -1438,8 +1570,8 @@
           "ran": 10,
           "failures": 6,
           "errors": 1,
-          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=6, errors=1)",
-          "duration_ms": 162.3
+          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.003s\n\nFAILED (failures=6, errors=1)",
+          "duration_ms": 162.0
         }
       },
       "verification": {
@@ -1459,7 +1591,7 @@
         "fix": "边界改为 ``>=``，并为 1000/10000 加回归用例。",
         "verify": "1000 元收 10 元，10000 元收 50 元。"
       },
-      "duration_ms": 1129.4
+      "duration_ms": 1398.2
     },
     {
       "iteration": 4,
@@ -1471,7 +1603,7 @@
       "rca": {
         "case_id": "case-04",
         "source": "ebpf.code_stack",
-        "generated_at": "2026-11-02T17:30:58+00:00",
+        "generated_at": "2026-11-02T17:36:00+00:00",
         "finding": {
           "file": "money.py",
           "line": 19,
@@ -1903,8 +2035,44 @@
       "patch": {
         "file": "money.py",
         "diff": "--- a/money.py\n+++ b/money.py\n@@ -1,4 +1,14 @@\n def allocate_amount(total, weights):\n-    # BUG: independent rounding loses or creates cents when splitting money.\n     total_weight = sum(weights)\n-    return [round(total * weight / total_weight, 2) for weight in weights]+    raw = [\n+        Decimal(str(total)) * Decimal(weight) / Decimal(total_weight)\n+        for weight in weights\n+    ]\n+    cents = [\n+        int((value * 100).quantize(Decimal(\"1\"), rounding=ROUND_HALF_UP))\n+        for value in raw\n+    ]\n+    diff = int((Decimal(str(total)) * 100).quantize(Decimal(\"1\"))) - sum(cents)\n+    for index in range(abs(diff)):\n+        cents[index % len(cents)] += 1 if diff > 0 else -1\n+    return [float(Decimal(c) / 100) for c in cents]",
-        "applied": true
+        "applied": true,
+        "candidate_id": "case-04-reviewed",
+        "source": "reviewed",
+        "strategy": "先按分取整，再用最大余数法分配差额。",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 10,
+          "test_file_touched": false,
+          "reasons": []
+        }
       },
+      "candidates": [
+        {
+          "candidate_id": "case-04-reviewed",
+          "source": "reviewed",
+          "strategy": "先按分取整，再用最大余数法分配差额。",
+          "applied": true,
+          "safety": {
+            "allowed": true,
+            "matched": 1,
+            "changed_lines": 10,
+            "test_file_touched": false,
+            "reasons": []
+          },
+          "test": {
+            "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_allocate_amount_preserves_total",
+            "passed": true,
+            "returncode": 0,
+            "ran": 1,
+            "failures": 0,
+            "errors": 0,
+            "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+            "duration_ms": 170.0
+          },
+          "status": "accepted"
+        }
+      ],
       "tests": {
         "case": {
           "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_allocate_amount_preserves_total",
@@ -1914,7 +2082,7 @@
           "failures": 0,
           "errors": 0,
           "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
-          "duration_ms": 130.5
+          "duration_ms": 170.0
         },
         "suite": {
           "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
@@ -1923,8 +2091,8 @@
           "ran": 10,
           "failures": 5,
           "errors": 1,
-          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=5, errors=1)",
-          "duration_ms": 145.3
+          "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.003s\n\nFAILED (failures=5, errors=1)",
+          "duration_ms": 163.5
         }
       },
       "verification": {
@@ -1944,7 +2112,7 @@
         "fix": "先转成整数分，再用最大余数法把差额分给前几笔。",
         "verify": "0.05 元分 3 份得到 0.01/0.02/0.02，合计仍是 0.05。"
       },
-      "duration_ms": 1408.6
+      "duration_ms": 1736.0
     },
     {
       "iteration": 5,
@@ -1956,7 +2124,7 @@
       "rca": {
         "case_id": "case-05",
         "source": "ebpf.code_stack",
-        "generated_at": "2026-11-02T17:30:58+00:00",
+        "generated_at": "2026-11-02T17:36:00+00:00",
         "finding": {
           "file": "payments.py",
           "line": 37,
@@ -2388,8 +2556,44 @@
       "patch": {
         "file": "payments.py",
         "diff": "--- a/payments.py\n+++ b/payments.py\n@@ -1,4 +1,6 @@\n def refund(store, charge_id, amount, refund_id):\n-    # BUG: duplicate refund callbacks append a second refund for the same id.\n+    for item in store.refunds:\n+        if item[\"refund_id\"] == refund_id:\n+            return len(store.refunds)\n     store.refunds.append({\"charge_id\": charge_id, \"amount\": amount, \"refund_id\": refund_id})\n     return len(store.refunds)",
-        "applied": true
+        "applied": true,
+        "candidate_id": "case-05-reviewed",
+        "source": "reviewed",
+        "strategy": "按 refund_id 去重，重复回调直接返回已有结果。",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 2,
+          "test_file_touched": false,
+          "reasons": []
+        }
       },
+      "candidates": [
+        {
+          "candidate_id": "case-05-reviewed",
+          "source": "reviewed",
+          "strategy": "按 refund_id 去重，重复回调直接返回已有结果。",
+          "applied": true,
+          "safety": {
+            "allowed": true,
+            "matched": 1,
+            "changed_lines": 2,
+            "test_file_touched": false,
+            "reasons": []
+          },
+          "test": {
+            "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_refund_is_idempotent",
+            "passed": true,
+            "returncode": 0,
+            "ran": 1,
+            "failures": 0,
+            "errors": 0,
+            "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+            "duration_ms": 132.5
+          },
+          "status": "accepted"
+        }
+      ],
       "tests": {
         "case": {
           "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_refund_is_idempotent",
@@ -2399,7 +2603,7 @@
           "failures": 0,
           "errors": 0,
           "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
-          "duration_ms": 129.9
+          "duration_ms": 132.5
         },
         "suite": {
           "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
@@ -2409,7 +2613,7 @@
           "failures": 4,
           "errors": 1,
           "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=4, errors=1)",
-          "duration_ms": 144.1
+          "duration_ms": 147.4
         }
       },
       "verification": {
@@ -2429,7 +2633,7 @@
         "fix": "先查 refund_id，已存在则直接返回，保证幂等。",
         "verify": "同一 refund_id 调用两次，只产生 1 条退款记录。"
       },
-      "duration_ms": 1686.6
+      "duration_ms": 2021.0
     },
     {
       "iteration": 6,
@@ -2441,7 +2645,7 @@
       "rca": {
         "case_id": "case-06",
         "source": "ebpf.code_stack",
-        "generated_at": "2026-11-02T17:30:58+00:00",
+        "generated_at": "2026-11-02T17:36:00+00:00",
         "finding": {
           "file": "ledger.py",
           "line": 7,
@@ -2876,8 +3080,44 @@
       "patch": {
         "file": "ledger.py",
         "diff": "--- a/ledger.py\n+++ b/ledger.py\n@@ -1,5 +1,4 @@\n def settle_batch(fetch_page, page_size=2):\n-    # BUG: a full page is treated as the last page, so later pages are skipped.\n     page = 0\n     settled = []\n     while True:\n@@ -7,7 +6,7 @@\n         if not rows:\n             break\n         settled.extend(rows)\n-        if len(rows) <= page_size:\n+        if len(rows) < page_size:\n             break\n         page += 1\n     return settled",
-        "applied": true
+        "applied": true,
+        "candidate_id": "case-06-reviewed",
+        "source": "reviewed",
+        "strategy": "只有空页才结束，满页继续翻页。",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 1,
+          "test_file_touched": false,
+          "reasons": []
+        }
       },
+      "candidates": [
+        {
+          "candidate_id": "case-06-reviewed",
+          "source": "reviewed",
+          "strategy": "只有空页才结束，满页继续翻页。",
+          "applied": true,
+          "safety": {
+            "allowed": true,
+            "matched": 1,
+            "changed_lines": 1,
+            "test_file_touched": false,
+            "reasons": []
+          },
+          "test": {
+            "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_settle_batch_reads_all_pages",
+            "passed": true,
+            "returncode": 0,
+            "ran": 1,
+            "failures": 0,
+            "errors": 0,
+            "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+            "duration_ms": 136.4
+          },
+          "status": "accepted"
+        }
+      ],
       "tests": {
         "case": {
           "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_settle_batch_reads_all_pages",
@@ -2887,7 +3127,7 @@
           "failures": 0,
           "errors": 0,
           "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
-          "duration_ms": 138.5
+          "duration_ms": 136.4
         },
         "suite": {
           "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
@@ -2897,7 +3137,7 @@
           "failures": 3,
           "errors": 1,
           "output_tail": "? - -- --\n+ eu-bank\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=3, errors=1)",
-          "duration_ms": 134.2
+          "duration_ms": 157.0
         }
       },
       "verification": {
@@ -2917,7 +3157,7 @@
         "fix": "只有空页或不足一页才结束，满页继续翻页。",
         "verify": "3 页数据全部进入结算列表，不再漏单。"
       },
-      "duration_ms": 1963.5
+      "duration_ms": 2318.9
     },
     {
       "iteration": 7,
@@ -2929,7 +3169,7 @@
       "rca": {
         "case_id": "case-07",
         "source": "ebpf.code_stack",
-        "generated_at": "2026-11-02T17:30:59+00:00",
+        "generated_at": "2026-11-02T17:36:01+00:00",
         "finding": {
           "file": "ledger.py",
           "line": 22,
@@ -3363,8 +3603,44 @@
       "patch": {
         "file": "ledger.py",
         "diff": "--- a/ledger.py\n+++ b/ledger.py\n@@ -1,6 +1,7 @@\n def append_entries(store, entries):\n-    # BUG: a mid-batch failure leaves the ledger partially written.\n+    staged = []\n     for entry in entries:\n         if entry.get(\"fail\"):\n             raise ValueError(\"ledger write failed\")\n-        store.entries.append(entry)+        staged.append(entry)\n+    store.entries.extend(staged)",
-        "applied": true
+        "applied": true,
+        "candidate_id": "case-07-reviewed",
+        "source": "reviewed",
+        "strategy": "先全量校验并暂存，全部通过后再一次性提交。",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 1,
+          "test_file_touched": false,
+          "reasons": []
+        }
       },
+      "candidates": [
+        {
+          "candidate_id": "case-07-reviewed",
+          "source": "reviewed",
+          "strategy": "先全量校验并暂存，全部通过后再一次性提交。",
+          "applied": true,
+          "safety": {
+            "allowed": true,
+            "matched": 1,
+            "changed_lines": 1,
+            "test_file_touched": false,
+            "reasons": []
+          },
+          "test": {
+            "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_append_entries_is_atomic",
+            "passed": true,
+            "returncode": 0,
+            "ran": 1,
+            "failures": 0,
+            "errors": 0,
+            "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+            "duration_ms": 138.7
+          },
+          "status": "accepted"
+        }
+      ],
       "tests": {
         "case": {
           "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_append_entries_is_atomic",
@@ -3374,7 +3650,7 @@
           "failures": 0,
           "errors": 0,
           "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
-          "duration_ms": 125.6
+          "duration_ms": 138.7
         },
         "suite": {
           "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
@@ -3383,8 +3659,8 @@
           "ran": 10,
           "failures": 2,
           "errors": 1,
-          "output_tail": "? - -- --\n+ eu-bank\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=2, errors=1)",
-          "duration_ms": 127.4
+          "output_tail": "? - -- --\n+ eu-bank\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nFAILED (failures=2, errors=1)",
+          "duration_ms": 129.0
         }
       },
       "verification": {
@@ -3404,7 +3680,7 @@
         "fix": "先暂存并通过全部校验，再一次性写入。",
         "verify": "失败批次不改变账本，重试后账目一致。"
       },
-      "duration_ms": 2219.8
+      "duration_ms": 2590.9
     },
     {
       "iteration": 8,
@@ -3416,7 +3692,7 @@
       "rca": {
         "case_id": "case-08",
         "source": "ebpf.code_stack",
-        "generated_at": "2026-11-02T17:30:59+00:00",
+        "generated_at": "2026-11-02T17:36:01+00:00",
         "finding": {
           "file": "routing.py",
           "line": 2,
@@ -3851,8 +4127,44 @@
       "patch": {
         "file": "routing.py",
         "diff": "--- a/routing.py\n+++ b/routing.py\n@@ -1,7 +1,8 @@\n def route_payout(currency, country):\n-    # BUG: non-USD payouts fall through to a default rail with the wrong currency.\n-    if currency == \"USD\":\n+    if currency == \"USD\" and country == \"US\":\n         return \"us-bank\"\n-    if country == \"US\":\n-        return \"us-bank\"\n-    return \"default-bank\"+    if currency == \"EUR\" and country in {\"DE\", \"FR\", \"NL\", \"ES\", \"IT\"}:\n+        return \"eu-bank\"\n+    if currency == \"GBP\" and country == \"GB\":\n+        return \"uk-bank\"\n+    raise ValueError(\"unsupported payout rail\")",
-        "applied": true
+        "applied": true,
+        "candidate_id": "case-08-reviewed",
+        "source": "reviewed",
+        "strategy": "按币种+国家选择本地清算通道，不支持的组合显式拒绝。",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 1,
+          "test_file_touched": false,
+          "reasons": []
+        }
       },
+      "candidates": [
+        {
+          "candidate_id": "case-08-reviewed",
+          "source": "reviewed",
+          "strategy": "按币种+国家选择本地清算通道，不支持的组合显式拒绝。",
+          "applied": true,
+          "safety": {
+            "allowed": true,
+            "matched": 1,
+            "changed_lines": 1,
+            "test_file_touched": false,
+            "reasons": []
+          },
+          "test": {
+            "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_route_payout_uses_local_rail",
+            "passed": true,
+            "returncode": 0,
+            "ran": 1,
+            "failures": 0,
+            "errors": 0,
+            "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+            "duration_ms": 116.4
+          },
+          "status": "accepted"
+        }
+      ],
       "tests": {
         "case": {
           "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_route_payout_uses_local_rail",
@@ -3862,7 +4174,7 @@
           "failures": 0,
           "errors": 0,
           "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
-          "duration_ms": 141.2
+          "duration_ms": 116.4
         },
         "suite": {
           "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
@@ -3872,7 +4184,7 @@
           "failures": 1,
           "errors": 1,
           "output_tail": "    self.assertEqual(next_settlement_date(date(2026, 11, 6)), date(2026, 11, 9))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: datetime.date(2026, 11, 7) != datetime.date(2026, 11, 9)\n\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nFAILED (failures=1, errors=1)",
-          "duration_ms": 133.3
+          "duration_ms": 108.6
         }
       },
       "verification": {
@@ -3892,7 +4204,7 @@
         "fix": "用币种+国家匹配本地通道，未知组合直接拒绝。",
         "verify": "EUR/DE 走 eu-bank，GBP/GB 走 uk-bank。"
       },
-      "duration_ms": 2498.0
+      "duration_ms": 2821.6
     },
     {
       "iteration": 9,
@@ -3904,7 +4216,7 @@
       "rca": {
         "case_id": "case-09",
         "source": "ebpf.code_stack",
-        "generated_at": "2026-11-02T17:30:59+00:00",
+        "generated_at": "2026-11-02T17:36:01+00:00",
         "finding": {
           "file": "risk.py",
           "line": 2,
@@ -4337,8 +4649,44 @@
       "patch": {
         "file": "risk.py",
         "diff": "--- a/risk.py\n+++ b/risk.py\n@@ -1,3 +1,5 @@\n def fraud_score(provider, txn):\n-    # BUG: provider timeout propagates and blocks every payment in the request.\n-    return provider.score(txn)+    try:\n+        return {\"score\": provider.score(txn), \"degraded\": False}\n+    except TimeoutError:\n+        return {\"score\": 50, \"degraded\": True}",
-        "applied": true
+        "applied": true,
+        "candidate_id": "case-09-reviewed",
+        "source": "reviewed",
+        "strategy": "超时降级为中间风险分并标记 degraded，恢复后再走完整风控。",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 2,
+          "test_file_touched": false,
+          "reasons": []
+        }
       },
+      "candidates": [
+        {
+          "candidate_id": "case-09-reviewed",
+          "source": "reviewed",
+          "strategy": "超时降级为中间风险分并标记 degraded，恢复后再走完整风控。",
+          "applied": true,
+          "safety": {
+            "allowed": true,
+            "matched": 1,
+            "changed_lines": 2,
+            "test_file_touched": false,
+            "reasons": []
+          },
+          "test": {
+            "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_fraud_score_degrades_on_timeout",
+            "passed": true,
+            "returncode": 0,
+            "ran": 1,
+            "failures": 0,
+            "errors": 0,
+            "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+            "duration_ms": 125.1
+          },
+          "status": "accepted"
+        }
+      ],
       "tests": {
         "case": {
           "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_fraud_score_degrades_on_timeout",
@@ -4348,7 +4696,7 @@
           "failures": 0,
           "errors": 0,
           "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
-          "duration_ms": 161.6
+          "duration_ms": 125.1
         },
         "suite": {
           "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
@@ -4358,7 +4706,7 @@
           "failures": 1,
           "errors": 0,
           "output_tail": "    self.assertEqual(next_settlement_date(date(2026, 11, 6)), date(2026, 11, 9))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: datetime.date(2026, 11, 7) != datetime.date(2026, 11, 9)\n\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nFAILED (failures=1)",
-          "duration_ms": 147.9
+          "duration_ms": 111.7
         }
       },
       "verification": {
@@ -4378,7 +4726,7 @@
         "fix": "捕获超时，返回中间风险分并标记降级，保证支付可用。",
         "verify": "供应商超时返回 score=50/degraded=true，支付继续。"
       },
-      "duration_ms": 2811.5
+      "duration_ms": 3063.0
     },
     {
       "iteration": 10,
@@ -4390,7 +4738,7 @@
       "rca": {
         "case_id": "case-10",
         "source": "ebpf.code_stack",
-        "generated_at": "2026-11-02T17:31:00+00:00",
+        "generated_at": "2026-11-02T17:36:01+00:00",
         "finding": {
           "file": "scheduling.py",
           "line": 5,
@@ -4822,8 +5170,44 @@
       "patch": {
         "file": "scheduling.py",
         "diff": "--- a/scheduling.py\n+++ b/scheduling.py\n@@ -1,3 +1,5 @@\n def next_settlement_date(day):\n-    # BUG: weekends are treated as settlement days.\n-    return day + timedelta(days=1)+    candidate = day + timedelta(days=1)\n+    while candidate.weekday() >= 5:\n+        candidate += timedelta(days=1)\n+    return candidate",
-        "applied": true
+        "applied": true,
+        "candidate_id": "case-10-reviewed",
+        "source": "reviewed",
+        "strategy": "结算日只取工作日，自动跳到下一个周一/工作日。",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 2,
+          "test_file_touched": false,
+          "reasons": []
+        }
       },
+      "candidates": [
+        {
+          "candidate_id": "case-10-reviewed",
+          "source": "reviewed",
+          "strategy": "结算日只取工作日，自动跳到下一个周一/工作日。",
+          "applied": true,
+          "safety": {
+            "allowed": true,
+            "matched": 1,
+            "changed_lines": 2,
+            "test_file_touched": false,
+            "reasons": []
+          },
+          "test": {
+            "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_next_settlement_date_skips_weekend",
+            "passed": true,
+            "returncode": 0,
+            "ran": 1,
+            "failures": 0,
+            "errors": 0,
+            "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+            "duration_ms": 99.0
+          },
+          "status": "accepted"
+        }
+      ],
       "tests": {
         "case": {
           "command": "C:\\Python314\\python.exe -m unittest tests.test_finance.FinanceTests.test_next_settlement_date_skips_weekend",
@@ -4833,7 +5217,7 @@
           "failures": 0,
           "errors": 0,
           "output_tail": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
-          "duration_ms": 140.3
+          "duration_ms": 99.0
         },
         "suite": {
           "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
@@ -4843,7 +5227,7 @@
           "failures": 0,
           "errors": 0,
           "output_tail": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.000s\n\nOK",
-          "duration_ms": 135.2
+          "duration_ms": 98.5
         }
       },
       "verification": {
@@ -4863,7 +5247,7 @@
         "fix": "循环跳过周六/周日，返回下一个工作日。",
         "verify": "2026-11-06 周五结算日变为 2026-11-09 周一。"
       },
-      "duration_ms": 3090.6
+      "duration_ms": 3264.1
     }
   ],
   "summary": {
@@ -4872,6 +5256,8 @@
     "failed": 0,
     "success_rate": 1.0,
     "rca_matches": 10,
+    "candidate_attempts": 11,
+    "rejected_candidates": 1,
     "before_suite": {
       "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
       "passed": false,
@@ -4879,8 +5265,8 @@
       "ran": 10,
       "failures": 9,
       "errors": 1,
-      "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.003s\n\nFAILED (failures=9, errors=1)",
-      "duration_ms": 162.6
+      "output_tail": "+ [1, 2, 3]\n?      +++\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.002s\n\nFAILED (failures=9, errors=1)",
+      "duration_ms": 137.1
     },
     "final_suite": {
       "command": "C:\\Python314\\python.exe -m unittest discover -s tests",
@@ -4890,9 +5276,9 @@
       "failures": 0,
       "errors": 0,
       "output_tail": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.000s\n\nOK",
-      "duration_ms": 142.2
+      "duration_ms": 102.2
     },
-    "elapsed_ms": 3235.1,
+    "elapsed_ms": 3368.5,
     "headline": "10/10 个金融故障已从 eBPF 代码栈定位并修复，最终回归 通过。"
   },
   "cumulative_diff": "--- a/payments.py\n+++ b/payments.py\n@@ -1,8 +1,8 @@\n def retry_charge(gateway, customer_id, amount, attempts=3):\n-    # BUG: retries are not idempotent, so a timeout can charge the customer twice.\n+    key = f\"charge:{customer_id}:{amount}\"\n     for _ in range(attempts):\n         try:\n-            return gateway.charge(customer_id, amount)\n+            return gateway.charge(customer_id, amount, idempotency_key=key)\n         except TimeoutError:\n             continue\n     raise RuntimeError(\"gateway unavailable\")--- a/money.py\n+++ b/money.py\n@@ -1,3 +1,3 @@\n def convert_currency(amount, rate):\n-    # BUG: float arithmetic loses cents before the ledger records the amount.\n-    return round(float(amount) * float(rate), 2)+    value = Decimal(str(amount)) * Decimal(str(rate))\n+    return float(value.quantize(Decimal(\"0.01\"), rounding=ROUND_HALF_UP))--- a/money.py\n+++ b/money.py\n@@ -1,7 +1,6 @@\n def calculate_fee(amount, tier):\n-    # BUG: tier boundaries are exclusive, so exactly 1000/10000 is overcharged.\n-    if amount > 10000:\n+    if amount >= 10000:\n         return round(amount * 0.005, 2)\n-    if amount > 1000:\n+    if amount >= 1000:\n         return round(amount * 0.01, 2)\n     return round(amount * 0.015, 2)--- a/money.py\n+++ b/money.py\n@@ -1,4 +1,14 @@\n def allocate_amount(total, weights):\n-    # BUG: independent rounding loses or creates cents when splitting money.\n     total_weight = sum(weights)\n-    return [round(total * weight / total_weight, 2) for weight in weights]+    raw = [\n+        Decimal(str(total)) * Decimal(weight) / Decimal(total_weight)\n+        for weight in weights\n+    ]\n+    cents = [\n+        int((value * 100).quantize(Decimal(\"1\"), rounding=ROUND_HALF_UP))\n+        for value in raw\n+    ]\n+    diff = int((Decimal(str(total)) * 100).quantize(Decimal(\"1\"))) - sum(cents)\n+    for index in range(abs(diff)):\n+        cents[index % len(cents)] += 1 if diff > 0 else -1\n+    return [float(Decimal(c) / 100) for c in cents]--- a/payments.py\n+++ b/payments.py\n@@ -1,4 +1,6 @@\n def refund(store, charge_id, amount, refund_id):\n-    # BUG: duplicate refund callbacks append a second refund for the same id.\n+    for item in store.refunds:\n+        if item[\"refund_id\"] == refund_id:\n+            return len(store.refunds)\n     store.refunds.append({\"charge_id\": charge_id, \"amount\": amount, \"refund_id\": refund_id})\n     return len(store.refunds)--- a/ledger.py\n+++ b/ledger.py\n@@ -1,5 +1,4 @@\n def settle_batch(fetch_page, page_size=2):\n-    # BUG: a full page is treated as the last page, so later pages are skipped.\n     page = 0\n     settled = []\n     while True:\n@@ -7,7 +6,7 @@\n         if not rows:\n             break\n         settled.extend(rows)\n-        if len(rows) <= page_size:\n+        if len(rows) < page_size:\n             break\n         page += 1\n     return settled--- a/ledger.py\n+++ b/ledger.py\n@@ -1,6 +1,7 @@\n def append_entries(store, entries):\n-    # BUG: a mid-batch failure leaves the ledger partially written.\n+    staged = []\n     for entry in entries:\n         if entry.get(\"fail\"):\n             raise ValueError(\"ledger write failed\")\n-        store.entries.append(entry)+        staged.append(entry)\n+    store.entries.extend(staged)--- a/routing.py\n+++ b/routing.py\n@@ -1,7 +1,8 @@\n def route_payout(currency, country):\n-    # BUG: non-USD payouts fall through to a default rail with the wrong currency.\n-    if currency == \"USD\":\n+    if currency == \"USD\" and country == \"US\":\n         return \"us-bank\"\n-    if country == \"US\":\n-        return \"us-bank\"\n-    return \"default-bank\"+    if currency == \"EUR\" and country in {\"DE\", \"FR\", \"NL\", \"ES\", \"IT\"}:\n+        return \"eu-bank\"\n+    if currency == \"GBP\" and country == \"GB\":\n+        return \"uk-bank\"\n+    raise ValueError(\"unsupported payout rail\")--- a/risk.py\n+++ b/risk.py\n@@ -1,3 +1,5 @@\n def fraud_score(provider, txn):\n-    # BUG: provider timeout propagates and blocks every payment in the request.\n-    return provider.score(txn)+    try:\n+        return {\"score\": provider.score(txn), \"degraded\": False}\n+    except TimeoutError:\n+        return {\"score\": 50, \"degraded\": True}--- a/scheduling.py\n+++ b/scheduling.py\n@@ -1,3 +1,5 @@\n def next_settlement_date(day):\n-    # BUG: weekends are treated as settlement days.\n-    return day + timedelta(days=1)+    candidate = day + timedelta(days=1)\n+    while candidate.weekday() >= 5:\n+        candidate += timedelta(days=1)\n+    return candidate",
