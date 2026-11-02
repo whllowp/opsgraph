@@ -77,6 +77,7 @@ model/
 | `ai.agent_session_acts_on_svc.service` | agent_session → service | Agent 作用于服务 |
 | `ai.agent_session_investigates_ops.incident` | agent_session → incident | Agent 排查事件 |
 | `ai.effect_affects_svc.service` | effect → service | 系统效果影响服务 |
+| `ai.agent_session_delegates_to_ai.agent_session` | agent_session → agent_session | Agent 委派子会话 |
 
 ### `calls` 关系字段
 
@@ -105,11 +106,12 @@ model/
 | `produces` | `risk`, `status` |
 | `acts_on` | 无（语义边） |
 | `investigates` | 无（语义边） |
+| `delegates_to` | `role`, `tokens` |
 | `affects` | `risk` |
 
 AI 实体核心字段：
 
-- `ai.agent_session`: `session_key`, `model`, `total_tokens`, `cost_usd`, `tool_calls`, `failed_tool_calls`, `retry_loops`, `risk_score`, `friction_score`, `claim_status`, `remediation_status`
+- `ai.agent_session`: `session_key`, `model`, `total_tokens`, `cost_usd`, `tool_calls`, `failed_tool_calls`, `retry_loops`, `risk_score`, `friction_score`, `claim_status`, `remediation_status`, `parent_session`, `root_session`, `depth`, `delegation_role`, `child_sessions`, `subtree_tokens`, `subtree_cost_usd`, `subtree_risk_score`
 - `ai.tool_call`: `tool_name`, `status`, `target`, `command`, `retry_index`, `retry_of`, `risk`
 - `ai.effect`: `effect_type`, `action`, `target`, `status`, `risk`, `confidence`
 

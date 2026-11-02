@@ -4,7 +4,7 @@
 - 受害服务：`payment-gateway`
 - 根因：`checkout-service`（置信度 78%）
 - 时间窗口：2026-11-02T00:00:00+08:00 → 2026-11-02T01:00:00+08:00
-- 图规模：119 个实体 / 183 条关系
+- 图规模：130 个实体 / 200 条关系
 
 ## 结论
 
@@ -66,20 +66,44 @@ Root cause is checkout-service, upstream of the victim payment-gateway. Score 0.
 
 ## AI Agent 观测（AgentSight）
 
-- 会话：2；工具调用：16；失败：5；重试环：3
-- Token：69,400；成本：$0.27；高风险效果：4
+- 会话：4；工具调用：20；失败：5；重试环：3
+- Token：80,800；成本：$0.28；高风险效果：4
 
-| Agent 会话 | 模型 | Tokens | 成本 | 工具/失败 | 重试环 | 风险 | 关联服务 | 结论校验 |
-|---|---|---:|---:|---:|---:|---|---|---|
-| `claude:sre-claude-01` | claude-sonnet-4 | 44,600 | $0.21 | 11/4 | 2 | high | checkout-service | verified |
-| `codex:codex-console-02` | gpt-5 | 24,800 | $0.06 | 5/1 | 1 | low | - | unverifiable |
+| Agent 会话 | 模型 | Tokens | 成本 | 工具/失败 | 重试环 | 风险 | 关联服务 | 结论校验 | 父子 |
+|---|---|---:|---:|---:|---:|---|---|---|---|
+| `claude:sre-claude-01` | claude-sonnet-4 | 44,600 | $0.21 | 11/4 | 2 | high | checkout-service | verified | root |
+| `claude:sre-log-analyst` | claude-haiku | 7,600 | $0.00 | 2/0 | 0 | low | payment-gateway | unverifiable | ↳ claude:sre-claude-01 |
+| `codex:sre-policy-reviewer` | gpt-5 | 3,800 | $0.01 | 2/0 | 0 | low | checkout-service | unverifiable | ↳ claude:sre-claude-01 |
+| `codex:codex-console-02` | gpt-5 | 24,800 | $0.06 | 5/1 | 1 | low | - | unverifiable | root |
 
+- **[info] Agent delegated work to subagents**：claude:sre-claude-01 delegated to 2 child session(s); subtree 56,000 tokens / $0.22, max subtree risk 100.
 - **[critical] apply_patch retry loop**：sre-claude-01 attempted apply_patch 3 times against /workspace/opsgraph/checkout-retry-policy.yaml (2 failures) over 60s.
 - **[critical] kubectl_apply retry loop**：sre-claude-01 attempted kubectl_apply 3 times against kubectl apply -f checkout-retry-policy.yaml -n shop (2 failures) over 120s.
 - **[warning] exec retry loop**：codex-console-02 attempted exec 2 times against npm test -- --runInBand (1 failures) over 180s.
 - **[critical] Agent touched high-risk system surfaces**：4 high-risk effects, including write /workspace/opsgraph/checkout-retry-policy.yaml.
 - **[info] Agent root cause verified against graph**：claude:sre-claude-01 claimed checkout-service; graph RCA says checkout-service (verified).
 - **[warning] Remediation is not yet validated by eBPF**：claude:sre-claude-01 changed checkout-service, but the service is still critical in the same window.
+- **[warning] total_tokens above historical p95**：claude:sre-claude-01 total_tokens=44600 vs claude p95=31600 (5 historical runs).
+- **[warning] failed_tool_calls above historical p95**：claude:sre-claude-01 failed_tool_calls=4 vs claude p95=2.8 (5 historical runs).
+- **[warning] retry_loops above historical p95**：claude:sre-claude-01 retry_loops=2 vs claude p95=1 (5 historical runs).
+
+### 历史基线与 Claim Accuracy
+
+- 历史运行：8；窗口：2026-10-27T09:12:00+08:00 → 2026-11-01T12:31:00+08:00
+- Claim accuracy：6/8（75%）
+  - `claude`：5/6（83%）
+  - `codex`：1/2（50%）
+- **[warning] total_tokens above historical p95**：claude:sre-claude-01 total_tokens=44600 vs claude p95=31600 (5 historical runs).
+- **[warning] failed_tool_calls above historical p95**：claude:sre-claude-01 failed_tool_calls=4 vs claude p95=2.8 (5 historical runs).
+- **[warning] retry_loops above historical p95**：claude:sre-claude-01 retry_loops=2 vs claude p95=1 (5 historical runs).
+
+### 执行前策略门禁
+
+| 动作 | 目标 | 决策 | 规则 | 需审批人 |
+|---|---|---|---|---|
+| `kubectl_delete` | kubectl delete deploy/payment-gateway -n payments | **deny** | deny-destructive-action | - |
+| `kubectl_apply` | kubectl apply -f checkout-retry-policy.yaml -n shop | **require_approval** | approve-prod-write-during-incident | commerce-core, change-manager |
+| `query_umodel` | payment-gateway upstream | **allow** | allow-read-only | - |
 
 ## 复现查询
 

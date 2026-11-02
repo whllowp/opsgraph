@@ -273,6 +273,70 @@
           "en_us": "Source",
           "zh_cn": "数据来源"
         }
+      },
+      {
+        "name": "parent_session",
+        "type": "string",
+        "display_name": {
+          "en_us": "Parent Session",
+          "zh_cn": "父会话"
+        }
+      },
+      {
+        "name": "root_session",
+        "type": "string",
+        "display_name": {
+          "en_us": "Root Session",
+          "zh_cn": "根会话"
+        }
+      },
+      {
+        "name": "depth",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Delegation Depth",
+          "zh_cn": "委派深度"
+        }
+      },
+      {
+        "name": "delegation_role",
+        "type": "string",
+        "display_name": {
+          "en_us": "Delegation Role",
+          "zh_cn": "委派角色"
+        }
+      },
+      {
+        "name": "child_sessions",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Child Sessions",
+          "zh_cn": "子会话数"
+        }
+      },
+      {
+        "name": "subtree_tokens",
+        "type": "integer",
+        "display_name": {
+          "en_us": "Subtree Tokens",
+          "zh_cn": "子树 Token"
+        }
+      },
+      {
+        "name": "subtree_cost_usd",
+        "type": "float",
+        "display_name": {
+          "en_us": "Subtree Cost (USD)",
+          "zh_cn": "子树成本（USD）"
+        }
+      },
+      {
+        "name": "subtree_risk_score",
+        "type": "float",
+        "display_name": {
+          "en_us": "Subtree Risk",
+          "zh_cn": "子树风险分"
+        }
       }
     ],
     "primary_key_fields": [
@@ -314,7 +378,15 @@
       "claim_root_cause",
       "claim_status",
       "remediation_status",
-      "source"
+      "source",
+      "parent_session",
+      "root_session",
+      "depth",
+      "delegation_role",
+      "child_sessions",
+      "subtree_tokens",
+      "subtree_cost_usd",
+      "subtree_risk_score"
     ],
     "first_observed_time_field": "__first_observed_time__",
     "last_observed_time_field": "__last_observed_time__"

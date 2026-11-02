@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "history_path": "agent_history.json",
+  "history_runs": 8,
+  "history_window": {
+    "first": "2026-10-27T09:12:00+08:00",
+    "last": "2026-11-01T12:31:00+08:00"
+  },
+  "baseline_by_agent": [
+    {
+      "agent": "claude",
+      "runs": 5
+    },
+    {
+      "agent": "codex",
+      "runs": 3
+    }
+  ],
+  "sessions": [
+    {
+      "key": "sre-claude-01",
+      "name": "claude:sre-claude-01",
+      "agent_type": "claude",
+      "model": "claude-sonnet-4",
+      "historical_runs": 5,
+      "metrics": {
+        "total_tokens": {
+          "current": 44600.0,
+          "median": 28000.0,
+          "p95": 31600.0,
+          "mean": 27800.0,
+          "samples": 5,
+          "deviation_pct": 59.3
+        },
+        "cost_usd": {
+          "current": 0.2106,
+          "median": 0.138,
+          "p95": 0.1596,
+          "mean": 0.141,
+          "samples": 5,
+          "deviation_pct": 52.6
+        },
+        "tool_calls": {
+          "current": 11.0,
+          "median": 10.0,
+          "p95": 11.8,
+          "mean": 9.6,
+          "samples": 5,
+          "deviation_pct": 10.0
+        },
+        "failed_tool_calls": {
+          "current": 4.0,
+          "median": 1.0,
+          "p95": 2.8,
+          "mean": 1.2,
+          "samples": 5,
+          "deviation_pct": 300.0
+        },
+        "retry_loops": {
+          "current": 2.0,
+          "median": 0.0,
+          "p95": 1.0,
+          "mean": 0.4,
+          "samples": 5,
+          "deviation_pct": null
+        },
+        "duration_s": {
+          "current": 840.0,
+          "median": 740.0,
+          "p95": 866.0,
+          "mean": 736.0,
+          "samples": 5,
+          "deviation_pct": 13.5
+        }
+      }
+    },
+    {
+      "key": "codex-console-02",
+      "name": "codex:codex-console-02",
+      "agent_type": "codex",
+      "model": "gpt-5",
+      "historical_runs": 3,
+      "metrics": {
+        "total_tokens": {
+          "current": 24800.0,
+          "median": 23000.0,
+          "p95": 25700.0,
+          "mean": 23333.3333,
+          "samples": 3,
+          "deviation_pct": 7.8
+        },
+        "cost_usd": {
+          "current": 0.0607,
+          "median": 0.055,
+          "p95": 0.0663,
+          "mean": 0.0583,
+          "samples": 3,
+          "deviation_pct": 10.4
+        },
+        "tool_calls": {
+          "current": 5.0,
+          "median": 7.0,
+          "p95": 7.9,
+          "mean": 7.0,
+          "samples": 3,
+          "deviation_pct": -28.6
+        },
+        "failed_tool_calls": {
+          "current": 1.0,
+          "median": 1.0,
+          "p95": 1.9,
+          "mean": 1.0,
+          "samples": 3,
+          "deviation_pct": 0.0
+        },
+        "retry_loops": {
+          "current": 1.0,
+          "median": 0.0,
+          "p95": 0.9,
+          "mean": 0.3333,
+          "samples": 3,
+          "deviation_pct": null
+        },
+        "duration_s": {
+          "current": 780.0,
+          "median": 650.0,
+          "p95": 695.0,
+          "mean": 656.6667,
+          "samples": 3,
+          "deviation_pct": 20.0
+        }
+      }
+    }
+  ],
+  "claim_accuracy": {
+    "overall": {
+      "correct": 6,
+      "total": 8,
+      "accuracy": 0.75
+    },
+    "by_agent": [
+      {
+        "agent": "claude",
+        "correct": 5,
+        "total": 6,
+        "accuracy": 0.833
+      },
+      {
+        "agent": "codex",
+        "correct": 1,
+        "total": 2,
+        "accuracy": 0.5
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "agent-baseline-spike",
+      "severity": "warning",
+      "title": "total_tokens above historical p95",
+      "detail": "claude:sre-claude-01 total_tokens=44600 vs claude p95=31600 (5 historical runs).",
+      "entities": [
+        "459b11f5d1bbc9ac2be163e4e5b3e143"
+      ],
+      "session": "claude:sre-claude-01"
+    },
+    {
+      "id": "agent-baseline-spike",
+      "severity": "warning",
+      "title": "failed_tool_calls above historical p95",
+      "detail": "claude:sre-claude-01 failed_tool_calls=4 vs claude p95=2.8 (5 historical runs).",
+      "entities": [
+        "459b11f5d1bbc9ac2be163e4e5b3e143"
+      ],
+      "session": "claude:sre-claude-01"
+    },
+    {
+      "id": "agent-baseline-spike",
+      "severity": "warning",
+      "title": "retry_loops above historical p95",
+      "detail": "claude:sre-claude-01 retry_loops=2 vs claude p95=1 (5 historical runs).",
+      "entities": [
+        "459b11f5d1bbc9ac2be163e4e5b3e143"
+      ],
+      "session": "claude:sre-claude-01"
+    }
+  ]
+}

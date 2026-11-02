@@ -26,6 +26,8 @@ JSON 走 `load_snapshot()`；SQLite 走 `load_sqlite()`，读取 `llm_calls`、`
 | `sessions[].attributes.linked_service` | `ai.agent_session --acts_on--> svc.service` |
 | `sessions[].attributes.incident_id` | `ai.agent_session --investigates--> ops.incident` |
 | `sessions[].attributes.claimed_root_cause` | `claim_status` 校验 |
+| `sessions[].attributes.parent_session_id` / `parent_session` | `ai.agent_session --delegates_to--> ai.agent_session` |
+| `sessions[].attributes.delegation_role` | 委派角色 |
 | `token_summary[]` | `ai.model`（tokens / calls / cost） |
 | `tool_calls[]` | `ai.tool_call`（工具、输入摘要、状态、时长、重试） |
 | `tool_calls[].related_pid` | 与 `process_nodes` 关联 |
@@ -49,6 +51,7 @@ JSON 走 `load_snapshot()`；SQLite 走 `load_sqlite()`，读取 `llm_calls`、`
 ```text
 ai.agent_session --uses_model----> ai.model
 ai.agent_session --invokes-------> ai.tool_call --produces--> ai.effect
+ai.agent_session --delegates_to--> ai.agent_session
 ai.agent_session --acts_on-------> svc.service
 ai.agent_session --investigates--> ops.incident
 ai.effect        --affects-------> svc.service
@@ -56,7 +59,7 @@ ai.effect        --affects-------> svc.service
 
 关键字段：
 
-- `ai.agent_session`：`total_tokens`、`cost_usd`、`tool_calls`、`failed_tool_calls`、`retry_loops`、`risk_score`、`friction_score`、`risk_level`、`claim_status`、`remediation_status`。
+- `ai.agent_session`：`total_tokens`、`cost_usd`、`tool_calls`、`failed_tool_calls`、`retry_loops`、`risk_score`、`friction_score`、`risk_level`、`claim_status`、`remediation_status`、`parent_session`、`root_session`、`depth`、`delegation_role`、`child_sessions`、`subtree_tokens`、`subtree_cost_usd`、`subtree_risk_score`。
 - `ai.tool_call`：`tool_name`、`status`、`target`、`command`、`retry_index`、`retry_of`、`risk`。
 - `ai.effect`：`effect_type`、`action`、`target`、`status`、`risk`、`confidence`。
 
@@ -133,10 +136,12 @@ OpsGraph 只把**摘要与派生指标**写入 UModel：
 
 ## 7. 当前 Demo
 
-`agentsight_demo.py` 生成两个会话：
+`agentsight_demo.py` 生成四个会话：
 
-- `sre-claude-01`：SRE Agent 排查 payment 故障，写入 retry 配置、`kubectl apply`、rollout、验证 SLO；
-- `codex-console-02`：编码 Agent 修改 OpsGraph 控制台，测试失败后修复。
+- `sre-claude-01`：SRE 主 Agent，排查 payment 故障，写入 retry 配置、`kubectl apply`、rollout、验证 SLO；
+- `sre-log-analyst`：主 Agent 委派的日志子 Agent（Claude Haiku）；
+- `sre-policy-reviewer`：主 Agent 委派的配置审查子 Agent（GPT-5）；
+- `codex-console-02`：独立编码 Agent，修改 OpsGraph 控制台，测试失败后修复。
 
 生成物：`data/replay/agentsight_snapshot.json`。
 

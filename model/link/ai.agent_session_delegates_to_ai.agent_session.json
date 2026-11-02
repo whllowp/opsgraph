@@ -1,0 +1,32 @@
+{
+  "kind": "entity_set_link",
+  "schema": {
+    "url": "umodel.aliyun.com",
+    "version": "v0.1.0"
+  },
+  "metadata": {
+    "name": "ai.agent_session_delegates_to_ai.agent_session",
+    "domain": "ai",
+    "display_name": {
+      "en_us": "Agent Session delegates to Agent Session",
+      "zh_cn": "Agent 会话委派子会话"
+    },
+    "description": {
+      "en_us": "A parent agent delegates a scoped subtask to a child session; the child's tokens, effects, and risk roll up into the parent subtree.",
+      "zh_cn": "父 Agent 将受限子任务委派给子会话；子会话的 token、效果与风险汇总到父会话子树。"
+    }
+  },
+  "spec": {
+    "src": {
+      "domain": "ai",
+      "kind": "entity_set",
+      "name": "ai.agent_session"
+    },
+    "dest": {
+      "domain": "ai",
+      "kind": "entity_set",
+      "name": "ai.agent_session"
+    },
+    "entity_link_type": "delegates_to"
+  }
+}

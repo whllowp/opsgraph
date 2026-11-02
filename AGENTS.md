@@ -4,9 +4,11 @@ OpsGraph is a Python reference implementation of eBPF-observed operational graph
 
 ## Project In One Minute
 
-- `opsgraph/ontology.py` — the graph contract (16 EntitySets, 20 Links, incl. AI domain).
+- `opsgraph/ontology.py` — the graph contract (16 EntitySets, 21 Links, incl. AI domain + delegation).
 - `opsgraph/agentsight.py` — AgentSight snapshot/SQLite adapter.
-- `opsgraph/agent_graph.py` — agent session/tool/effect graph + AI graph operators.
+- `opsgraph/agent_graph.py` — agent session/tool/effect graph + delegation tree + AI graph operators.
+- `opsgraph/policy.py` — pre-execution allow/require_approval/deny gate.
+- `opsgraph/history.py` — historical baseline + claim accuracy.
 - `opsgraph/scenario.py` — deterministic DeepFlow-shaped replay with a retry-storm incident.
 - `opsgraph/materialize.py` — observations + declared topology -> UModel entities/relations with evidence.
 - `opsgraph/analysis.py` — explainable RCA, blast radius, drift, SPOF, timeline.
@@ -17,6 +19,8 @@ OpsGraph is a Python reference implementation of eBPF-observed operational graph
 
 ```bash
 python -m opsgraph demo --addr http://127.0.0.1:18080
+python -m opsgraph gate --session sre-claude-01 --tool kubectl_apply --target "kubectl apply -f checkout-retry-policy.yaml -n shop"
+python -m opsgraph baseline
 python -m opsgraph analyze --source umodel
 python -m opsgraph serve --port 18088
 python -m unittest discover -s tests -v
@@ -33,6 +37,8 @@ node --check console/app.js
 - Do not let `analysis.py` read `scenario.expected_root_cause`.
 - AgentSight `claim` is not truth: keep `claim_status` derived from graph RCA and `remediation_status` derived from eBPF service status.
 - Do not commit raw AgentSight snapshots; they contain prompts, paths, and commands. Commit only derived `artifacts/agents.json`.
+- Gate decisions are advisory: do not claim the gate enforces syscalls unless a tool proxy/admission layer is actually wired.
+- Baseline history is synthetic in the demo; never present it as production telemetry.
 - Update `docs/en`-style paired docs only if the project gains bilingual docs; currently Chinese README plus English code comments is intentional.
 - Regenerate `model/` after changing `ontology.py` (`python -m opsgraph model`).
 

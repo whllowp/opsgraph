@@ -43,6 +43,7 @@ def cmd_demo(args: argparse.Namespace) -> int:
         end=args.end,
         agentsight_path=args.agentsight,
         include_agents=not args.no_agents,
+        history_path=args.history,
     )
     analysis = result["analysis"]
     print("=" * 78)
@@ -66,8 +67,19 @@ def cmd_demo(args: argparse.Namespace) -> int:
         print(
             f"Agents:          {summary.get('sessions', 0)} sessions · {summary.get('tool_calls', 0)} tool calls · "
             f"{summary.get('total_tokens', 0):,} tokens · ${summary.get('cost_usd', 0):.2f} · "
-            f"{summary.get('retry_loops', 0)} retry loops"
+            f"{summary.get('retry_loops', 0)} retry loops · {summary.get('delegations', 0)} delegations"
         )
+        baseline = result.get("baseline") or {}
+        accuracy = (baseline.get("claim_accuracy") or {}).get("overall") or {}
+        if baseline:
+            print(
+                f"Baseline:        {baseline.get('history_runs', 0)} historical runs · "
+                f"claim accuracy {accuracy.get('correct', 0)}/{accuracy.get('total', 0)}"
+            )
+        for decision in result.get("policy") or []:
+            print(
+                f"Gate:            {decision.get('decision'):<16} {decision.get('tool')} {decision.get('target')}"
+            )
     print(f"Artifacts:       {ARTIFACT_DIR}")
     print(
         f"Verification:    entities {result['verification']['declared_entities']} -> {result['verification']['umodel_entities']}, "
@@ -169,6 +181,38 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 0 if result.get("status") == "ok" else 1
 
 
+def cmd_gate(args: argparse.Namespace) -> int:
+    from .policy import evaluate_gate
+
+    snapshot_path = ARTIFACT_DIR / "snapshot.json"
+    agents_path = ARTIFACT_DIR / "agents.json"
+    if not snapshot_path.exists() or not agents_path.exists():
+        print("artifacts not found; run `python -m opsgraph demo` first", file=sys.stderr)
+        return 1
+    result = evaluate_gate(
+        read_json(snapshot_path),
+        read_json(agents_path),
+        args.session,
+        args.tool,
+        args.target,
+        args.command or "",
+    )
+    _print_json(result)
+    return 0
+
+
+def cmd_baseline(args: argparse.Namespace) -> int:
+    from .history import compute_baseline, load_history
+
+    agents_path = ARTIFACT_DIR / "agents.json"
+    if not agents_path.exists():
+        print("agents.json not found; run `python -m opsgraph demo` first", file=sys.stderr)
+        return 1
+    result = compute_baseline(load_history(args.history), read_json(agents_path))
+    _print_json(result)
+    return 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     snapshot_path = ARTIFACT_DIR / "snapshot.json"
     analysis_path = ARTIFACT_DIR / "analysis.json"
@@ -185,6 +229,12 @@ def cmd_report(args: argparse.Namespace) -> int:
     agents_path = ARTIFACT_DIR / "agents.json"
     if agents_path.exists():
         result["agents"] = read_json(agents_path)
+    baseline_path = ARTIFACT_DIR / "baseline.json"
+    if baseline_path.exists():
+        result["baseline"] = read_json(baseline_path)
+    policy_path = ARTIFACT_DIR / "policy.json"
+    if policy_path.exists():
+        result["policy"] = read_json(policy_path)
     target = ARTIFACT_DIR / "incident-report.md"
     target.write_text(render_report(result), encoding="utf-8")
     print(target)
@@ -217,6 +267,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--end", type=int, default=None, help="window end (unix seconds)")
     p.add_argument("--agentsight", default=None, help="AgentSight snapshot.json or agentsight-*.db")
     p.add_argument("--no-agents", action="store_true", help="skip AgentSight AI graph")
+    p.add_argument("--history", default=None, help="historical agent runs JSON")
     p.set_defaults(func=cmd_demo)
 
     p = sub.add_parser("analyze", help="re-run graph analysis")
@@ -252,6 +303,19 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("doctor", help="check the UModel connection and graph counts")
     _add_common(p)
     p.set_defaults(func=cmd_doctor)
+
+    p = sub.add_parser("gate", help="evaluate a proposed agent action before execution")
+    _add_common(p)
+    p.add_argument("--session", required=True, help="agent session key or display name")
+    p.add_argument("--tool", required=True, help="proposed tool name")
+    p.add_argument("--target", required=True, help="target service/path/command")
+    p.add_argument("--command", default="", help="optional shell command")
+    p.set_defaults(func=cmd_gate)
+
+    p = sub.add_parser("baseline", help="compute agent historical baseline and claim accuracy")
+    _add_common(p)
+    p.add_argument("--history", default=None, help="historical agent runs JSON")
+    p.set_defaults(func=cmd_baseline)
 
     p = sub.add_parser("report", help="regenerate the markdown incident report")
     _add_common(p)

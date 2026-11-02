@@ -545,6 +545,7 @@ a { color: inherit; text-decoration: none; }
 .agent-list { display: flex; flex-direction: column; gap: 7px; }
 .agent-card { border: 1px solid var(--line); border-radius: 9px; padding: 8px 9px; background: rgba(10, 17, 29, 0.62); cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; }
 .agent-card:hover, .agent-card.active { border-color: rgba(167, 139, 250, 0.45); background: rgba(167, 139, 250, 0.06); }
+.agent-card.child { margin-left: 12px; border-left: 2px solid rgba(167, 139, 250, 0.35); }
 .agent-card-head { display: flex; align-items: center; gap: 6px; }
 .agent-card-head strong { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .agent-card-head em { margin-left: auto; font-family: var(--mono); font-size: 8px; font-style: normal; color: var(--dim); }
@@ -566,6 +567,33 @@ a { color: inherit; text-decoration: none; }
 .agent-tool .tool { color: #d7e1ef; }
 .agent-tool .target { color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .agent-tool .risk { color: var(--amber); }
+.agent-baseline { display: flex; flex-direction: column; gap: 5px; }
+.baseline-row { display: grid; grid-template-columns: 1fr auto auto; gap: 7px; align-items: center; padding: 5px 7px; border: 1px solid var(--line); border-radius: 6px; font-family: var(--mono); font-size: 8.6px; }
+.baseline-row .metric { color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.baseline-row .value { color: #dfe9f7; }
+.baseline-row .delta { color: var(--dim); }
+.baseline-row.spike .delta { color: var(--amber); }
+.baseline-row .delta.good { color: var(--teal); }
+.claim-accuracy { display: flex; gap: 6px; margin-top: 7px; }
+.claim-accuracy div { flex: 1; padding: 6px 7px; border: 1px solid var(--line); border-radius: 6px; }
+.claim-accuracy strong { display: block; font-family: var(--mono); font-size: 14px; color: #e5ddff; }
+.claim-accuracy span { color: var(--dim); font-size: 8px; text-transform: uppercase; }
+.gate-presets { display: flex; flex-direction: column; gap: 5px; }
+.gate-presets button { text-align: left; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: rgba(148, 163, 184, 0.03); color: var(--muted); font-family: var(--mono); font-size: 8.8px; cursor: pointer; }
+.gate-presets button:hover { border-color: rgba(167, 139, 250, 0.4); color: #e6ddff; }
+.gate-result { margin-top: 8px; }
+.gate-card { border: 1px solid var(--line); border-radius: 7px; padding: 8px; }
+.gate-card.deny { border-color: rgba(255, 91, 110, 0.45); background: rgba(255, 91, 110, 0.05); }
+.gate-card.require_approval { border-color: rgba(245, 165, 36, 0.45); background: rgba(245, 165, 36, 0.05); }
+.gate-card.allow { border-color: rgba(45, 212, 191, 0.4); background: rgba(45, 212, 191, 0.04); }
+.gate-card-head { display: flex; align-items: center; gap: 6px; }
+.gate-decision { font-family: var(--mono); font-size: 10px; font-weight: 600; text-transform: uppercase; }
+.gate-card.deny .gate-decision { color: var(--rose); }
+.gate-card.require_approval .gate-decision { color: var(--amber); }
+.gate-card.allow .gate-decision { color: var(--teal); }
+.gate-card-head em { margin-left: auto; color: var(--dim); font-family: var(--mono); font-size: 8px; font-style: normal; }
+.gate-card p { margin: 5px 0 0; color: var(--muted); font-size: 9.4px; line-height: 1.45; }
+.gate-card ul { margin: 5px 0 0; padding-left: 14px; color: var(--dim); font-size: 8.8px; line-height: 1.55; }
 
 .query-list { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }.query-card { border: 1px solid var(--line); border-radius: 8px; padding: 8px 9px; background: rgba(10, 17, 29, 0.55); }
 .query-card-head { display: flex; align-items: center; gap: 6px; }

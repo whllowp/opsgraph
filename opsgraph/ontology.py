@@ -345,6 +345,14 @@ ENTITY_SETS: dict[str, dict[str, Any]] = {
             f("claim_status", en="Claim Verification", zh="结论校验"),
             f("remediation_status", en="Remediation Status", zh="处置状态"),
             f("source", en="Source", zh="数据来源"),
+            f("parent_session", en="Parent Session", zh="父会话"),
+            f("root_session", en="Root Session", zh="根会话"),
+            f("depth", "integer", "Delegation Depth", "委派深度"),
+            f("delegation_role", en="Delegation Role", zh="委派角色"),
+            f("child_sessions", "integer", "Child Sessions", "子会话数"),
+            f("subtree_tokens", "integer", "Subtree Tokens", "子树 Token"),
+            f("subtree_cost_usd", "float", "Subtree Cost (USD)", "子树成本（USD）"),
+            f("subtree_risk_score", "float", "Subtree Risk", "子树风险分"),
         ],
     },
     "ai.model": {
@@ -655,6 +663,21 @@ LINKS: list[dict[str, Any]] = [
         "description": {
             "en_us": "An observed effect (for example a kubectl apply or config write) that lands on a service.",
             "zh_cn": "落在服务上的可观测效果（例如 kubectl apply 或配置写入）。",
+        },
+    },
+    {
+        "name": "ai.agent_session_delegates_to_ai.agent_session",
+        "domain": "ai",
+        "src": "ai.agent_session",
+        "dest": "ai.agent_session",
+        "type": "delegates_to",
+        "display": {
+            "en_us": "Agent Session delegates to Agent Session",
+            "zh_cn": "Agent 会话委派子会话",
+        },
+        "description": {
+            "en_us": "A parent agent delegates a scoped subtask to a child session; the child's tokens, effects, and risk roll up into the parent subtree.",
+            "zh_cn": "父 Agent 将受限子任务委派给子会话；子会话的 token、效果与风险汇总到父会话子树。",
         },
     },
 ]

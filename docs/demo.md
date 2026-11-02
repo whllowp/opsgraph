@@ -28,6 +28,8 @@
 | 00:20 | node-3 CPU 92% | batch-reporter，不在支付路径 |
 | 00:40 | SLO 告警 | burn rate 14.2x |
 | 00:44 | SRE Agent 开始排查 | AgentSight 会话 `sre-claude-01` |
+| 00:45 | 委派日志子 Agent | `sre-log-analyst` 读取 payment-gateway 日志 |
+| 00:46 | 委派配置审查子 Agent | `sre-policy-reviewer` 审查 retry 变更 |
 | 00:47 | Agent 写入 retry 配置 | 2 次 `apply_patch` 失败后成功 |
 | 00:50 | Agent 应用 prod | 2 次 `kubectl_apply` forbidden 后成功 |
 | 00:54 | Agent 验证 SLO | P99 仍 2.2s，remediation pending |
@@ -36,11 +38,13 @@
 
 右侧 `Agent` tab：
 
-- 2 个 session：SRE Agent（high risk）与编码 Agent（low risk）
-- 卡片上直接显示 tokens、成本、tool 数、失败数、重试环
+- 4 个 session：SRE 主 Agent + 2 个委派子 Agent + 独立编码 Agent
+- 子会话带 `↳` 缩进；主会话显示子树 token/成本
 - 点开 SRE session：`claim verified` + `remediation pending_validation`
 - 下方 tool → effect 时间线：`apply_patch`/`kubectl_apply` 的失败与重试
-- Agent 图上的紫色连线：`session --acts_on--> checkout-service`
+- 紫色连线：`session --acts_on--> service` 与 `session --delegates_to--> session`
+- 「执行前门禁」：delete → deny，prod apply → require_approval，read → allow
+- 「历史基线」：token/失败/重试环 vs p95；claim accuracy 75%
 
 AI 图的 UModel 查询：
 

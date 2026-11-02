@@ -211,6 +211,75 @@ class AgentGraphBuilder:
         self._effect_session: dict[str, str] = {}
         self._effect_tool: dict[str, str] = {}
         self.incident_eid = str(self.incident.get("__entity_id__") or "")
+        self.parent_of: dict[str, str] = {}
+        self.children: dict[str, list[str]] = defaultdict(list)
+        self.depth: dict[str, int] = {}
+        self.root_of: dict[str, str] = {}
+        self.tree_order: list[str] = []
+        self._session_metrics: dict[str, dict[str, Any]] = {}
+        self._build_tree()
+
+    def _build_tree(self) -> None:
+        for session in self.sessions.values():
+            raw = (
+                session.attributes.get("parent_session_id")
+                or session.attributes.get("parent_session")
+                or session.attributes.get("parent_session_key")
+            )
+            parent = self.aliases.get(str(raw)) if raw else None
+            if parent and parent.key != session.key:
+                self.parent_of[session.key] = parent.key
+                self.children[parent.key].append(session.key)
+
+        def walk(key: str, seen: set[str]) -> tuple[int, str]:
+            if key in self.depth:
+                return self.depth[key], self.root_of[key]
+            if key in seen:
+                self.parent_of.pop(key, None)
+                self.depth[key] = 0
+                self.root_of[key] = key
+                return 0, key
+            parent = self.parent_of.get(key)
+            if not parent:
+                self.depth[key] = 0
+                self.root_of[key] = key
+                return 0, key
+            depth, root = walk(parent, seen | {key})
+            self.depth[key] = depth + 1
+            self.root_of[key] = root
+            return self.depth[key], root
+
+        for key in self.sessions:
+            walk(key, set())
+        for key in self.children:
+            self.children[key].sort(key=lambda item: self.sessions[item].start_ms)
+        roots = sorted(
+            [key for key in self.sessions if self.depth.get(key, 0) == 0],
+            key=lambda item: self.sessions[item].start_ms,
+        )
+        for root in roots:
+            self._append_tree(root)
+        for key in self.sessions:
+            if key not in self.tree_order:
+                self.tree_order.append(key)
+
+    def _append_tree(self, key: str) -> None:
+        if key in self.tree_order:
+            return
+        self.tree_order.append(key)
+        for child in self.children.get(key, []):
+            self._append_tree(child)
+
+    def _descendants(self, key: str, seen: set[str] | None = None) -> list[str]:
+        visited = seen if seen is not None else set()
+        if key in visited:
+            return []
+        visited.add(key)
+        result: list[str] = []
+        for child in self.children.get(key, []):
+            result.append(child)
+            result.extend(self._descendants(child, visited))
+        return result
 
     def _build_pid_map(self) -> dict[int, str]:
         mapping: dict[int, str] = {}
@@ -355,6 +424,26 @@ class AgentGraphBuilder:
             linked_service = str(session.attributes.get("linked_service") or "")
             incident_id = str(session.attributes.get("incident_id") or "")
             cost = model_cost(session.model, session.input_tokens, session.output_tokens)
+            parent_key = self.parent_of.get(session.key, "")
+            root_key = self.root_of.get(session.key, session.key)
+            descendants = self._descendants(session.key)
+            subtree_tokens = session.total_tokens + sum(
+                self.sessions[item].total_tokens for item in descendants
+            )
+            subtree_cost = cost + sum(
+                model_cost(
+                    self.sessions[item].model,
+                    self.sessions[item].input_tokens,
+                    self.sessions[item].output_tokens,
+                )
+                for item in descendants
+            )
+            self._session_metrics[session.key] = {
+                "risk_score": risk_score,
+                "cost": cost,
+                "tokens": session.total_tokens,
+                "descendants": descendants,
+            }
             eid = ids.agent_session_id(session.key)
             self.entities.append(
                 _entity(
@@ -392,6 +481,19 @@ class AgentGraphBuilder:
                         "claim_status": claim_status,
                         "remediation_status": remediation_status,
                         "source": f"agentsight.{self.agent_snapshot.source_kind}",
+                        "parent_session": _display_session(self.sessions[parent_key])
+                        if parent_key
+                        else "",
+                        "root_session": _display_session(self.sessions[root_key]),
+                        "depth": self.depth.get(session.key, 0),
+                        "delegation_role": str(
+                            session.attributes.get("delegation_role")
+                            or ("incident_commander" if not parent_key else "subagent")
+                        ),
+                        "child_sessions": len(self.children.get(session.key, [])),
+                        "subtree_tokens": subtree_tokens,
+                        "subtree_cost_usd": round(subtree_cost, 4),
+                        "subtree_risk_score": risk_score,
                     },
                     _ms_to_s(session.start_ms),
                     _ms_to_s(session.end_ms) or _ms_to_s(session.start_ms),
@@ -439,6 +541,37 @@ class AgentGraphBuilder:
                         _ms_to_s(session.end_ms),
                     )
                 )
+            if parent_key:
+                self.relations.append(
+                    _relation(
+                        "ai.agent_session",
+                        ids.agent_session_id(parent_key),
+                        "ai.agent_session",
+                        eid,
+                        "delegates_to",
+                        f"{_display_session(self.sessions[parent_key])} delegates to {_display_session(session)}",
+                        _ms_to_s(session.start_ms),
+                        _ms_to_s(session.end_ms),
+                        {
+                            "role": str(session.attributes.get("delegation_role") or "subagent"),
+                            "tokens": session.total_tokens,
+                        },
+                    )
+                )
+
+        for key, metrics in self._session_metrics.items():
+            subtree_risk = metrics["risk_score"]
+            for child in metrics["descendants"]:
+                subtree_risk = max(
+                    subtree_risk, self._session_metrics.get(child, {}).get("risk_score", 0)
+                )
+            for entity in self.entities:
+                if (
+                    entity.get("__entity_type__") == "ai.agent_session"
+                    and entity.get("session_key") == key
+                ):
+                    entity["subtree_risk_score"] = round(subtree_risk, 1)
+                    break
 
     def _build_tools(self) -> None:
         for session_key, tools in self.tools_by_session.items():
@@ -687,6 +820,11 @@ class AgentGraphBuilder:
                     reasons.append("claimed root cause conflicts with graph evidence")
                 if entity.get("remediation_status") == "pending_validation":
                     reasons.append("remediation not yet validated by eBPF")
+                if self.children.get(session_key):
+                    reasons.append(
+                        f"{len(self.children[session_key])} delegated subagent(s), "
+                        f"{entity.get('subtree_tokens', 0):,} subtree tokens"
+                    )
                 sessions.append(
                     {
                         "id": entity.get("__entity_id__"),
@@ -720,6 +858,17 @@ class AgentGraphBuilder:
                         "remediation_status": entity.get("remediation_status"),
                         "prompt_preview": entity.get("prompt_preview"),
                         "cwd": entity.get("cwd"),
+                        "parent_session": entity.get("parent_session"),
+                        "root_session": entity.get("root_session"),
+                        "depth": entity.get("depth"),
+                        "delegation_role": entity.get("delegation_role"),
+                        "child_sessions": entity.get("child_sessions"),
+                        "children": [
+                            self.sessions[item].key for item in self.children.get(session_key, [])
+                        ],
+                        "subtree_tokens": entity.get("subtree_tokens"),
+                        "subtree_cost_usd": entity.get("subtree_cost_usd"),
+                        "subtree_risk_score": entity.get("subtree_risk_score"),
                         "reasons": reasons,
                         "tool_timeline": [
                             {
@@ -746,8 +895,9 @@ class AgentGraphBuilder:
                     )
 
         sessions.sort(
-            key=lambda item: (float(item.get("risk_score") or 0), float(item.get("cost_usd") or 0)),
-            reverse=True,
+            key=lambda item: (
+                self.tree_order.index(item["key"]) if item["key"] in self.tree_order else 999
+            )
         )
         loops.sort(key=lambda item: (item["failures"], item["attempts"]), reverse=True)
         risk_effects.sort(key=lambda item: item["ts"])
@@ -792,6 +942,9 @@ class AgentGraphBuilder:
                 "high_risk_effects": len(risk_effects),
                 "claims_verified": sum(1 for item in claims if item["status"] == "verified"),
                 "claims_mismatched": sum(1 for item in claims if item["status"] == "mismatch"),
+                "roots": sum(1 for key in self.sessions if self.depth.get(key, 0) == 0),
+                "max_depth": max(self.depth.values(), default=0),
+                "delegations": len(self.parent_of),
                 "agent_entities": len(
                     [item for item in self.entities if item.get("__domain__") == "ai"]
                 ),
@@ -820,6 +973,24 @@ class AgentGraphBuilder:
         claims: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
         findings = []
+        for session in sessions:
+            if not session.get("child_sessions"):
+                continue
+            findings.append(
+                {
+                    "id": "agent-delegation",
+                    "severity": "info",
+                    "title": "Agent delegated work to subagents",
+                    "detail": (
+                        f"{session['name']} delegated to {session['child_sessions']} child session(s); "
+                        f"subtree {session.get('subtree_tokens', 0):,} tokens / "
+                        f"${float(session.get('subtree_cost_usd') or 0):.2f}, "
+                        f"max subtree risk {float(session.get('subtree_risk_score') or 0):.0f}."
+                    ),
+                    "entities": [session.get("id")],
+                    "session": session["name"],
+                }
+            )
         for loop in loops:
             findings.append(
                 {

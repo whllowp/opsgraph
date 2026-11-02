@@ -56,7 +56,8 @@ class ConsoleStateTests(unittest.TestCase):
         self.assertIn("ai.agent_session", types)
         edge_types = {edge["type"] for edge in self.state["edges"]}
         self.assertIn("acts_on", edge_types)
-        self.assertEqual(self.state["agents"]["summary"]["sessions"], 2)
+        self.assertIn("delegates_to", edge_types)
+        self.assertEqual(self.state["agents"]["summary"]["sessions"], 4)
 
     def test_edges_and_path(self):
         types = {edge["type"] for edge in self.state["edges"]}
@@ -66,7 +67,7 @@ class ConsoleStateTests(unittest.TestCase):
 
     def test_metadata(self):
         self.assertEqual(self.state["meta"]["model"]["entity_sets"], 16)
-        self.assertEqual(self.state["meta"]["graph_counts"]["entities"], 119)
+        self.assertEqual(self.state["meta"]["graph_counts"]["entities"], 130)
         self.assertEqual(self.state["queries"][0]["label"], "在 UModel 中定位受害服务")
 
 

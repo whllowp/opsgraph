@@ -100,7 +100,7 @@ Agent 执行了 `kubectl apply` / rollout，并不等于故障恢复。OpsGraph 
 - 服务 RCA 可以 join Agent 行为；
 - Agent 可以查询自己上一次的运行图；
 - 控制台可以在同一张图里显示「服务异常 + Agent 处置」；
-- 未来多 Agent 协作可以建模为 session 之间的 `delegates` / `observes` 边。
+- 多 Agent 协作建模为 session 之间的 `delegates_to` 边；父会话汇总子树 token/成本/风险。
 
 ## 5. 可信度与边界
 
@@ -120,10 +120,16 @@ Agent 执行了 `kubectl apply` / rollout，并不等于故障恢复。OpsGraph 
 4. `Agent 发现`：重试环、高风险效果、claim verified、remediation pending。
 5. 右侧 `查询`：直接跑 `.entity with(domain='ai', name='ai.agent_session')`。
 
-## 7. 下一步
+## 7. 已落地的三个扩展
 
-- 多 Agent 协作：`parent_session` / `delegates` / `observes`。
-- Agent 行为基线：同一 Agent/仓库的历史 token、tool、失败率。
-- 策略门禁：高风险 effect 在 Agent 执行前拦截，而不是事后 finding。
+- **多 Agent 协作**：`parent_session_id` → `delegates_to`，`depth/child_sessions/subtree_tokens/subtree_cost/subtree_risk`；详见 [多 Agent 协作](agent-collaboration.md)。
+- **执行前门禁**：`policy.py` 读取图上下文，返回 allow/require_approval/deny；详见 [执行前策略门禁](policy-gate.md)。
+- **历史基线 + claim accuracy**：`history.py` 对比同 Agent 历史 p95，并统计 claim 与图 RCA 的一致率；详见 [Agent 基线与评估](agent-evaluation.md)。
+
+## 8. 下一步
+
+- 多 Agent DAG 与跨机器委派（`observes`、`handoff`）。
+- 把 gate 接到 tool proxy / MCP server / admission controller，形成强制拦截。
+- 用更多真实运行替换合成历史，加入 repo/incident 维度。
 - Agent 记忆：把 verified claim、remediation、runbook 回写成可检索的图上下文。
-- 评估集：用历史 Agent 运行做 claim accuracy、risk precision、cost per incident。
+- 评估集：claim accuracy、risk precision、cost per incident 的持续回归。

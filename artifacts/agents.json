@@ -4,18 +4,21 @@
   "source_path": "agentsight_snapshot.json",
   "generated_at": "2026-11-02T01:00:00Z",
   "summary": {
-    "sessions": 2,
-    "models": 2,
-    "tool_calls": 16,
+    "sessions": 4,
+    "models": 3,
+    "tool_calls": 20,
     "failed_tool_calls": 5,
     "retry_loops": 3,
-    "total_tokens": 69400,
-    "cost_usd": 0.2713,
+    "total_tokens": 80800,
+    "cost_usd": 0.2844,
     "high_risk_effects": 4,
     "claims_verified": 1,
     "claims_mismatched": 0,
-    "agent_entities": 33,
-    "agent_relations": 32
+    "roots": 2,
+    "max_depth": 1,
+    "delegations": 2,
+    "agent_entities": 44,
+    "agent_relations": 49
   },
   "models": [
     {
@@ -31,10 +34,19 @@
       "id": "b6e5ddf76a94c431a41f5aaa3c8ef740",
       "model": "gpt-5",
       "provider": "openai",
-      "calls": 4,
+      "calls": 5,
+      "sessions": 2,
+      "tokens": 28600,
+      "cost_usd": 0.0708
+    },
+    {
+      "id": "bb33176ec2bd96274add149ad59fd204",
+      "model": "claude-haiku",
+      "provider": "anthropic",
+      "calls": 2,
       "sessions": 1,
-      "tokens": 24800,
-      "cost_usd": 0.0607
+      "tokens": 7600,
+      "cost_usd": 0.0031
     }
   ],
   "sessions": [
@@ -70,11 +82,24 @@
       "remediation_status": "pending_validation",
       "prompt_preview": "Payment SLO is breaching. Use the UModel graph, find the root cause, and roll back the retry config.",
       "cwd": "/workspace/opsgraph",
+      "parent_session": "",
+      "root_session": "claude:sre-claude-01",
+      "depth": 0,
+      "delegation_role": "incident_commander",
+      "child_sessions": 2,
+      "children": [
+        "sre-log-analyst",
+        "sre-policy-reviewer"
+      ],
+      "subtree_tokens": 56000,
+      "subtree_cost_usd": 0.2237,
+      "subtree_risk_score": 100.0,
       "reasons": [
         "4 high-risk system effect(s)",
         "2 retry loop(s)",
         "claimed root cause matches graph evidence",
-        "remediation not yet validated by eBPF"
+        "remediation not yet validated by eBPF",
+        "2 delegated subagent(s), 56,000 subtree tokens"
       ],
       "tool_timeline": [
         {
@@ -179,6 +204,132 @@
       ]
     },
     {
+      "id": "0d42f450c0f3e76a1607bed325b7490b",
+      "key": "sre-log-analyst",
+      "name": "claude:sre-log-analyst",
+      "agent_type": "claude",
+      "model": "claude-haiku",
+      "provider": "anthropic",
+      "status": "completed",
+      "start_ts": 1793551500,
+      "end_ts": 1793551740,
+      "duration_s": 240.0,
+      "input_tokens": 6400,
+      "output_tokens": 1200,
+      "total_tokens": 7600,
+      "cost_usd": 0.0031,
+      "tool_calls": 2,
+      "failed_tool_calls": 0,
+      "retry_loops": 0,
+      "files_read": 1,
+      "files_written": 0,
+      "network_calls": 1,
+      "commands": 0,
+      "risk_score": 2,
+      "friction_score": 0.8,
+      "risk_level": "low",
+      "linked_service": "payment-gateway",
+      "incident_id": "INC-2026-1102-01",
+      "claim_root_cause": "",
+      "claim_status": "unverifiable",
+      "remediation_status": "none",
+      "prompt_preview": "Read payment-gateway pod logs and summarize timeout/retry signals for the parent incident.",
+      "cwd": "/workspace/opsgraph",
+      "parent_session": "claude:sre-claude-01",
+      "root_session": "claude:sre-claude-01",
+      "depth": 1,
+      "delegation_role": "log_analysis",
+      "child_sessions": 0,
+      "children": [],
+      "subtree_tokens": 7600,
+      "subtree_cost_usd": 0.0031,
+      "subtree_risk_score": 2,
+      "reasons": [],
+      "tool_timeline": [
+        {
+          "id": "tool-log-read",
+          "tool": "read_file",
+          "target": "/var/log/pods/shop_payment-gateway-6f8c9/0.log",
+          "status": "success",
+          "ts": 1793551512,
+          "duration_ms": 900,
+          "risk": "low"
+        },
+        {
+          "id": "tool-log-query",
+          "tool": "query_umodel",
+          "target": ".topo | graph-call getDirectRelations(payment-gateway)",
+          "status": "success",
+          "ts": 1793551536,
+          "duration_ms": 1200,
+          "risk": "low"
+        }
+      ]
+    },
+    {
+      "id": "1d243e146ae4e988193908fef140ed11",
+      "key": "sre-policy-reviewer",
+      "name": "codex:sre-policy-reviewer",
+      "agent_type": "codex",
+      "model": "gpt-5",
+      "provider": "openai",
+      "status": "completed",
+      "start_ts": 1793551560,
+      "end_ts": 1793551650,
+      "duration_s": 90.0,
+      "input_tokens": 3200,
+      "output_tokens": 600,
+      "total_tokens": 3800,
+      "cost_usd": 0.01,
+      "tool_calls": 2,
+      "failed_tool_calls": 0,
+      "retry_loops": 0,
+      "files_read": 1,
+      "files_written": 0,
+      "network_calls": 1,
+      "commands": 0,
+      "risk_score": 2,
+      "friction_score": 0.4,
+      "risk_level": "low",
+      "linked_service": "checkout-service",
+      "incident_id": "INC-2026-1102-01",
+      "claim_root_cause": "",
+      "claim_status": "unverifiable",
+      "remediation_status": "none",
+      "prompt_preview": "Review the proposed checkout retry config against the graph and flag risky fields.",
+      "cwd": "/workspace/opsgraph",
+      "parent_session": "claude:sre-claude-01",
+      "root_session": "claude:sre-claude-01",
+      "depth": 1,
+      "delegation_role": "policy_review",
+      "child_sessions": 0,
+      "children": [],
+      "subtree_tokens": 3800,
+      "subtree_cost_usd": 0.01,
+      "subtree_risk_score": 2,
+      "reasons": [],
+      "tool_timeline": [
+        {
+          "id": "tool-policy-read",
+          "tool": "read_file",
+          "target": "/workspace/opsgraph/checkout-retry-policy.yaml",
+          "status": "success",
+          "ts": 1793551566,
+          "duration_ms": 600,
+          "risk": "low"
+        },
+        {
+          "id": "tool-policy-verify",
+          "tool": "query_umodel",
+          "target": ".entity with(domain='ops', name='ops.change', query='checkout')",
+          "status": "success",
+          "ts": 1793551584,
+          "duration_ms": 800,
+          "risk": "low"
+        }
+      ]
+    },
+    {
       "id": "17d00cdb6673884602297645c0e656a7",
       "key": "codex-console-02",
       "name": "codex:codex-console-02",
@@ -210,6 +361,15 @@
       "remediation_status": "none",
       "prompt_preview": "Add the AgentSight graph lane to the OpsGraph console and keep CI green.",
       "cwd": "/workspace/opsgraph",
+      "parent_session": "",
+      "root_session": "codex:codex-console-02",
+      "depth": 0,
+      "delegation_role": "independent_coder",
+      "child_sessions": 0,
+      "children": [],
+      "subtree_tokens": 24800,
+      "subtree_cost_usd": 0.0607,
+      "subtree_risk_score": 21,
       "reasons": [
         "1 retry loop(s)"
       ],
@@ -346,6 +506,16 @@
   ],
   "findings": [
     {
+      "id": "agent-delegation",
+      "severity": "info",
+      "title": "Agent delegated work to subagents",
+      "detail": "claude:sre-claude-01 delegated to 2 child session(s); subtree 56,000 tokens / $0.22, max subtree risk 100.",
+      "entities": [
+        "459b11f5d1bbc9ac2be163e4e5b3e143"
+      ],
+      "session": "claude:sre-claude-01"
+    },
+    {
       "id": "agent-retry-loop",
       "severity": "critical",
       "title": "apply_patch retry loop",
@@ -400,6 +570,36 @@
         "459b11f5d1bbc9ac2be163e4e5b3e143"
       ],
       "session": "claude:sre-claude-01"
+    },
+    {
+      "id": "agent-baseline-spike",
+      "severity": "warning",
+      "title": "total_tokens above historical p95",
+      "detail": "claude:sre-claude-01 total_tokens=44600 vs claude p95=31600 (5 historical runs).",
+      "entities": [
+        "459b11f5d1bbc9ac2be163e4e5b3e143"
+      ],
+      "session": "claude:sre-claude-01"
+    },
+    {
+      "id": "agent-baseline-spike",
+      "severity": "warning",
+      "title": "failed_tool_calls above historical p95",
+      "detail": "claude:sre-claude-01 failed_tool_calls=4 vs claude p95=2.8 (5 historical runs).",
+      "entities": [
+        "459b11f5d1bbc9ac2be163e4e5b3e143"
+      ],
+      "session": "claude:sre-claude-01"
+    },
+    {
+      "id": "agent-baseline-spike",
+      "severity": "warning",
+      "title": "retry_loops above historical p95",
+      "detail": "claude:sre-claude-01 retry_loops=2 vs claude p95=1 (5 historical runs).",
+      "entities": [
+        "459b11f5d1bbc9ac2be163e4e5b3e143"
+      ],
+      "session": "claude:sre-claude-01"
     }
   ],
   "timeline": [
@@ -421,10 +621,26 @@
     },
     {
       "ts": 1793551500,
+      "kind": "agent",
+      "title": "claude:sre-log-analyst started",
+      "detail": "claude · claude-haiku",
+      "session": "claude:sre-log-analyst",
+      "clock": "00:45"
+    },
+    {
+      "ts": 1793551500,
       "kind": "tool",
       "title": "kubectl_get succeeded",
       "detail": "kubectl get pods -n payments -o wide",
       "session": "claude:sre-claude-01",
+      "clock": "00:45"
+    },
+    {
+      "ts": 1793551512,
+      "kind": "tool",
+      "title": "read_file succeeded",
+      "detail": "/var/log/pods/shop_payment-gateway-6f8c9/0.log",
+      "session": "claude:sre-log-analyst",
       "clock": "00:45"
     },
     {
@@ -434,6 +650,22 @@
       "detail": "/workspace/opsgraph/checkout-retry-policy.yaml",
       "session": "claude:sre-claude-01",
       "clock": "00:45"
+    },
+    {
+      "ts": 1793551536,
+      "kind": "tool",
+      "title": "query_umodel succeeded",
+      "detail": ".topo | graph-call getDirectRelations(payment-gateway)",
+      "session": "claude:sre-log-analyst",
+      "clock": "00:45"
+    },
+    {
+      "ts": 1793551560,
+      "kind": "agent",
+      "title": "codex:sre-policy-reviewer started",
+      "detail": "codex · gpt-5",
+      "session": "codex:sre-policy-reviewer",
+      "clock": "00:46"
     },
     {
       "ts": 1793551560,
@@ -452,11 +684,27 @@
       "clock": "00:46"
     },
     {
+      "ts": 1793551566,
+      "kind": "tool",
+      "title": "read_file succeeded",
+      "detail": "/workspace/opsgraph/checkout-retry-policy.yaml",
+      "session": "codex:sre-policy-reviewer",
+      "clock": "00:46"
+    },
+    {
       "ts": 1793551578,
       "kind": "tool",
       "title": "apply_patch failed",
       "detail": "/workspace/opsgraph/checkout-retry-policy.yaml",
       "session": "claude:sre-claude-01",
+      "clock": "00:46"
+    },
+    {
+      "ts": 1793551584,
+      "kind": "tool",
+      "title": "query_umodel succeeded",
+      "detail": ".entity with(domain='ops', name='ops.change', query='checkout')",
+      "session": "codex:sre-policy-reviewer",
       "clock": "00:46"
     },
     {
@@ -492,6 +740,14 @@
       "clock": "00:47"
     },
     {
+      "ts": 1793551650,
+      "kind": "agent",
+      "title": "codex:sre-policy-reviewer ended",
+      "detail": "3800 tokens · 1.5 min",
+      "session": "codex:sre-policy-reviewer",
+      "clock": "00:47"
+    },
+    {
       "ts": 1793551680,
       "kind": "tool",
       "title": "kubectl_apply failed",
@@ -506,6 +762,14 @@
       "detail": "npm test -- --runInBand",
       "session": "codex:codex-console-02",
       "clock": "00:48"
+    },
+    {
+      "ts": 1793551740,
+      "kind": "agent",
+      "title": "claude:sre-log-analyst ended",
+      "detail": "7600 tokens · 4.0 min",
+      "session": "claude:sre-log-analyst",
+      "clock": "00:49"
     },
     {
       "ts": 1793551740,
@@ -595,5 +859,214 @@
       "session": "codex:codex-console-02",
       "clock": "00:59"
     }
-  ]
+  ],
+  "baseline": {
+    "schema_version": 1,
+    "history_path": "agent_history.json",
+    "history_runs": 8,
+    "history_window": {
+      "first": "2026-10-27T09:12:00+08:00",
+      "last": "2026-11-01T12:31:00+08:00"
+    },
+    "baseline_by_agent": [
+      {
+        "agent": "claude",
+        "runs": 5
+      },
+      {
+        "agent": "codex",
+        "runs": 3
+      }
+    ],
+    "sessions": [
+      {
+        "key": "sre-claude-01",
+        "name": "claude:sre-claude-01",
+        "agent_type": "claude",
+        "model": "claude-sonnet-4",
+        "historical_runs": 5,
+        "metrics": {
+          "total_tokens": {
+            "current": 44600.0,
+            "median": 28000.0,
+            "p95": 31600.0,
+            "mean": 27800.0,
+            "samples": 5,
+            "deviation_pct": 59.3
+          },
+          "cost_usd": {
+            "current": 0.2106,
+            "median": 0.138,
+            "p95": 0.1596,
+            "mean": 0.141,
+            "samples": 5,
+            "deviation_pct": 52.6
+          },
+          "tool_calls": {
+            "current": 11.0,
+            "median": 10.0,
+            "p95": 11.8,
+            "mean": 9.6,
+            "samples": 5,
+            "deviation_pct": 10.0
+          },
+          "failed_tool_calls": {
+            "current": 4.0,
+            "median": 1.0,
+            "p95": 2.8,
+            "mean": 1.2,
+            "samples": 5,
+            "deviation_pct": 300.0
+          },
+          "retry_loops": {
+            "current": 2.0,
+            "median": 0.0,
+            "p95": 1.0,
+            "mean": 0.4,
+            "samples": 5,
+            "deviation_pct": null
+          },
+          "duration_s": {
+            "current": 840.0,
+            "median": 740.0,
+            "p95": 866.0,
+            "mean": 736.0,
+            "samples": 5,
+            "deviation_pct": 13.5
+          }
+        }
+      },
+      {
+        "key": "codex-console-02",
+        "name": "codex:codex-console-02",
+        "agent_type": "codex",
+        "model": "gpt-5",
+        "historical_runs": 3,
+        "metrics": {
+          "total_tokens": {
+            "current": 24800.0,
+            "median": 23000.0,
+            "p95": 25700.0,
+            "mean": 23333.3333,
+            "samples": 3,
+            "deviation_pct": 7.8
+          },
+          "cost_usd": {
+            "current": 0.0607,
+            "median": 0.055,
+            "p95": 0.0663,
+            "mean": 0.0583,
+            "samples": 3,
+            "deviation_pct": 10.4
+          },
+          "tool_calls": {
+            "current": 5.0,
+            "median": 7.0,
+            "p95": 7.9,
+            "mean": 7.0,
+            "samples": 3,
+            "deviation_pct": -28.6
+          },
+          "failed_tool_calls": {
+            "current": 1.0,
+            "median": 1.0,
+            "p95": 1.9,
+            "mean": 1.0,
+            "samples": 3,
+            "deviation_pct": 0.0
+          },
+          "retry_loops": {
+            "current": 1.0,
+            "median": 0.0,
+            "p95": 0.9,
+            "mean": 0.3333,
+            "samples": 3,
+            "deviation_pct": null
+          },
+          "duration_s": {
+            "current": 780.0,
+            "median": 650.0,
+            "p95": 695.0,
+            "mean": 656.6667,
+            "samples": 3,
+            "deviation_pct": 20.0
+          }
+        }
+      }
+    ],
+    "claim_accuracy": {
+      "overall": {
+        "correct": 6,
+        "total": 8,
+        "accuracy": 0.75
+      },
+      "by_agent": [
+        {
+          "agent": "claude",
+          "correct": 5,
+          "total": 6,
+          "accuracy": 0.833
+        },
+        {
+          "agent": "codex",
+          "correct": 1,
+          "total": 2,
+          "accuracy": 0.5
+        }
+      ]
+    },
+    "findings": [
+      {
+        "id": "agent-baseline-spike",
+        "severity": "warning",
+        "title": "total_tokens above historical p95",
+        "detail": "claude:sre-claude-01 total_tokens=44600 vs claude p95=31600 (5 historical runs).",
+        "entities": [
+          "459b11f5d1bbc9ac2be163e4e5b3e143"
+        ],
+        "session": "claude:sre-claude-01"
+      },
+      {
+        "id": "agent-baseline-spike",
+        "severity": "warning",
+        "title": "failed_tool_calls above historical p95",
+        "detail": "claude:sre-claude-01 failed_tool_calls=4 vs claude p95=2.8 (5 historical runs).",
+        "entities": [
+          "459b11f5d1bbc9ac2be163e4e5b3e143"
+        ],
+        "session": "claude:sre-claude-01"
+      },
+      {
+        "id": "agent-baseline-spike",
+        "severity": "warning",
+        "title": "retry_loops above historical p95",
+        "detail": "claude:sre-claude-01 retry_loops=2 vs claude p95=1 (5 historical runs).",
+        "entities": [
+          "459b11f5d1bbc9ac2be163e4e5b3e143"
+        ],
+        "session": "claude:sre-claude-01"
+      }
+    ]
+  },
+  "claim_accuracy": {
+    "overall": {
+      "correct": 6,
+      "total": 8,
+      "accuracy": 0.75
+    },
+    "by_agent": [
+      {
+        "agent": "claude",
+        "correct": 5,
+        "total": 6,
+        "accuracy": 0.833
+      },
+      {
+        "agent": "codex",
+        "correct": 1,
+        "total": 2,
+        "accuracy": 0.5
+      }
+    ]
+  }
 }

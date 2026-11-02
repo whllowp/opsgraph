@@ -20,9 +20,9 @@ class ModelPackTests(unittest.TestCase):
 
     def test_counts(self):
         self.assertEqual(self.result["entity_sets"], 16)
-        self.assertEqual(self.result["links"], 20)
+        self.assertEqual(self.result["links"], 21)
         self.assertEqual(len(list((self.root / "entity_set").glob("*.json"))), 16)
-        self.assertEqual(len(list((self.root / "link").glob("*.json"))), 20)
+        self.assertEqual(len(list((self.root / "link").glob("*.json"))), 21)
 
     def test_entity_set_shape(self):
         element = json.loads(

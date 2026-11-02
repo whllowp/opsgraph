@@ -312,9 +312,9 @@ function renderAgents() {
       const tokens = Number(session.total_tokens || 0);
       const cost = Number(session.cost_usd || 0);
       return `
-        <div class="agent-card ${session.key === state.selectedAgent ? "active" : ""}" data-agent="${escapeHtml(session.key)}">
+        <div class="agent-card ${session.key === state.selectedAgent ? "active" : ""} ${Number(session.depth || 0) > 0 ? "child" : ""}" data-agent="${escapeHtml(session.key)}">
           <div class="agent-card-head">
-            <strong>${escapeHtml(session.name)}</strong>
+            <strong>${Number(session.depth || 0) > 0 ? "↳ " : ""}${escapeHtml(session.name)}</strong>
             <span class="agent-risk ${risk}">${risk}</span>
             <em>${escapeHtml(session.model || "")}</em>
           </div>
@@ -324,6 +324,7 @@ function renderAgents() {
             <span>tools <b>${session.tool_calls ?? 0}</b></span>
             <span>fail <b>${session.failed_tool_calls ?? 0}</b></span>
             <span>loops <b>${session.retry_loops ?? 0}</b></span>
+            ${session.child_sessions ? `<span>children <b>${session.child_sessions}</b></span>` : ""}
           </div>
         </div>`;
     })
@@ -339,6 +340,11 @@ function renderAgents() {
   const remediation = selected.remediation_status && selected.remediation_status !== "none"
     ? `<div class="agent-claim ${selected.remediation_status === "pending_validation" ? "mismatch" : "verified"}">remediation <b>${escapeHtml(selected.remediation_status)}</b> · ${Number(selected.risk_score || 0).toFixed(0)} risk</div>`
     : "";
+  const delegation = selected.parent_session
+    ? `<div class="agent-claim">delegated by <b>${escapeHtml(selected.parent_session)}</b> · role ${escapeHtml(selected.delegation_role || "subagent")}</div>`
+    : selected.child_sessions
+      ? `<div class="agent-claim verified">root session · ${selected.child_sessions} child(s) · subtree ${fmt.qps(selected.subtree_tokens)} tok · $${Number(selected.subtree_cost_usd || 0).toFixed(2)}</div>`
+      : "";
   const tools = (selected.tool_timeline || [])
     .slice(-14)
     .map(
@@ -352,7 +358,7 @@ function renderAgents() {
     .join("");
   const reasons = (selected.reasons || []).map((reason) => `<span>${escapeHtml(reason)}</span>`).join("");
   $("#agent-detail").innerHTML = `
-    ${claim}${remediation}
+    ${claim}${remediation}${delegation}
     <div class="rank-reasons">${reasons}</div>
     <div class="agent-tools">${tools || '<p class="muted small">没有工具调用。</p>'}</div>`;
   $("#agent-findings").innerHTML = (agents.findings || [])
@@ -364,6 +370,90 @@ function renderAgents() {
       </div>`
     )
     .join("");
+  renderBaseline(selected);
+  renderGatePresets();
+}
+
+function renderBaseline(session) {
+  const baseline = state.data.baseline || {};
+  const row = (baseline.sessions || []).find((item) => item.key === session.key);
+  $("#baseline-runs").textContent = `${baseline.history_runs || 0} runs`;
+  if (!row) {
+    $("#agent-baseline").innerHTML = '<p class="muted small">没有历史基线数据。</p>';
+    $("#claim-accuracy").innerHTML = "";
+    return;
+  }
+  const metrics = row.metrics || {};
+  const labels = { total_tokens: "tokens", cost_usd: "cost", tool_calls: "tools", failed_tool_calls: "fail", retry_loops: "loops" };
+  $("#agent-baseline").innerHTML = Object.entries(labels)
+    .map(([key, label]) => {
+      const metric = metrics[key] || {};
+      const current = Number(metric.current || 0);
+      const p95 = metric.p95 == null ? null : Number(metric.p95);
+      const spike = p95 != null && current > Math.max(p95 * 1.25, p95 + 1);
+      const value = key === "cost_usd" ? `$${current.toFixed(2)}` : key === "total_tokens" ? fmt.qps(current) : String(current);
+      const base = p95 == null ? "no history" : `p95 ${key === "cost_usd" ? "$" + p95.toFixed(2) : key === "total_tokens" ? fmt.qps(p95) : p95}`;
+      return `<div class="baseline-row ${spike ? "spike" : ""}"><span class="metric">${label}</span><span class="value">${value}</span><span class="delta">${spike ? "▲ " : ""}${base}</span></div>`;
+    })
+    .join("");
+  const accuracy = baseline.claim_accuracy || {};
+  const overall = accuracy.overall || {};
+  $("#claim-accuracy").innerHTML = `
+    <div><strong>${overall.accuracy == null ? "—" : `${Math.round(overall.accuracy * 100)}%`}</strong><span>claim accuracy</span></div>
+    ${(accuracy.by_agent || []).map((item) => `<div><strong>${Math.round((item.accuracy || 0) * 100)}%</strong><span>${escapeHtml(item.agent)} · ${item.correct}/${item.total}</span></div>`).join("")}`;
+}
+
+function renderGatePresets() {
+  const presets = state.data.policy || [];
+  const container = $("#gate-presets");
+  if (!presets.length || container.dataset.ready === "1") return;
+  container.dataset.ready = "1";
+  container.innerHTML = presets
+    .map(
+      (item, index) => `<button data-gate="${index}">${escapeHtml(item.label || item.tool)} → <b>${escapeHtml(item.decision)}</b></button>`
+    )
+    .join("");
+  $$("#gate-presets button").forEach((button) => {
+    button.addEventListener("click", () => {
+      const item = presets[Number(button.dataset.gate)];
+      runGate(item);
+    });
+  });
+  runGate(presets[0]);
+}
+
+async function runGate(item) {
+  const session = state.data.agents?.sessions?.find((entry) => entry.key === state.selectedAgent);
+  const payload = {
+    session: session?.key || item.session || "sre-claude-01",
+    tool: item.tool,
+    target: item.target,
+    command: item.target,
+  };
+  const box = $("#gate-result");
+  box.innerHTML = '<p class="muted small">evaluating policy…</p>';
+  try {
+    const response = await fetch("/api/gate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const decision = await response.json();
+    if (!response.ok) throw new Error(decision.error || "gate failed");
+    const cls = decision.decision === "deny" ? "deny" : decision.decision === "require_approval" ? "require_approval" : "allow";
+    box.innerHTML = `
+      <div class="gate-card ${cls}">
+        <div class="gate-card-head">
+          <span class="gate-decision">${escapeHtml(decision.decision)}</span>
+          <em>${escapeHtml(decision.rule)}</em>
+        </div>
+        <p><code>${escapeHtml(decision.tool)}</code> ${escapeHtml(decision.target)}</p>
+        <ul>${(decision.reasons || []).map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>
+        ${decision.approvers?.length ? `<p>approvers: ${decision.approvers.map((item) => escapeHtml(item)).join(", ")}</p>` : ""}
+      </div>`;
+  } catch (error) {
+    box.innerHTML = `<p class="muted small">gate error: ${escapeHtml(error.message)}</p>`;
+  }
 }
 
 function selectAgent(key) {
@@ -555,7 +645,7 @@ function visibleNode(node) {
 function visibleEdge(edge) {
   if (edge.type === "calls" && !state.filters.calls) return false;
   if (edge.type === "depends_on" && !state.filters.business) return false;
-  if (["acts_on", "investigates"].includes(edge.type) && !state.filters.agents) return false;
+  if (["acts_on", "investigates", "delegates_to"].includes(edge.type) && !state.filters.agents) return false;
   if (["targets", "affects"].includes(edge.type) && !state.filters.ops) return false;
   if (state.filters.observedOnly && edge.observed === false) return false;
   return true;
@@ -643,7 +733,7 @@ function renderGraph() {
     const g = document.createElementNS(NS, "g");
     const isPath = pathPairs.has(`${edge.src}->${edge.dst}`) && edge.type === "calls";
     const hot = edge.type === "calls" && ((Number(edge.p99_ms || 0) >= 800 && Number(edge.delta_pct || 0) >= 100) || Number(edge.error_rate || 0) >= 0.03);
-    const classes = ["edge", edge.type === "calls" ? "call" : edge.type === "depends_on" ? "business" : edge.type === "acts_on" ? "agent" : "ops"];
+    const classes = ["edge", edge.type === "calls" ? "call" : edge.type === "depends_on" ? "business" : ["acts_on", "delegates_to"].includes(edge.type) ? "agent" : "ops"];
     if (hot) classes.push("hot");
     if (!edge.observed) classes.push("unobserved");
     if (edge.shadow) classes.push("shadow");
@@ -728,7 +818,7 @@ function renderGraph() {
     const label = document.createElementNS(NS, "text");
     label.setAttribute("class", "label");
     label.setAttribute("y", String(Number(node.radius) + 15));
-    label.textContent = node.name;
+    label.textContent = node.label || node.name;
     g.appendChild(label);
 
     const sub = document.createElementNS(NS, "text");
@@ -740,8 +830,7 @@ function renderGraph() {
       sub.textContent = node.status === "impacted" ? "impacted" : "healthy";
     } else if (node.type === "ai.agent_session") {
       sub.textContent = `${fmt.qps(node.metrics?.tokens)} tok · $${Number(node.metrics?.cost_usd || 0).toFixed(2)}`;
-    } else {
-      sub.textContent = node.status || "";
+    } else {      sub.textContent = node.status || "";
     }
     g.appendChild(sub);
 

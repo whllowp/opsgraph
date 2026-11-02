@@ -9,6 +9,8 @@ from .agent_graph import AgentGraphBuilder
 from .agentsight import load_agentsight
 from .agentsight_demo import generate_demo_snapshot
 from .analysis import analyze, changed_entities
+from .history import compute_baseline, load_history
+from .policy import demo_gate_evaluations
 from .config import (
     ARTIFACT_DIR,
     MODEL_DIR,
@@ -67,6 +69,7 @@ def run_pipeline(
     end: int | None = None,
     agentsight_path: str | Path | None = None,
     include_agents: bool = True,
+    history_path: str | Path | None = None,
     write_artifacts: bool = True,
 ) -> dict[str, Any]:
     replay = generate_replay(Path(replay_dir) if replay_dir else REPLAY_DIR)
@@ -104,6 +107,8 @@ def run_pipeline(
 
     agent_snapshot = load_agentsight(agent_path) if agent_path else None
     agent_analysis: dict[str, Any] | None = None
+    baseline: dict[str, Any] | None = None
+    policy_evaluations: list[dict[str, Any]] = []
     if agent_snapshot:
         agent_entities, agent_relations, agent_analysis = AgentGraphBuilder(
             snapshot, agent_snapshot, analysis
@@ -114,6 +119,11 @@ def run_pipeline(
             "entities": len(snapshot["entities"]),
             "relations": len(snapshot["relations"]),
         }
+        baseline = compute_baseline(load_history(history_path), agent_analysis)
+        agent_analysis["baseline"] = baseline
+        agent_analysis["claim_accuracy"] = baseline["claim_accuracy"]
+        agent_analysis["findings"].extend(baseline["findings"])
+        policy_evaluations = demo_gate_evaluations(snapshot, agent_analysis)
 
     entity_write = client.write_entities(snapshot["entities"])
     reconcile = reconcile_ai_relations(client, snapshot["relations"])
@@ -160,6 +170,13 @@ def run_pipeline(
                 if item.get("__entity_type__") == "ai.effect"
             ]
         ),
+        "agent_delegations": len(
+            [
+                item
+                for item in umodel_snapshot["relations"]
+                if item.get("__relation_type__") == "delegates_to"
+            ]
+        ),
     }
     result = {
         "pipeline": {
@@ -177,6 +194,8 @@ def run_pipeline(
         "snapshot": snapshot,
         "analysis": analysis,
         "agents": agent_analysis,
+        "baseline": baseline,
+        "policy": policy_evaluations,
         "umodel": umodel_snapshot,
         "verification": verification,
     }
@@ -233,6 +252,8 @@ def write_artifacts_bundle(result: dict[str, Any]) -> dict[str, str]:
     snapshot_path = write_json(root / "snapshot.json", result["snapshot"])
     analysis_path = write_json(root / "analysis.json", result["analysis"])
     agents_path = write_json(root / "agents.json", result.get("agents") or {})
+    baseline_path = write_json(root / "baseline.json", result.get("baseline") or {})
+    policy_path = write_json(root / "policy.json", result.get("policy") or [])
     verification_path = write_json(root / "verification.json", result["verification"])
     report_path = write_text(root / "incident-report.md", render_report(result))
     graph_path = write_json(root / "graph.json", build_graph_document(result))
@@ -240,6 +261,8 @@ def write_artifacts_bundle(result: dict[str, Any]) -> dict[str, str]:
         "snapshot": str(snapshot_path),
         "analysis": str(analysis_path),
         "agents": str(agents_path),
+        "baseline": str(baseline_path),
+        "policy": str(policy_path),
         "verification": str(verification_path),
         "report": str(report_path),
         "graph": str(graph_path),
@@ -360,21 +383,56 @@ def render_report(result: dict[str, Any]) -> str:
             f"- 会话：{summary.get('sessions', 0)}；工具调用：{summary.get('tool_calls', 0)}；失败：{summary.get('failed_tool_calls', 0)}；重试环：{summary.get('retry_loops', 0)}",
             f"- Token：{summary.get('total_tokens', 0):,}；成本：${summary.get('cost_usd', 0):.2f}；高风险效果：{summary.get('high_risk_effects', 0)}",
             "",
-            "| Agent 会话 | 模型 | Tokens | 成本 | 工具/失败 | 重试环 | 风险 | 关联服务 | 结论校验 |",
-            "|---|---|---:|---:|---:|---:|---|---|---|",
+            "| Agent 会话 | 模型 | Tokens | 成本 | 工具/失败 | 重试环 | 风险 | 关联服务 | 结论校验 | 父子 |",
+            "|---|---|---:|---:|---:|---:|---|---|---|---|",
         ]
         for session in agents.get("sessions", []):
             lines.append(
                 f"| `{session['name']}` | {session.get('model', '')} | {int(session.get('total_tokens') or 0):,} | "
                 f"${float(session.get('cost_usd') or 0):.2f} | {session.get('tool_calls', 0)}/{session.get('failed_tool_calls', 0)} | "
                 f"{session.get('retry_loops', 0)} | {session.get('risk_level', '')} | {session.get('linked_service', '') or '-'} | "
-                f"{session.get('claim_status', '') or '-'} |"
+                f"{session.get('claim_status', '') or '-'} | "
+                f"{'root' if not session.get('parent_session') else '↳ ' + str(session.get('parent_session'))} |"
             )
         lines.append("")
         for finding in agents.get("findings", []):
             lines.append(
                 f"- **[{finding.get('severity')}] {finding.get('title')}**：{finding.get('detail')}"
             )
+        baseline = result.get("baseline") or {}
+        accuracy = baseline.get("claim_accuracy") or {}
+        overall = accuracy.get("overall") or {}
+        if baseline:
+            lines += [
+                "",
+                "### 历史基线与 Claim Accuracy",
+                "",
+                f"- 历史运行：{baseline.get('history_runs', 0)}；窗口：{baseline.get('history_window', {}).get('first', '')} → {baseline.get('history_window', {}).get('last', '')}",
+                f"- Claim accuracy：{overall.get('correct', 0)}/{overall.get('total', 0)}"
+                f"（{(overall.get('accuracy') or 0) * 100:.0f}%）",
+            ]
+            for row in accuracy.get("by_agent", []):
+                lines.append(
+                    f"  - `{row['agent']}`：{row['correct']}/{row['total']}（{(row['accuracy'] or 0) * 100:.0f}%）"
+                )
+            for finding in baseline.get("findings", []):
+                lines.append(
+                    f"- **[{finding.get('severity')}] {finding.get('title')}**：{finding.get('detail')}"
+                )
+        policy = result.get("policy") or []
+        if policy:
+            lines += [
+                "",
+                "### 执行前策略门禁",
+                "",
+                "| 动作 | 目标 | 决策 | 规则 | 需审批人 |",
+                "|---|---|---|---|---|",
+            ]
+            for decision in policy:
+                lines.append(
+                    f"| `{decision.get('tool')}` | {decision.get('target')} | **{decision.get('decision')}** | "
+                    f"{decision.get('rule')} | {', '.join(decision.get('approvers') or []) or '-'} |"
+                )
     lines += [
         "",
         "## 复现查询",

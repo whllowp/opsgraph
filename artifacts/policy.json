@@ -1,0 +1,77 @@
+[
+  {
+    "session": "claude:sre-claude-01",
+    "tool": "kubectl_delete",
+    "target": "kubectl delete deploy/payment-gateway -n payments",
+    "risk": "high",
+    "decision": "deny",
+    "rule": "deny-destructive-action",
+    "reasons": [
+      "action is destructive and cannot run unattended",
+      "target maps to payment-gateway (critical, platinum, role=victim)",
+      "incident Payment P99 SLO breach is still active",
+      "agent session risk is 100/100"
+    ],
+    "service": "payment-gateway",
+    "incident": "Payment P99 SLO breach",
+    "approvers": [],
+    "evidence": {
+      "service_status": "critical",
+      "criticality": "platinum",
+      "incident_active": true,
+      "policy": "destructive actions are never auto-approved"
+    },
+    "policy_version": "2026-11-02.1",
+    "label": "delete the victim deployment"
+  },
+  {
+    "session": "claude:sre-claude-01",
+    "tool": "kubectl_apply",
+    "target": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+    "risk": "high",
+    "decision": "require_approval",
+    "rule": "approve-prod-write-during-incident",
+    "reasons": [
+      "write action on a production/critical surface needs a human approver",
+      "target maps to checkout-service (critical, platinum, role=root_cause)",
+      "incident Payment P99 SLO breach is still active",
+      "agent session risk is 100/100"
+    ],
+    "service": "checkout-service",
+    "incident": "Payment P99 SLO breach",
+    "approvers": [
+      "commerce-core",
+      "change-manager"
+    ],
+    "evidence": {
+      "service_status": "critical",
+      "criticality": "platinum",
+      "incident_active": true,
+      "recommended_scope": "single service, single change window"
+    },
+    "policy_version": "2026-11-02.1",
+    "label": "apply the retry policy"
+  },
+  {
+    "session": "claude:sre-claude-01",
+    "tool": "query_umodel",
+    "target": "payment-gateway upstream",
+    "risk": "low",
+    "decision": "allow",
+    "rule": "allow-read-only",
+    "reasons": [
+      "read-only investigation is allowed",
+      "target maps to payment-gateway (critical, platinum, role=victim)",
+      "incident Payment P99 SLO breach is still active",
+      "agent session risk is 100/100"
+    ],
+    "service": "payment-gateway",
+    "incident": "Payment P99 SLO breach",
+    "approvers": [],
+    "evidence": {
+      "incident_active": true
+    },
+    "policy_version": "2026-11-02.1",
+    "label": "read-only RCA query"
+  }
+]

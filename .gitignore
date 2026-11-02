@@ -9,6 +9,8 @@ artifacts/*.md
 !artifacts/incident-report.md
 !artifacts/verification.json
 !artifacts/agents.json
+!artifacts/baseline.json
+!artifacts/policy.json
 .venv/
 .ruff_cache/
 

@@ -73,6 +73,8 @@ def _node_entity(entity: dict[str, Any]) -> dict[str, Any]:
         tier = "ai"
         status = str(entity.get("risk_level") or "low")
         radius = 13.0
+        if int(entity.get("depth") or 0) > 0:
+            radius = 10.5
     elif etype == "ops.incident":
         tier = "ops"
         radius = 11.0
@@ -85,12 +87,17 @@ def _node_entity(entity: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": entity.get("__entity_id__"),
         "name": name,
+        "label": f"{'↳ ' if int(entity.get('depth') or 0) > 0 else ''}{name}",
         "type": etype,
         "status": status,
         "role": role,
         "tier": tier,
         "radius": radius,
         "criticality": entity.get("criticality"),
+        "depth": entity.get("depth"),
+        "parent_session": entity.get("parent_session"),
+        "delegation_role": entity.get("delegation_role"),
+        "child_sessions": entity.get("child_sessions"),
         "metrics": {
             "qps": entity.get("qps"),
             "p99_ms": entity.get("latency_p99_ms"),
@@ -139,7 +146,10 @@ def _layout(nodes: list[dict[str, Any]]) -> None:
     for node in nodes:
         by_tier.setdefault(node["tier"], []).append(node)
     for tier, items in by_tier.items():
-        items.sort(key=lambda item: (order.get(item["name"], 50), item["name"]))
+        if tier == "ai":
+            items.sort(key=lambda item: (item.get("ai_order", 999), item["name"]))
+        else:
+            items.sort(key=lambda item: (order.get(item["name"], 50), item["name"]))
         if tier == "ops":
             for index, item in enumerate(items):
                 item["x"] = 940.0
@@ -148,7 +158,7 @@ def _layout(nodes: list[dict[str, Any]]) -> None:
         if tier == "ai":
             for index, item in enumerate(items):
                 item["x"] = 48.0
-                item["y"] = 120.0 + index * 84.0
+                item["y"] = 74.0 + index * 62.0
             continue
         spacing = 82.0 if len(items) <= 6 else 64.0
         total = (len(items) - 1) * spacing
@@ -162,6 +172,8 @@ def build_console_state(
     analysis: dict[str, Any],
     umodel_info: dict[str, Any] | None = None,
     agents: dict[str, Any] | None = None,
+    baseline: dict[str, Any] | None = None,
+    policy: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     visible_types = {
         "svc.service",
@@ -177,6 +189,13 @@ def build_console_state(
     ]
     nodes = [_node_entity(item) for item in entities]
     by_id = {str(item.get("__entity_id__")): item for item in entities}
+    ai_order = {
+        str(session.get("name")): index
+        for index, session in enumerate((agents or {}).get("sessions", []))
+    }
+    for node in nodes:
+        if node["type"] == "ai.agent_session":
+            node["ai_order"] = ai_order.get(node["name"], 999)
     _layout(nodes)
 
     visible_ids = set(by_id)
@@ -216,7 +235,7 @@ def build_console_state(
         )
 
     # Focus edges by default: call graph + business + incident overlay.
-    focus_types = {"calls", "depends_on", "affects", "acts_on"}
+    focus_types = {"calls", "depends_on", "affects", "acts_on", "delegates_to"}
     counts: dict[str, int] = {}
     for item in snapshot.get("entities", []):
         key = str(item.get("__entity_type__"))
@@ -259,6 +278,8 @@ def build_console_state(
         "edges": edges,
         "focus_types": sorted(focus_types),
         "agents": agents or {},
+        "baseline": baseline or {},
+        "policy": policy or [],
         "incident": next(
             (
                 item
@@ -277,6 +298,8 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     snapshot: dict[str, Any] | None = None
     analysis: dict[str, Any] | None = None
     agents: dict[str, Any] | None = None
+    baseline: dict[str, Any] | None = None
+    policy: list[dict[str, Any]] | None = None
     umodel_info: dict[str, Any] = {"addr": UMODEL_ADDR, "connected": False}
     lock = threading.Lock()
 
@@ -303,12 +326,23 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             cls.analysis = read_json(analysis_path)
             agents_path = ARTIFACT_DIR / "agents.json"
             cls.agents = read_json(agents_path) if agents_path.exists() else {}
+            baseline_path = ARTIFACT_DIR / "baseline.json"
+            cls.baseline = read_json(baseline_path) if baseline_path.exists() else {}
+            policy_path = ARTIFACT_DIR / "policy.json"
+            cls.policy = read_json(policy_path) if policy_path.exists() else []
         return True
 
     def _state(self) -> dict[str, Any]:
         cls = type(self)
         assert cls.snapshot is not None and cls.analysis is not None
-        return build_console_state(cls.snapshot, cls.analysis, cls.umodel_info, cls.agents)
+        return build_console_state(
+            cls.snapshot,
+            cls.analysis,
+            cls.umodel_info,
+            cls.agents,
+            cls.baseline,
+            cls.policy,
+        )
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
@@ -413,6 +447,28 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 self._json(self._state())
             return
 
+        if parsed.path == "/api/gate":
+            from .policy import evaluate_gate
+
+            with self.lock:
+                if not self._load():
+                    self._json({"error": "no snapshot"}, 503)
+                    return
+                try:
+                    decision = evaluate_gate(
+                        type(self).snapshot,
+                        type(self).agents or {},
+                        str(payload.get("session") or ""),
+                        str(payload.get("tool") or ""),
+                        str(payload.get("target") or ""),
+                        str(payload.get("command") or ""),
+                    )
+                except Exception as exc:
+                    self._json({"error": str(exc)}, 400)
+                    return
+                self._json(decision)
+            return
+
         if parsed.path == "/api/query":
             spl = str(payload.get("spl") or "")
             if not spl:
@@ -475,5 +531,5 @@ def serve(host: str = CONSOLE_HOST, port: int = CONSOLE_PORT) -> None:
         handler.umodel_info = {"addr": UMODEL_ADDR, "connected": False}
     server = ThreadingHTTPServer((host, port), handler)
     print(f"OpsGraph console: http://{host}:{port}")
-    print("  API: /api/state  /api/analyze  /api/query  /api/simulate  /api/report")
+    print("  API: /api/state  /api/analyze  /api/query  /api/simulate  /api/gate  /api/report")
     server.serve_forever()

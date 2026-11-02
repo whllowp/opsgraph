@@ -9,7 +9,7 @@
     "zh_cn": "面向 eBPF 观测服务、运行时对象、业务旅程与故障证据的 UModel 模型包。"
   },
   "entity_sets": 16,
-  "entity_set_links": 20,
+  "entity_set_links": 21,
   "domains": [
     "infra",
     "svc",
