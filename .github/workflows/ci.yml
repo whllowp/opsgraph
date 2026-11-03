@@ -24,3 +24,32 @@ jobs:
           node-version: "22"
       - name: Check console JavaScript
         run: node --check console/app.js
+
+  real-perf:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies and perf
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          sudo apt-get update
+          sudo apt-get install -y gcc linux-tools-common linux-tools-generic
+          perf --version
+      - name: Allow own-process perf sampling
+        run: sudo sysctl -w kernel.perf_event_paranoid=1
+      - name: Real perf capture -> C RCA -> 10-case REA
+        run: python -m opsgraph real-perf-rea
+      - name: Upload real perf evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-perf-rea
+          path: |
+            artifacts/real_perf_rea.json
+            artifacts/real-perf-rea.md
+          if-no-files-found: warn

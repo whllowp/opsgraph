@@ -139,7 +139,7 @@ class CodeIndex:
         if not item:
             raise KeyError(f"{file}:{function} not found")
         for line in range(item["line"], item["end_line"] + 1):
-            if "# BUG" in self.line_text(file, line):
+            if "BUG" in self.line_text(file, line):
                 return line
         return item["line"]
 

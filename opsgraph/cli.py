@@ -278,6 +278,34 @@ def cmd_code_demo(args: argparse.Namespace) -> int:
     return 0 if summary["failed"] == 0 else 1
 
 
+def cmd_real_perf(args: argparse.Namespace) -> int:
+    from .real_perf import run_real_perf_rea, write_real_perf_artifacts
+
+    result = run_real_perf_rea(max_iterations=args.iterations)
+    if result.get("status") == "skipped":
+        print(f"real perf skipped: {result.get('reason')}")
+        return 0
+    paths = write_real_perf_artifacts(result, ARTIFACT_DIR)
+    print("=" * 78)
+    print("Real perf RCA / REA complete")
+    print("=" * 78)
+    print(f"perf:            {result.get('perf')}")
+    print(f"Cases:           {result.get('cases')}")
+    print(f"Fixed:           {result.get('fixed')}  ({result.get('success_rate') * 100:.0f}%)")
+    print(f"Before all:      {'PASS' if result.get('before_all', {}).get('passed') else 'FAIL'}")
+    print(f"Final all:       {'PASS' if result.get('final_all', {}).get('passed') else 'FAIL'}")
+    for item in result.get("iterations", []):
+        finding = item["rca"]["finding"]
+        print(
+            f"  {item['iteration']:>2}. {item['case_id']}  "
+            f"{finding.get('file')}:{finding.get('line')} {finding.get('function')}  "
+            f"samples={item['before_capture'].get('samples')}  {item['status']}"
+        )
+    print(f"Artifacts:       {paths['json']}")
+    print(f"Report:          {paths['report']}")
+    return 0 if result.get("fixed") == result.get("cases") else 1
+
+
 def cmd_gate(args: argparse.Namespace) -> int:
     from .policy import evaluate_gate
 
@@ -414,6 +442,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--case", default="case-01")
     p.add_argument("--repo", default="demo/fintech")
     p.set_defaults(func=cmd_code_ingest)
+
+    p = sub.add_parser("real-perf-rea", help="real perf capture -> C code RCA -> 10-case REA")
+    _add_common(p)
+    p.add_argument("--iterations", type=int, default=10)
+    p.set_defaults(func=cmd_real_perf)
 
     p = sub.add_parser("gate", help="evaluate a proposed agent action before execution")
     _add_common(p)

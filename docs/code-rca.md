@@ -210,6 +210,53 @@ python -m opsgraph code-ingest --input stacks.folded --format folded --case case
 
 `code-ingest` 只做 RCA，不自动改代码；它输出根因行、置信度、Top 3 代码行，供 REA 或人工继续。
 
+## 6.3 真实 perf 10 次 C REA
+
+`opsgraph/real_perf.py` + `demo/fintech_c` 是一条完全基于真实 `perf` 的 Linux 路径：
+
+```text
+gcc -g -O0 -fno-inline
+  -> perf record -F 99 -g --call-graph dwarf -p <harness>
+  -> perf script -F comm,pid,period,ip,sym,dso,srcline
+  -> fintech.c:line
+  -> C 函数/行 RCA
+  -> C 补丁
+  -> 重新编译
+  -> 该故障 C 回归
+  -> 修复后再次 perf 采样
+  -> 10/10，全量 C 回归
+```
+
+命令：
+
+```bash
+python -m opsgraph real-perf-rea
+```
+
+实测（WSL Ubuntu + perf 6.8.12）：
+
+```text
+10/10 fixed
+before all: FAIL
+final all: PASS
+c01 fintech.c:8  convert_currency       samples=61
+c02 fintech.c:18 calculate_fee          samples=84
+c03 fintech.c:24 allocate_amount        samples=76
+c04 fintech.c:32 retry_charge           samples=77
+c05 fintech.c:41 refund                 samples=75
+c06 fintech.c:49 settle_batch           samples=79
+c07 fintech.c:58 append_entries         samples=74
+c08 fintech.c:70 route_payout           samples=81
+c09 fintech.c:86 fraud_score            samples=63
+c10 fintech.c:93 next_settlement_date   samples=58
+```
+
+注意：
+
+- C 故障函数里加了短暂的 workload loop，让过短函数能被 99Hz 采样稳定命中；补丁会移除它。
+- `real-perf-rea` 只在 Linux 运行；Windows 会返回 `skipped`，不会伪造采样。
+- CI 的 `real-perf` job 在 Ubuntu 上安装 `linux-tools`/gcc 后执行该命令，并上传 artifact。
+
 控制台：`http://127.0.0.1:18088/?tab=code`
 
 ## 7. 边界

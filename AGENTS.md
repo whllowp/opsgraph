@@ -12,6 +12,7 @@ OpsGraph is a Python reference implementation of eBPF-observed operational graph
 - `opsgraph/code_rca.py` — eBPF code-stack RCA + REA loop; `opsgraph/code_cases.py` — 10 fintech incidents.
 - `opsgraph/patch_engine.py` — candidate patch safety, test rejection, rollback.
 - `demo/fintech/` — intentionally buggy financial code + 10 regression tests.
+- `demo/fintech_c/` + `opsgraph/real_perf.py` — Linux-only real perf capture -> C code RCA -> 10-case REA.
 - `opsgraph/scenario.py` — deterministic DeepFlow-shaped replay with a retry-storm incident.
 - `opsgraph/materialize.py` — observations + declared topology -> UModel entities/relations with evidence.
 - `opsgraph/analysis.py` — explainable RCA, blast radius, drift, SPOF, timeline.
@@ -26,6 +27,7 @@ python -m opsgraph gate --session sre-claude-01 --tool kubectl_apply --target "k
 python -m opsgraph baseline
 python -m opsgraph code-demo
 python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
+python -m opsgraph real-perf-rea
 python -m opsgraph analyze --source umodel
 python -m opsgraph serve --port 18088
 python -m unittest discover -s tests -v
@@ -44,7 +46,8 @@ node --check console/app.js
 - Do not commit raw AgentSight snapshots; they contain prompts, paths, and commands. Commit only derived `artifacts/agents.json`.
 - Gate decisions are advisory: do not claim the gate enforces syscalls unless a tool proxy/admission layer is actually wired.
 - Baseline history is synthetic in the demo; never present it as production telemetry.
-- Code-RCA 10-iteration demo uses replay data; `data/code_rca/perf-sample.txt` is a real perf calibration, not a live end-to-end capture. Do not claim live kernel capture without a Linux perf/bpftrace run.
+- Code-RCA 10-iteration demo uses replay data; `data/code_rca/perf-sample.txt` is a real perf calibration, and `real-perf-rea` is the Linux-only real C path. Do not claim live kernel capture on Windows.
+- `real-perf-rea` must stay skipped on non-Linux; never fake perf samples.
 - REA applies patches only in a temp worktree; never auto-commit or auto-deploy a generated fix.
 - Rejected candidate patches must stay visible in `candidates`; do not silently discard failed attempts.
 - Update `docs/en`-style paired docs only if the project gains bilingual docs; currently Chinese README plus English code comments is intentional.

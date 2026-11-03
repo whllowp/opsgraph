@@ -1,0 +1,2799 @@
+{
+  "schema_version": 1,
+  "source": "linux.perf + code RCA + REA",
+  "perf": "perf",
+  "cases": 10,
+  "fixed": 10,
+  "success_rate": 1.0,
+  "before_all": {
+    "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests",
+    "returncode": 1,
+    "passed": false,
+    "output_tail": "FAIL convert_currency\\nFAIL calculate_fee_10000\\nFAIL calculate_fee_100000\\nFAIL allocate_amount_sum\\nFAIL retry_charge\\nFAIL refund\\nFAIL settle_batch\\nFAIL append_entries\\nFAIL route_eur\\nFAIL route_gbp\\nFAIL fraud_score_timeout\\nFAIL next_settlement_date\\n12 failures\\n",
+    "duration_ms": 1.9
+  },
+  "final_all": {
+    "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests",
+    "returncode": 0,
+    "passed": true,
+    "output_tail": "OK\\n",
+    "duration_ms": 2.2
+  },
+  "iterations": [
+    {
+      "iteration": 1,
+      "case_id": "c01",
+      "title": "换汇截断分位",
+      "rca": {
+        "case_id": "c01",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-03T00:28:21+00:00",
+        "finding": {
+          "file": "fintech.c",
+          "line": 8,
+          "function": "convert_currency",
+          "qualname": "convert_currency",
+          "source": "}",
+          "score": 0.4344,
+          "self_ms": 53.0,
+          "self_ratio": 0.8689,
+          "p95_ms": 1.0,
+          "baseline_p95_ms": 0.0,
+          "latency_delta": 0.0,
+          "error_rate": 0.0,
+          "offcpu_ratio": 0.0,
+          "changed": false,
+          "samples": [
+            "c01-perf-0004",
+            "c01-perf-0005",
+            "c01-perf-0006",
+            "c01-perf-0007",
+            "c01-perf-0009"
+          ],
+          "confidence": 0.761,
+          "reasons": [
+            "leaf frame accounts for 87% of incident exclusive time",
+            "p95 rises 0ms -> 1ms (0.0x)",
+            "error affinity 0% on this line"
+          ],
+          "evidence": [
+            "c01-perf-0004",
+            "c01-perf-0005",
+            "c01-perf-0006",
+            "c01-perf-0007",
+            "c01-perf-0009"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "fintech.c",
+            "line": 8,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "}",
+            "score": 0.4344,
+            "self_ms": 53.0,
+            "self_ratio": 0.8689,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c01-perf-0004",
+              "c01-perf-0005",
+              "c01-perf-0006",
+              "c01-perf-0007",
+              "c01-perf-0009"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 17,
+            "function": "main",
+            "qualname": "main",
+            "source": "case 1: sink += convert_currency(101, 1, 2); break;",
+            "score": 0.0328,
+            "self_ms": 4.0,
+            "self_ratio": 0.0656,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c01-perf-0000",
+              "c01-perf-0001",
+              "c01-perf-0008",
+              "c01-perf-0051"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 16,
+            "function": "main",
+            "qualname": "main",
+            "source": "switch (index) {",
+            "score": 0.0164,
+            "self_ms": 2.0,
+            "self_ratio": 0.0328,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c01-perf-0003",
+              "c01-perf-0052"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 5,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "long convert_currency(long amount_cents, long rate_num, long rate_den) {",
+            "score": 0.0082,
+            "self_ms": 1.0,
+            "self_ratio": 0.0164,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c01-perf-0002"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 7,
+            "function": "convert_currency",
+            "qualname": "convert_currency",
+            "source": "return (amount_cents * rate_num) / rate_den;",
+            "score": 0.0082,
+            "self_ms": 1.0,
+            "self_ratio": 0.0164,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c01-perf-0038"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "perf_harness.c",
+            "line": 17,
+            "function": "main",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 16,
+            "function": "main",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "fintech.c",
+            "line": 5,
+            "function": "convert_currency",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": ":0",
+              "file": "",
+              "line": 0,
+              "function": ""
+            },
+            {
+              "id": "perf_harness.c:17",
+              "file": "perf_harness.c",
+              "line": 17,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:5",
+              "file": "fintech.c",
+              "line": 5,
+              "function": "convert_currency"
+            },
+            {
+              "id": "perf_harness.c:16",
+              "file": "perf_harness.c",
+              "line": 16,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:8",
+              "file": "fintech.c",
+              "line": 8,
+              "function": "convert_currency"
+            },
+            {
+              "id": "fintech.c:7",
+              "file": "fintech.c",
+              "line": 7,
+              "function": "convert_currency"
+            }
+          ],
+          "edges": [
+            {
+              "source": ":0",
+              "target": ":0",
+              "count": 60
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:17",
+              "count": 58
+            },
+            {
+              "source": "perf_harness.c:17",
+              "target": "fintech.c:8",
+              "count": 53
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:16",
+              "count": 2
+            },
+            {
+              "source": "perf_harness.c:17",
+              "target": "fintech.c:5",
+              "count": 1
+            },
+            {
+              "source": "perf_harness.c:17",
+              "target": "fintech.c:7",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 fintech.c:8 (convert_currency), confidence 76%."
+      },
+      "patch": {
+        "candidate_id": "c01-reviewed",
+        "strategy": "加半个分母后做整数四舍五入",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 0,
+          "test_file_touched": false,
+          "reasons": []
+        },
+        "applied": true
+      },
+      "test": {
+        "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests 1",
+        "returncode": 0,
+        "passed": true,
+        "output_tail": "OK\\n",
+        "duration_ms": 0.9
+      },
+      "before_capture": {
+        "tag": "before",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 2 times to write data ]\n[ perf record: Captured and wrote 0.495 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c01-before.perf.data (61 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 30240
+        },
+        "samples": 61,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c01-before.stacks.txt"
+      },
+      "after_capture": {
+        "tag": "after",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.559 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c01-after.perf.data (69 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 34601
+        },
+        "samples": 69,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c01-after.stacks.txt"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "换汇金额少 1 分",
+        "why": "整数除法把 50.5 分截成 50 分",
+        "fix": "先加 rate_den/2 再整除"
+      }
+    },
+    {
+      "iteration": 2,
+      "case_id": "c02",
+      "title": "费率边界错算",
+      "rca": {
+        "case_id": "c02",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-03T00:28:24+00:00",
+        "finding": {
+          "file": "fintech.c",
+          "line": 18,
+          "function": "calculate_fee",
+          "qualname": "calculate_fee",
+          "source": "return amount_cents * 15 / 1000;",
+          "score": 0.3274,
+          "self_ms": 55.0,
+          "self_ratio": 0.6548,
+          "p95_ms": 1.0,
+          "baseline_p95_ms": 0.0,
+          "latency_delta": 0.0,
+          "error_rate": 0.0,
+          "offcpu_ratio": 0.0,
+          "changed": false,
+          "samples": [
+            "c02-perf-0002",
+            "c02-perf-0006",
+            "c02-perf-0008",
+            "c02-perf-0009",
+            "c02-perf-0011"
+          ],
+          "confidence": 0.696,
+          "reasons": [
+            "leaf frame accounts for 65% of incident exclusive time",
+            "p95 rises 0ms -> 1ms (0.0x)",
+            "error affinity 0% on this line"
+          ],
+          "evidence": [
+            "c02-perf-0002",
+            "c02-perf-0006",
+            "c02-perf-0008",
+            "c02-perf-0009",
+            "c02-perf-0011"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "fintech.c",
+            "line": 18,
+            "function": "calculate_fee",
+            "qualname": "calculate_fee",
+            "source": "return amount_cents * 15 / 1000;",
+            "score": 0.3274,
+            "self_ms": 55.0,
+            "self_ratio": 0.6548,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c02-perf-0002",
+              "c02-perf-0006",
+              "c02-perf-0008",
+              "c02-perf-0009",
+              "c02-perf-0011"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 19,
+            "function": "calculate_fee",
+            "qualname": "calculate_fee",
+            "source": "}",
+            "score": 0.0714,
+            "self_ms": 12.0,
+            "self_ratio": 0.1429,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c02-perf-0004",
+              "c02-perf-0007",
+              "c02-perf-0010",
+              "c02-perf-0023",
+              "c02-perf-0027"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 18,
+            "function": "main",
+            "qualname": "main",
+            "source": "case 2: sink += calculate_fee(10000); break;",
+            "score": 0.0417,
+            "self_ms": 7.0,
+            "self_ratio": 0.0833,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c02-perf-0013",
+              "c02-perf-0014",
+              "c02-perf-0031",
+              "c02-perf-0054",
+              "c02-perf-0060"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 16,
+            "function": "main",
+            "qualname": "main",
+            "source": "switch (index) {",
+            "score": 0.0238,
+            "self_ms": 4.0,
+            "self_ratio": 0.0476,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c02-perf-0005",
+              "c02-perf-0018",
+              "c02-perf-0037",
+              "c02-perf-0046"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 15,
+            "function": "calculate_fee",
+            "qualname": "calculate_fee",
+            "source": "if (amount_cents > 10000) {",
+            "score": 0.0179,
+            "self_ms": 3.0,
+            "self_ratio": 0.0357,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c02-perf-0003",
+              "c02-perf-0016",
+              "c02-perf-0043"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 10,
+            "function": "calculate_fee",
+            "qualname": "calculate_fee",
+            "source": "long calculate_fee(long amount_cents) {",
+            "score": 0.0119,
+            "self_ms": 2.0,
+            "self_ratio": 0.0238,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c02-perf-0000",
+              "c02-perf-0001"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 12,
+            "function": "calculate_fee",
+            "qualname": "calculate_fee",
+            "source": "if (amount_cents > 100000) {",
+            "score": 0.006,
+            "self_ms": 1.0,
+            "self_ratio": 0.0119,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c02-perf-0050"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "fintech.c",
+            "line": 19,
+            "function": "calculate_fee",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 18,
+            "function": "main",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 16,
+            "function": "main",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": ":0",
+              "file": "",
+              "line": 0,
+              "function": ""
+            },
+            {
+              "id": "perf_harness.c:18",
+              "file": "perf_harness.c",
+              "line": 18,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:10",
+              "file": "fintech.c",
+              "line": 10,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "fintech.c:18",
+              "file": "fintech.c",
+              "line": 18,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "fintech.c:15",
+              "file": "fintech.c",
+              "line": 15,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "fintech.c:19",
+              "file": "fintech.c",
+              "line": 19,
+              "function": "calculate_fee"
+            },
+            {
+              "id": "perf_harness.c:16",
+              "file": "perf_harness.c",
+              "line": 16,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:12",
+              "file": "fintech.c",
+              "line": 12,
+              "function": "calculate_fee"
+            }
+          ],
+          "edges": [
+            {
+              "source": ":0",
+              "target": ":0",
+              "count": 83
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:18",
+              "count": 79
+            },
+            {
+              "source": "perf_harness.c:18",
+              "target": "fintech.c:18",
+              "count": 55
+            },
+            {
+              "source": "perf_harness.c:18",
+              "target": "fintech.c:19",
+              "count": 12
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:16",
+              "count": 4
+            },
+            {
+              "source": "perf_harness.c:18",
+              "target": "fintech.c:15",
+              "count": 3
+            },
+            {
+              "source": "perf_harness.c:18",
+              "target": "fintech.c:10",
+              "count": 2
+            },
+            {
+              "source": "perf_harness.c:18",
+              "target": "fintech.c:12",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 fintech.c:18 (calculate_fee), confidence 70%."
+      },
+      "patch": {
+        "candidate_id": "c02-reviewed",
+        "strategy": "档位边界改为包含等号",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 0,
+          "test_file_touched": false,
+          "reasons": []
+        },
+        "applied": true
+      },
+      "test": {
+        "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests 2",
+        "returncode": 0,
+        "passed": true,
+        "output_tail": "OK\\n",
+        "duration_ms": 0.9
+      },
+      "before_capture": {
+        "tag": "before",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.679 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c02-before.perf.data (84 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 41289
+        },
+        "samples": 84,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c02-before.stacks.txt"
+      },
+      "after_capture": {
+        "tag": "after",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.663 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c02-after.perf.data (82 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 37054
+        },
+        "samples": 82,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c02-after.stacks.txt"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "刚好 100 元的交易被多收手续费",
+        "why": "边界使用 > 而不是 >=",
+        "fix": "两个档位边界改为包含等号"
+      }
+    },
+    {
+      "iteration": 3,
+      "case_id": "c03",
+      "title": "分账丢失余数",
+      "rca": {
+        "case_id": "c03",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-03T00:28:26+00:00",
+        "finding": {
+          "file": "fintech.c",
+          "line": 24,
+          "function": "allocate_amount",
+          "qualname": "allocate_amount",
+          "source": "out[i] = total_cents / parts;",
+          "score": 0.1908,
+          "self_ms": 29.0,
+          "self_ratio": 0.3816,
+          "p95_ms": 1.0,
+          "baseline_p95_ms": 0.0,
+          "latency_delta": 0.0,
+          "error_rate": 0.0,
+          "offcpu_ratio": 0.0,
+          "changed": false,
+          "samples": [
+            "c03-perf-0000",
+            "c03-perf-0001",
+            "c03-perf-0006",
+            "c03-perf-0007",
+            "c03-perf-0008"
+          ],
+          "confidence": 0.614,
+          "reasons": [
+            "leaf frame accounts for 38% of incident exclusive time",
+            "p95 rises 0ms -> 1ms (0.0x)",
+            "error affinity 0% on this line"
+          ],
+          "evidence": [
+            "c03-perf-0000",
+            "c03-perf-0001",
+            "c03-perf-0006",
+            "c03-perf-0007",
+            "c03-perf-0008"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "fintech.c",
+            "line": 24,
+            "function": "allocate_amount",
+            "qualname": "allocate_amount",
+            "source": "out[i] = total_cents / parts;",
+            "score": 0.1908,
+            "self_ms": 29.0,
+            "self_ratio": 0.3816,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c03-perf-0000",
+              "c03-perf-0001",
+              "c03-perf-0006",
+              "c03-perf-0007",
+              "c03-perf-0008"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 23,
+            "function": "allocate_amount",
+            "qualname": "allocate_amount",
+            "source": "for (int i = 0; i < parts; i++) {",
+            "score": 0.1776,
+            "self_ms": 27.0,
+            "self_ratio": 0.3553,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c03-perf-0005",
+              "c03-perf-0010",
+              "c03-perf-0012",
+              "c03-perf-0015",
+              "c03-perf-0024"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 19,
+            "function": "main",
+            "qualname": "main",
+            "source": "case 3: allocate_amount(5, 3, slots); sink += slots[0]; break;",
+            "score": 0.0789,
+            "self_ms": 12.0,
+            "self_ratio": 0.1579,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c03-perf-0002",
+              "c03-perf-0003",
+              "c03-perf-0004",
+              "c03-perf-0021",
+              "c03-perf-0023"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 16,
+            "function": "main",
+            "qualname": "main",
+            "source": "switch (index) {",
+            "score": 0.0395,
+            "self_ms": 6.0,
+            "self_ratio": 0.0789,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c03-perf-0011",
+              "c03-perf-0013",
+              "c03-perf-0018",
+              "c03-perf-0027",
+              "c03-perf-0036"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 21,
+            "function": "allocate_amount",
+            "qualname": "allocate_amount",
+            "source": "void allocate_amount(long total_cents, int parts, long *out) {",
+            "score": 0.0066,
+            "self_ms": 1.0,
+            "self_ratio": 0.0132,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c03-perf-0009"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 26,
+            "function": "allocate_amount",
+            "qualname": "allocate_amount",
+            "source": "}",
+            "score": 0.0066,
+            "self_ms": 1.0,
+            "self_ratio": 0.0132,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c03-perf-0022"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "fintech.c",
+            "line": 23,
+            "function": "allocate_amount",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 19,
+            "function": "main",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 16,
+            "function": "main",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": ":0",
+              "file": "",
+              "line": 0,
+              "function": ""
+            },
+            {
+              "id": "perf_harness.c:19",
+              "file": "perf_harness.c",
+              "line": 19,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:24",
+              "file": "fintech.c",
+              "line": 24,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "fintech.c:23",
+              "file": "fintech.c",
+              "line": 23,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "fintech.c:21",
+              "file": "fintech.c",
+              "line": 21,
+              "function": "allocate_amount"
+            },
+            {
+              "id": "perf_harness.c:16",
+              "file": "perf_harness.c",
+              "line": 16,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:26",
+              "file": "fintech.c",
+              "line": 26,
+              "function": "allocate_amount"
+            }
+          ],
+          "edges": [
+            {
+              "source": ":0",
+              "target": ":0",
+              "count": 76
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:19",
+              "count": 70
+            },
+            {
+              "source": "perf_harness.c:19",
+              "target": "fintech.c:24",
+              "count": 29
+            },
+            {
+              "source": "perf_harness.c:19",
+              "target": "fintech.c:23",
+              "count": 27
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:16",
+              "count": 6
+            },
+            {
+              "source": "perf_harness.c:19",
+              "target": "fintech.c:21",
+              "count": 1
+            },
+            {
+              "source": "perf_harness.c:19",
+              "target": "fintech.c:26",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 fintech.c:24 (allocate_amount), confidence 61%."
+      },
+      "patch": {
+        "candidate_id": "c03-reviewed",
+        "strategy": "先分整数份，再按余数给前几份加 1 分",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 2,
+          "test_file_touched": false,
+          "reasons": []
+        },
+        "applied": true
+      },
+      "test": {
+        "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests 3",
+        "returncode": 0,
+        "passed": true,
+        "output_tail": "OK\\n",
+        "duration_ms": 0.9
+      },
+      "before_capture": {
+        "tag": "before",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.615 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c03-before.perf.data (76 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 36914
+        },
+        "samples": 76,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c03-before.stacks.txt"
+      },
+      "after_capture": {
+        "tag": "after",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.647 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c03-after.perf.data (80 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 40091
+        },
+        "samples": 80,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c03-after.stacks.txt"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "分账后总额少 1 分",
+        "why": "整除把余数丢掉了",
+        "fix": "余数依次分给前几份"
+      }
+    },
+    {
+      "iteration": 4,
+      "case_id": "c04",
+      "title": "重试重复扣款",
+      "rca": {
+        "case_id": "c04",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-03T00:28:29+00:00",
+        "finding": {
+          "file": "fintech.c",
+          "line": 32,
+          "function": "retry_charge",
+          "qualname": "retry_charge",
+          "source": "*charges += 2;",
+          "score": 0.1558,
+          "self_ms": 24.0,
+          "self_ratio": 0.3117,
+          "p95_ms": 1.0,
+          "baseline_p95_ms": 0.0,
+          "latency_delta": 0.0,
+          "error_rate": 0.0,
+          "offcpu_ratio": 0.0,
+          "changed": false,
+          "samples": [
+            "c04-perf-0000",
+            "c04-perf-0001",
+            "c04-perf-0002",
+            "c04-perf-0003",
+            "c04-perf-0006"
+          ],
+          "confidence": 0.594,
+          "reasons": [
+            "leaf frame accounts for 31% of incident exclusive time",
+            "p95 rises 0ms -> 1ms (0.0x)",
+            "error affinity 0% on this line"
+          ],
+          "evidence": [
+            "c04-perf-0000",
+            "c04-perf-0001",
+            "c04-perf-0002",
+            "c04-perf-0003",
+            "c04-perf-0006"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "fintech.c",
+            "line": 32,
+            "function": "retry_charge",
+            "qualname": "retry_charge",
+            "source": "*charges += 2;",
+            "score": 0.1558,
+            "self_ms": 24.0,
+            "self_ratio": 0.3117,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c04-perf-0000",
+              "c04-perf-0001",
+              "c04-perf-0002",
+              "c04-perf-0003",
+              "c04-perf-0006"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 34,
+            "function": "retry_charge",
+            "qualname": "retry_charge",
+            "source": "}",
+            "score": 0.1364,
+            "self_ms": 21.0,
+            "self_ratio": 0.2727,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c04-perf-0005",
+              "c04-perf-0013",
+              "c04-perf-0014",
+              "c04-perf-0016",
+              "c04-perf-0019"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 33,
+            "function": "retry_charge",
+            "qualname": "retry_charge",
+            "source": "return *charges;",
+            "score": 0.1169,
+            "self_ms": 18.0,
+            "self_ratio": 0.2338,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c04-perf-0004",
+              "c04-perf-0008",
+              "c04-perf-0009",
+              "c04-perf-0015",
+              "c04-perf-0017"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 20,
+            "function": "main",
+            "qualname": "main",
+            "source": "case 4: sink += retry_charge(&counter); break;",
+            "score": 0.0584,
+            "self_ms": 9.0,
+            "self_ratio": 0.1169,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c04-perf-0012",
+              "c04-perf-0025",
+              "c04-perf-0037",
+              "c04-perf-0040",
+              "c04-perf-0055"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 30,
+            "function": "retry_charge",
+            "qualname": "retry_charge",
+            "source": "long retry_charge(long *charges) {",
+            "score": 0.0195,
+            "self_ms": 3.0,
+            "self_ratio": 0.039,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c04-perf-0042",
+              "c04-perf-0060",
+              "c04-perf-0068"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 16,
+            "function": "main",
+            "qualname": "main",
+            "source": "switch (index) {",
+            "score": 0.013,
+            "self_ms": 2.0,
+            "self_ratio": 0.026,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c04-perf-0010",
+              "c04-perf-0033"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "fintech.c",
+            "line": 34,
+            "function": "retry_charge",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "fintech.c",
+            "line": 33,
+            "function": "retry_charge",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 20,
+            "function": "main",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": ":0",
+              "file": "",
+              "line": 0,
+              "function": ""
+            },
+            {
+              "id": "perf_harness.c:20",
+              "file": "perf_harness.c",
+              "line": 20,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:32",
+              "file": "fintech.c",
+              "line": 32,
+              "function": "retry_charge"
+            },
+            {
+              "id": "fintech.c:33",
+              "file": "fintech.c",
+              "line": 33,
+              "function": "retry_charge"
+            },
+            {
+              "id": "fintech.c:34",
+              "file": "fintech.c",
+              "line": 34,
+              "function": "retry_charge"
+            },
+            {
+              "id": "perf_harness.c:16",
+              "file": "perf_harness.c",
+              "line": 16,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:30",
+              "file": "fintech.c",
+              "line": 30,
+              "function": "retry_charge"
+            }
+          ],
+          "edges": [
+            {
+              "source": ":0",
+              "target": ":0",
+              "count": 77
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:20",
+              "count": 75
+            },
+            {
+              "source": "perf_harness.c:20",
+              "target": "fintech.c:32",
+              "count": 24
+            },
+            {
+              "source": "perf_harness.c:20",
+              "target": "fintech.c:34",
+              "count": 21
+            },
+            {
+              "source": "perf_harness.c:20",
+              "target": "fintech.c:33",
+              "count": 18
+            },
+            {
+              "source": "perf_harness.c:20",
+              "target": "fintech.c:30",
+              "count": 3
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:16",
+              "count": 2
+            }
+          ]
+        },
+        "summary": "代码根因定位到 fintech.c:32 (retry_charge), confidence 59%."
+      },
+      "patch": {
+        "candidate_id": "c04-reviewed",
+        "strategy": "扣款计数只允许从 0 变成 1",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 2,
+          "test_file_touched": false,
+          "reasons": []
+        },
+        "applied": true
+      },
+      "test": {
+        "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests 4",
+        "returncode": 0,
+        "passed": true,
+        "output_tail": "OK\\n",
+        "duration_ms": 1.3
+      },
+      "before_capture": {
+        "tag": "before",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.623 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c04-before.perf.data (77 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 38015
+        },
+        "samples": 77,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c04-before.stacks.txt"
+      },
+      "after_capture": {
+        "tag": "after",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.623 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c04-after.perf.data (77 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 36439
+        },
+        "samples": 77,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c04-after.stacks.txt"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "重试把客户扣了两次",
+        "why": "每次重试都无条件加 2",
+        "fix": "只在第一次扣款时置 1"
+      }
+    },
+    {
+      "iteration": 5,
+      "case_id": "c05",
+      "title": "退款重复入账",
+      "rca": {
+        "case_id": "c05",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-03T00:28:32+00:00",
+        "finding": {
+          "file": "fintech.c",
+          "line": 41,
+          "function": "refund",
+          "qualname": "refund",
+          "source": "return *refunds;",
+          "score": 0.18,
+          "self_ms": 27.0,
+          "self_ratio": 0.36,
+          "p95_ms": 1.0,
+          "baseline_p95_ms": 0.0,
+          "latency_delta": 0.0,
+          "error_rate": 0.0,
+          "offcpu_ratio": 0.0,
+          "changed": false,
+          "samples": [
+            "c05-perf-0002",
+            "c05-perf-0006",
+            "c05-perf-0012",
+            "c05-perf-0030",
+            "c05-perf-0031"
+          ],
+          "confidence": 0.608,
+          "reasons": [
+            "leaf frame accounts for 36% of incident exclusive time",
+            "p95 rises 0ms -> 1ms (0.0x)",
+            "error affinity 0% on this line"
+          ],
+          "evidence": [
+            "c05-perf-0002",
+            "c05-perf-0006",
+            "c05-perf-0012",
+            "c05-perf-0030",
+            "c05-perf-0031"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "fintech.c",
+            "line": 41,
+            "function": "refund",
+            "qualname": "refund",
+            "source": "return *refunds;",
+            "score": 0.18,
+            "self_ms": 27.0,
+            "self_ratio": 0.36,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c05-perf-0002",
+              "c05-perf-0006",
+              "c05-perf-0012",
+              "c05-perf-0030",
+              "c05-perf-0031"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 40,
+            "function": "refund",
+            "qualname": "refund",
+            "source": "*refunds += 1;",
+            "score": 0.1733,
+            "self_ms": 26.0,
+            "self_ratio": 0.3467,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c05-perf-0000",
+              "c05-perf-0003",
+              "c05-perf-0004",
+              "c05-perf-0005",
+              "c05-perf-0007"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 42,
+            "function": "refund",
+            "qualname": "refund",
+            "source": "}",
+            "score": 0.0933,
+            "self_ms": 14.0,
+            "self_ratio": 0.1867,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c05-perf-0017",
+              "c05-perf-0018",
+              "c05-perf-0021",
+              "c05-perf-0027",
+              "c05-perf-0032"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 16,
+            "function": "main",
+            "qualname": "main",
+            "source": "switch (index) {",
+            "score": 0.0333,
+            "self_ms": 5.0,
+            "self_ratio": 0.0667,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c05-perf-0001",
+              "c05-perf-0014",
+              "c05-perf-0016",
+              "c05-perf-0022",
+              "c05-perf-0025"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 21,
+            "function": "main",
+            "qualname": "main",
+            "source": "case 5: sink += refund(&counter); break;",
+            "score": 0.0133,
+            "self_ms": 2.0,
+            "self_ratio": 0.0267,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c05-perf-0019",
+              "c05-perf-0029"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 38,
+            "function": "refund",
+            "qualname": "refund",
+            "source": "long refund(long *refunds) {",
+            "score": 0.0067,
+            "self_ms": 1.0,
+            "self_ratio": 0.0133,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c05-perf-0062"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "fintech.c",
+            "line": 40,
+            "function": "refund",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "fintech.c",
+            "line": 42,
+            "function": "refund",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 16,
+            "function": "main",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": ":0",
+              "file": "",
+              "line": 0,
+              "function": ""
+            },
+            {
+              "id": "perf_harness.c:21",
+              "file": "perf_harness.c",
+              "line": 21,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:40",
+              "file": "fintech.c",
+              "line": 40,
+              "function": "refund"
+            },
+            {
+              "id": "perf_harness.c:16",
+              "file": "perf_harness.c",
+              "line": 16,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:41",
+              "file": "fintech.c",
+              "line": 41,
+              "function": "refund"
+            },
+            {
+              "id": "fintech.c:42",
+              "file": "fintech.c",
+              "line": 42,
+              "function": "refund"
+            },
+            {
+              "id": "fintech.c:38",
+              "file": "fintech.c",
+              "line": 38,
+              "function": "refund"
+            }
+          ],
+          "edges": [
+            {
+              "source": ":0",
+              "target": ":0",
+              "count": 75
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:21",
+              "count": 70
+            },
+            {
+              "source": "perf_harness.c:21",
+              "target": "fintech.c:41",
+              "count": 27
+            },
+            {
+              "source": "perf_harness.c:21",
+              "target": "fintech.c:40",
+              "count": 26
+            },
+            {
+              "source": "perf_harness.c:21",
+              "target": "fintech.c:42",
+              "count": 14
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:16",
+              "count": 5
+            },
+            {
+              "source": "perf_harness.c:21",
+              "target": "fintech.c:38",
+              "count": 1
+            }
+          ]
+        },
+        "summary": "代码根因定位到 fintech.c:41 (refund), confidence 61%."
+      },
+      "patch": {
+        "candidate_id": "c05-reviewed",
+        "strategy": "退款计数只允许从 0 变成 1",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 2,
+          "test_file_touched": false,
+          "reasons": []
+        },
+        "applied": true
+      },
+      "test": {
+        "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests 5",
+        "returncode": 0,
+        "passed": true,
+        "output_tail": "OK\\n",
+        "duration_ms": 0.9
+      },
+      "before_capture": {
+        "tag": "before",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.607 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c05-before.perf.data (75 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 36889
+        },
+        "samples": 75,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c05-before.stacks.txt"
+      },
+      "after_capture": {
+        "tag": "after",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.639 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c05-after.perf.data (79 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 36959
+        },
+        "samples": 79,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c05-after.stacks.txt"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "同一笔退款被入账两次",
+        "why": "没有按 refund_id 去重",
+        "fix": "只在第一次回调时入账"
+      }
+    },
+    {
+      "iteration": 6,
+      "case_id": "c06",
+      "title": "批量结算漏页",
+      "rca": {
+        "case_id": "c06",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-03T00:28:35+00:00",
+        "finding": {
+          "file": "fintech.c",
+          "line": 49,
+          "function": "settle_batch",
+          "qualname": "settle_batch",
+          "source": "for (int i = 0; i < 200000; i++) {",
+          "score": 0.3228,
+          "self_ms": 51.0,
+          "self_ratio": 0.6456,
+          "p95_ms": 1.0,
+          "baseline_p95_ms": 0.0,
+          "latency_delta": 0.0,
+          "error_rate": 0.0,
+          "offcpu_ratio": 0.0,
+          "changed": false,
+          "samples": [
+            "c06-perf-0001",
+            "c06-perf-0002",
+            "c06-perf-0005",
+            "c06-perf-0006",
+            "c06-perf-0007"
+          ],
+          "confidence": 0.694,
+          "reasons": [
+            "leaf frame accounts for 65% of incident exclusive time",
+            "p95 rises 0ms -> 1ms (0.0x)",
+            "error affinity 0% on this line"
+          ],
+          "evidence": [
+            "c06-perf-0001",
+            "c06-perf-0002",
+            "c06-perf-0005",
+            "c06-perf-0006",
+            "c06-perf-0007"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "fintech.c",
+            "line": 49,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "for (int i = 0; i < 200000; i++) {",
+            "score": 0.3228,
+            "self_ms": 51.0,
+            "self_ratio": 0.6456,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c06-perf-0001",
+              "c06-perf-0002",
+              "c06-perf-0005",
+              "c06-perf-0006",
+              "c06-perf-0007"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 50,
+            "function": "settle_batch",
+            "qualname": "settle_batch",
+            "source": "spin += i;",
+            "score": 0.1772,
+            "self_ms": 28.0,
+            "self_ratio": 0.3544,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c06-perf-0000",
+              "c06-perf-0003",
+              "c06-perf-0004",
+              "c06-perf-0008",
+              "c06-perf-0009"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "fintech.c",
+            "line": 50,
+            "function": "settle_batch",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": ":0",
+              "file": "",
+              "line": 0,
+              "function": ""
+            },
+            {
+              "id": "perf_harness.c:22",
+              "file": "perf_harness.c",
+              "line": 22,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:50",
+              "file": "fintech.c",
+              "line": 50,
+              "function": "settle_batch"
+            },
+            {
+              "id": "fintech.c:49",
+              "file": "fintech.c",
+              "line": 49,
+              "function": "settle_batch"
+            }
+          ],
+          "edges": [
+            {
+              "source": ":0",
+              "target": ":0",
+              "count": 79
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:22",
+              "count": 79
+            },
+            {
+              "source": "perf_harness.c:22",
+              "target": "fintech.c:49",
+              "count": 51
+            },
+            {
+              "source": "perf_harness.c:22",
+              "target": "fintech.c:50",
+              "count": 28
+            }
+          ]
+        },
+        "summary": "代码根因定位到 fintech.c:49 (settle_batch), confidence 69%."
+      },
+      "patch": {
+        "candidate_id": "c06-reviewed",
+        "strategy": "移除提前 break，处理完所有页",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 7,
+          "test_file_touched": false,
+          "reasons": []
+        },
+        "applied": true
+      },
+      "test": {
+        "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests 6",
+        "returncode": 0,
+        "passed": true,
+        "output_tail": "OK\\n",
+        "duration_ms": 0.9
+      },
+      "before_capture": {
+        "tag": "before",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.639 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c06-before.perf.data (79 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 40053
+        },
+        "samples": 79,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c06-before.stacks.txt"
+      },
+      "after_capture": {
+        "tag": "after",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.639 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c06-after.perf.data (79 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 39845
+        },
+        "samples": 79,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c06-after.stacks.txt"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "结算只处理了前两页",
+        "why": "循环在第二页提前退出",
+        "fix": "移除提前 break"
+      }
+    },
+    {
+      "iteration": 7,
+      "case_id": "c07",
+      "title": "账本部分写入",
+      "rca": {
+        "case_id": "c07",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-03T00:28:36+00:00",
+        "finding": {
+          "file": "fintech.c",
+          "line": 58,
+          "function": "append_entries",
+          "qualname": "append_entries",
+          "source": "for (int i = 0; i < 200000; i++) {",
+          "score": 0.3446,
+          "self_ms": 51.0,
+          "self_ratio": 0.6892,
+          "p95_ms": 1.0,
+          "baseline_p95_ms": 0.0,
+          "latency_delta": 0.0,
+          "error_rate": 0.0,
+          "offcpu_ratio": 0.0,
+          "changed": false,
+          "samples": [
+            "c07-perf-0001",
+            "c07-perf-0002",
+            "c07-perf-0003",
+            "c07-perf-0004",
+            "c07-perf-0006"
+          ],
+          "confidence": 0.707,
+          "reasons": [
+            "leaf frame accounts for 69% of incident exclusive time",
+            "p95 rises 0ms -> 1ms (0.0x)",
+            "error affinity 0% on this line"
+          ],
+          "evidence": [
+            "c07-perf-0001",
+            "c07-perf-0002",
+            "c07-perf-0003",
+            "c07-perf-0004",
+            "c07-perf-0006"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "fintech.c",
+            "line": 58,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "for (int i = 0; i < 200000; i++) {",
+            "score": 0.3446,
+            "self_ms": 51.0,
+            "self_ratio": 0.6892,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c07-perf-0001",
+              "c07-perf-0002",
+              "c07-perf-0003",
+              "c07-perf-0004",
+              "c07-perf-0006"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 59,
+            "function": "append_entries",
+            "qualname": "append_entries",
+            "source": "spin += i;",
+            "score": 0.1554,
+            "self_ms": 23.0,
+            "self_ratio": 0.3108,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c07-perf-0000",
+              "c07-perf-0005",
+              "c07-perf-0011",
+              "c07-perf-0012",
+              "c07-perf-0013"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "fintech.c",
+            "line": 59,
+            "function": "append_entries",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": ":0",
+              "file": "",
+              "line": 0,
+              "function": ""
+            },
+            {
+              "id": "perf_harness.c:23",
+              "file": "perf_harness.c",
+              "line": 23,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:59",
+              "file": "fintech.c",
+              "line": 59,
+              "function": "append_entries"
+            },
+            {
+              "id": "fintech.c:58",
+              "file": "fintech.c",
+              "line": 58,
+              "function": "append_entries"
+            }
+          ],
+          "edges": [
+            {
+              "source": ":0",
+              "target": ":0",
+              "count": 74
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:23",
+              "count": 74
+            },
+            {
+              "source": "perf_harness.c:23",
+              "target": "fintech.c:58",
+              "count": 51
+            },
+            {
+              "source": "perf_harness.c:23",
+              "target": "fintech.c:59",
+              "count": 23
+            }
+          ]
+        },
+        "summary": "代码根因定位到 fintech.c:58 (append_entries), confidence 71%."
+      },
+      "patch": {
+        "candidate_id": "c07-reviewed",
+        "strategy": "失败时返回 0，不提交批次",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 4,
+          "test_file_touched": false,
+          "reasons": []
+        },
+        "applied": true
+      },
+      "test": {
+        "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests 7",
+        "returncode": 0,
+        "passed": true,
+        "output_tail": "OK\\n",
+        "duration_ms": 2.5
+      },
+      "before_capture": {
+        "tag": "before",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.599 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c07-before.perf.data (74 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 37666
+        },
+        "samples": 74,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c07-before.stacks.txt"
+      },
+      "after_capture": {
+        "tag": "after",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.631 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c07-after.perf.data (78 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 36306
+        },
+        "samples": 78,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c07-after.stacks.txt"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "失败批次留下半截账本",
+        "why": "失败时返回已写入条数，调用方误以为成功",
+        "fix": "失败返回 0，整批回滚"
+      }
+    },
+    {
+      "iteration": 8,
+      "case_id": "c08",
+      "title": "欧元出款走错通道",
+      "rca": {
+        "case_id": "c08",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-03T00:28:39+00:00",
+        "finding": {
+          "file": "fintech.c",
+          "line": 70,
+          "function": "route_payout",
+          "qualname": "route_payout",
+          "source": "if (strcmp(currency, \"USD\") == 0) {",
+          "score": 0.4198,
+          "self_ms": 68.0,
+          "self_ratio": 0.8395,
+          "p95_ms": 1.0,
+          "baseline_p95_ms": 0.0,
+          "latency_delta": 0.0,
+          "error_rate": 0.0,
+          "offcpu_ratio": 0.0,
+          "changed": false,
+          "samples": [
+            "c08-perf-0000",
+            "c08-perf-0001",
+            "c08-perf-0002",
+            "c08-perf-0003",
+            "c08-perf-0004"
+          ],
+          "confidence": 0.752,
+          "reasons": [
+            "leaf frame accounts for 84% of incident exclusive time",
+            "p95 rises 0ms -> 1ms (0.0x)",
+            "error affinity 0% on this line"
+          ],
+          "evidence": [
+            "c08-perf-0000",
+            "c08-perf-0001",
+            "c08-perf-0002",
+            "c08-perf-0003",
+            "c08-perf-0004"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "fintech.c",
+            "line": 70,
+            "function": "route_payout",
+            "qualname": "route_payout",
+            "source": "if (strcmp(currency, \"USD\") == 0) {",
+            "score": 0.4198,
+            "self_ms": 68.0,
+            "self_ratio": 0.8395,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c08-perf-0000",
+              "c08-perf-0001",
+              "c08-perf-0002",
+              "c08-perf-0003",
+              "c08-perf-0004"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 24,
+            "function": "main",
+            "qualname": "main",
+            "source": "case 8: sink += route_payout(\"EUR\")[0]; break;",
+            "score": 0.037,
+            "self_ms": 6.0,
+            "self_ratio": 0.0741,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c08-perf-0014",
+              "c08-perf-0021",
+              "c08-perf-0025",
+              "c08-perf-0034",
+              "c08-perf-0036"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 16,
+            "function": "main",
+            "qualname": "main",
+            "source": "switch (index) {",
+            "score": 0.0309,
+            "self_ms": 5.0,
+            "self_ratio": 0.0617,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c08-perf-0018",
+              "c08-perf-0028",
+              "c08-perf-0039",
+              "c08-perf-0062",
+              "c08-perf-0069"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 68,
+            "function": "route_payout",
+            "qualname": "route_payout",
+            "source": "const char *route_payout(const char *currency) {",
+            "score": 0.0123,
+            "self_ms": 2.0,
+            "self_ratio": 0.0247,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c08-perf-0035",
+              "c08-perf-0064"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "perf_harness.c",
+            "line": 24,
+            "function": "main",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 16,
+            "function": "main",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "fintech.c",
+            "line": 68,
+            "function": "route_payout",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": ":0",
+              "file": "",
+              "line": 0,
+              "function": ""
+            },
+            {
+              "id": "perf_harness.c:24",
+              "file": "perf_harness.c",
+              "line": 24,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:70",
+              "file": "fintech.c",
+              "line": 70,
+              "function": "route_payout"
+            },
+            {
+              "id": "perf_harness.c:16",
+              "file": "perf_harness.c",
+              "line": 16,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:68",
+              "file": "fintech.c",
+              "line": 68,
+              "function": "route_payout"
+            }
+          ],
+          "edges": [
+            {
+              "source": ":0",
+              "target": ":0",
+              "count": 81
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:24",
+              "count": 76
+            },
+            {
+              "source": "perf_harness.c:24",
+              "target": "fintech.c:70",
+              "count": 68
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:16",
+              "count": 5
+            },
+            {
+              "source": "perf_harness.c:24",
+              "target": "fintech.c:68",
+              "count": 2
+            }
+          ]
+        },
+        "summary": "代码根因定位到 fintech.c:70 (route_payout), confidence 75%."
+      },
+      "patch": {
+        "candidate_id": "c08-reviewed",
+        "strategy": "按币种选择本地清算通道",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 6,
+          "test_file_touched": false,
+          "reasons": []
+        },
+        "applied": true
+      },
+      "test": {
+        "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests 8",
+        "returncode": 0,
+        "passed": true,
+        "output_tail": "OK\\n",
+        "duration_ms": 1.2
+      },
+      "before_capture": {
+        "tag": "before",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.655 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c08-before.perf.data (81 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 45037
+        },
+        "samples": 81,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c08-before.stacks.txt"
+      },
+      "after_capture": {
+        "tag": "after",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.623 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c08-after.perf.data (77 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 42959
+        },
+        "samples": 77,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c08-after.stacks.txt"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "欧元出款被路由到默认通道",
+        "why": "只识别 USD",
+        "fix": "增加 EUR/GBP 本地通道"
+      }
+    },
+    {
+      "iteration": 9,
+      "case_id": "c09",
+      "title": "风控超时阻断支付",
+      "rca": {
+        "case_id": "c09",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-03T00:28:42+00:00",
+        "finding": {
+          "file": "fintech.c",
+          "line": 86,
+          "function": "fraud_score",
+          "qualname": "fraud_score",
+          "source": "spin += i;",
+          "score": 0.2937,
+          "self_ms": 37.0,
+          "self_ratio": 0.5873,
+          "p95_ms": 1.0,
+          "baseline_p95_ms": 0.0,
+          "latency_delta": 0.0,
+          "error_rate": 0.0,
+          "offcpu_ratio": 0.0,
+          "changed": false,
+          "samples": [
+            "c09-perf-0000",
+            "c09-perf-0001",
+            "c09-perf-0002",
+            "c09-perf-0005",
+            "c09-perf-0008"
+          ],
+          "confidence": 0.676,
+          "reasons": [
+            "leaf frame accounts for 59% of incident exclusive time",
+            "p95 rises 0ms -> 1ms (0.0x)",
+            "error affinity 0% on this line"
+          ],
+          "evidence": [
+            "c09-perf-0000",
+            "c09-perf-0001",
+            "c09-perf-0002",
+            "c09-perf-0005",
+            "c09-perf-0008"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "fintech.c",
+            "line": 86,
+            "function": "fraud_score",
+            "qualname": "fraud_score",
+            "source": "spin += i;",
+            "score": 0.2937,
+            "self_ms": 37.0,
+            "self_ratio": 0.5873,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c09-perf-0000",
+              "c09-perf-0001",
+              "c09-perf-0002",
+              "c09-perf-0005",
+              "c09-perf-0008"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 85,
+            "function": "fraud_score",
+            "qualname": "fraud_score",
+            "source": "for (int i = 0; i < 200000; i++) {",
+            "score": 0.2063,
+            "self_ms": 26.0,
+            "self_ratio": 0.4127,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c09-perf-0003",
+              "c09-perf-0004",
+              "c09-perf-0006",
+              "c09-perf-0007",
+              "c09-perf-0010"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "fintech.c",
+            "line": 85,
+            "function": "fraud_score",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": ":0",
+              "file": "",
+              "line": 0,
+              "function": ""
+            },
+            {
+              "id": "perf_harness.c:25",
+              "file": "perf_harness.c",
+              "line": 25,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:86",
+              "file": "fintech.c",
+              "line": 86,
+              "function": "fraud_score"
+            },
+            {
+              "id": "fintech.c:85",
+              "file": "fintech.c",
+              "line": 85,
+              "function": "fraud_score"
+            }
+          ],
+          "edges": [
+            {
+              "source": ":0",
+              "target": ":0",
+              "count": 63
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:25",
+              "count": 63
+            },
+            {
+              "source": "perf_harness.c:25",
+              "target": "fintech.c:86",
+              "count": 37
+            },
+            {
+              "source": "perf_harness.c:25",
+              "target": "fintech.c:85",
+              "count": 26
+            }
+          ]
+        },
+        "summary": "代码根因定位到 fintech.c:86 (fraud_score), confidence 68%."
+      },
+      "patch": {
+        "candidate_id": "c09-reviewed",
+        "strategy": "超时返回降级风险分 50",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 4,
+          "test_file_touched": false,
+          "reasons": []
+        },
+        "applied": true
+      },
+      "test": {
+        "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests 9",
+        "returncode": 0,
+        "passed": true,
+        "output_tail": "OK\\n",
+        "duration_ms": 2.3
+      },
+      "before_capture": {
+        "tag": "before",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 2 times to write data ]\n[ perf record: Captured and wrote 0.511 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c09-before.perf.data (63 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 31998
+        },
+        "samples": 63,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c09-before.stacks.txt"
+      },
+      "after_capture": {
+        "tag": "after",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 2 times to write data ]\n[ perf record: Captured and wrote 0.559 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c09-after.perf.data (69 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 31041
+        },
+        "samples": 69,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c09-after.stacks.txt"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "风控超时导致整条支付失败",
+        "why": "超时返回 -1，调用方直接拒绝",
+        "fix": "返回中间风险分 50，标记降级"
+      }
+    },
+    {
+      "iteration": 10,
+      "case_id": "c10",
+      "title": "结算日落在周末",
+      "rca": {
+        "case_id": "c10",
+        "source": "ebpf.code_stack",
+        "generated_at": "2026-11-03T00:28:45+00:00",
+        "finding": {
+          "file": "fintech.c",
+          "line": 93,
+          "function": "next_settlement_date",
+          "qualname": "next_settlement_date",
+          "source": "for (int i = 0; i < 200000; i++) {",
+          "score": 0.2586,
+          "self_ms": 30.0,
+          "self_ratio": 0.5172,
+          "p95_ms": 1.0,
+          "baseline_p95_ms": 0.0,
+          "latency_delta": 0.0,
+          "error_rate": 0.0,
+          "offcpu_ratio": 0.0,
+          "changed": false,
+          "samples": [
+            "c10-perf-0001",
+            "c10-perf-0002",
+            "c10-perf-0007",
+            "c10-perf-0009",
+            "c10-perf-0010"
+          ],
+          "confidence": 0.655,
+          "reasons": [
+            "leaf frame accounts for 52% of incident exclusive time",
+            "p95 rises 0ms -> 1ms (0.0x)",
+            "error affinity 0% on this line"
+          ],
+          "evidence": [
+            "c10-perf-0001",
+            "c10-perf-0002",
+            "c10-perf-0007",
+            "c10-perf-0009",
+            "c10-perf-0010"
+          ]
+        },
+        "ranking": [
+          {
+            "file": "fintech.c",
+            "line": 93,
+            "function": "next_settlement_date",
+            "qualname": "next_settlement_date",
+            "source": "for (int i = 0; i < 200000; i++) {",
+            "score": 0.2586,
+            "self_ms": 30.0,
+            "self_ratio": 0.5172,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c10-perf-0001",
+              "c10-perf-0002",
+              "c10-perf-0007",
+              "c10-perf-0009",
+              "c10-perf-0010"
+            ]
+          },
+          {
+            "file": "fintech.c",
+            "line": 94,
+            "function": "next_settlement_date",
+            "qualname": "next_settlement_date",
+            "source": "spin += i;",
+            "score": 0.2328,
+            "self_ms": 27.0,
+            "self_ratio": 0.4655,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c10-perf-0000",
+              "c10-perf-0003",
+              "c10-perf-0004",
+              "c10-perf-0005",
+              "c10-perf-0006"
+            ]
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 28,
+            "function": "main",
+            "qualname": "main",
+            "source": "sink += next_settlement_date(4);",
+            "score": 0.0086,
+            "self_ms": 1.0,
+            "self_ratio": 0.0172,
+            "p95_ms": 1.0,
+            "baseline_p95_ms": 0.0,
+            "latency_delta": 0.0,
+            "error_rate": 0.0,
+            "offcpu_ratio": 0.0,
+            "changed": false,
+            "samples": [
+              "c10-perf-0057"
+            ]
+          }
+        ],
+        "ruled_out": [
+          {
+            "file": "fintech.c",
+            "line": 94,
+            "function": "next_settlement_date",
+            "reason": "high CPU but no error/latency change"
+          },
+          {
+            "file": "perf_harness.c",
+            "line": 28,
+            "function": "main",
+            "reason": "high CPU but no error/latency change"
+          }
+        ],
+        "code_graph": {
+          "nodes": [
+            {
+              "id": ":0",
+              "file": "",
+              "line": 0,
+              "function": ""
+            },
+            {
+              "id": "perf_harness.c:28",
+              "file": "perf_harness.c",
+              "line": 28,
+              "function": "main"
+            },
+            {
+              "id": "fintech.c:94",
+              "file": "fintech.c",
+              "line": 94,
+              "function": "next_settlement_date"
+            },
+            {
+              "id": "fintech.c:93",
+              "file": "fintech.c",
+              "line": 93,
+              "function": "next_settlement_date"
+            }
+          ],
+          "edges": [
+            {
+              "source": ":0",
+              "target": ":0",
+              "count": 58
+            },
+            {
+              "source": ":0",
+              "target": "perf_harness.c:28",
+              "count": 58
+            },
+            {
+              "source": "perf_harness.c:28",
+              "target": "fintech.c:93",
+              "count": 30
+            },
+            {
+              "source": "perf_harness.c:28",
+              "target": "fintech.c:94",
+              "count": 27
+            }
+          ]
+        },
+        "summary": "代码根因定位到 fintech.c:93 (next_settlement_date), confidence 66%."
+      },
+      "patch": {
+        "candidate_id": "c10-reviewed",
+        "strategy": "跳过周六/周日",
+        "safety": {
+          "allowed": true,
+          "matched": 1,
+          "changed_lines": 0,
+          "test_file_touched": false,
+          "reasons": []
+        },
+        "applied": true
+      },
+      "test": {
+        "command": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/fintech_tests 10",
+        "returncode": 0,
+        "passed": true,
+        "output_tail": "OK\\n",
+        "duration_ms": 2.1
+      },
+      "before_capture": {
+        "tag": "before",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 2 times to write data ]\n[ perf record: Captured and wrote 0.470 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c10-before.perf.data (58 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 29758
+        },
+        "samples": 58,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c10-before.stacks.txt"
+      },
+      "after_capture": {
+        "tag": "after",
+        "record": {
+          "returncode": 0,
+          "output_tail": "[ perf record: Woken up 3 times to write data ]\n[ perf record: Captured and wrote 0.535 MB /tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c10-after.perf.data (66 samples) ]"
+        },
+        "script": {
+          "returncode": 0,
+          "bytes": 33542
+        },
+        "samples": 66,
+        "stacks_path": "/tmp/opsgraph-real-perf-jadf5w4n/fintech_c/c10-after.stacks.txt"
+      },
+      "status": "fixed",
+      "novice": {
+        "what": "周五结算被排到周六",
+        "why": "日期只加 1 天",
+        "fix": "循环跳过周末"
+      }
+    }
+  ],
+  "summary": "10/10 C 金融故障通过真实 perf 栈定位并修复。"
+}

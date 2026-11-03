@@ -14,6 +14,8 @@ artifacts/*.md
 !artifacts/code_rca.json
 !artifacts/code_graph.json
 !artifacts/code-rca-report.md
+!artifacts/real_perf_rea.json
+!artifacts/real-perf-rea.md
 !artifacts/code-fixes.patch
 data/code_rca/ebpf_samples.json
 .venv/

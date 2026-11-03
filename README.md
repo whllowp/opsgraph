@@ -380,6 +380,44 @@ python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
 
 详见 [代码级 RCA / REA](docs/code-rca.md)。
 
+### 真实 perf 采集 → C 代码 10 次 REA
+
+Linux 上新增一条完全使用真实 `perf` 栈的 C 路径：
+
+```bash
+# 需要 perf、gcc
+python -m opsgraph real-perf-rea
+```
+
+它会：
+
+1. 用 `gcc -g -O0 -fno-inline` 构建 10 个金融故障的 C 服务；
+2. 对每个故障启动一个 `perf record -F 99 -g --call-graph dwarf`；
+3. 用 `perf script -F ... srcline` 拿到真实 `fintech.c:line`；
+4. RCA 到函数/行；
+5. 应用 C 补丁、重新编译、跑该故障 C 回归；
+6. 修复后再采一次真实 perf 栈；
+7. 10 个故障全部结束后跑全量 C 回归。
+
+本地 WSL 实测：
+
+```text
+10/10 fixed
+before all: FAIL
+final all: PASS
+c01 fintech.c:8  convert_currency   samples=61
+c02 fintech.c:18 calculate_fee     samples=84
+...
+c10 fintech.c:93 next_settlement_date samples=58
+```
+
+CI 新增 `real-perf` job（Linux + perf），产物为：
+
+- `artifacts/real_perf_rea.json`
+- `artifacts/real-perf-rea.md`
+
+详见 [代码级 RCA / REA](docs/code-rca.md#63-真实-perf-10-次-c-rea)。
+
 ## 图工程算子
 
 | 算子 | 输入 | 输出 | 说明 |
@@ -412,6 +450,7 @@ python -m opsgraph demo --addr http://127.0.0.1:18080   # 全链路（含 AgentS
 python -m opsgraph demo --agentsight agentsight_snapshot.json
 python -m opsgraph demo --no-agents                     # 只跑服务图
 python -m opsgraph code-demo                            # 10 次代码 RCA/REA 闭环
+python -m opsgraph real-perf-rea                        # Linux: 真实 perf + C 10 次闭环
 python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
 python -m opsgraph analyze --source umodel              # 从 UModel 重新读图分析
 python -m opsgraph rca                                  # 打印根因排序
@@ -456,6 +495,7 @@ opsgraph/
 │   ├── code_rca.py        # eBPF 代码栈 RCA + REA 闭环
 │   ├── code_graph.py      # 代码域 -> UModel 实体/关系
 │   ├── patch_engine.py    # 候选补丁、安全校验、失败回滚
+│   ├── real_perf.py       # Linux perf -> C RCA/REA
 │   ├── ebpf_stacks.py     # perf/bpftrace 栈文本接入
 │   ├── ontology.py        # 图契约：22 EntitySet + 29 Link
 │   ├── model_pack.py      # 生成 UModel 模型包
@@ -467,11 +507,12 @@ opsgraph/
 │   └── cli.py
 ├── model/                 # 生成的 UModel 模型包
 ├── demo/fintech/          # 金融故障代码库 + 10 个回归用例
+├── demo/fintech_c/        # C 金融故障 + 真实 perf 10 次 REA
 ├── data/replay/           # l7_flow_log.csv / agentsight_snapshot.json
 ├── data/history/          # agent_history.json（历史基线）
 ├── data/code_rca/         # eBPF 代码栈回放
 ├── console/               # 零依赖 SVG 图控制台（服务 + AI lane + 代码）
-├── artifacts/             # snapshot / analysis / agents / code_rca / report
+├── artifacts/             # snapshot / analysis / agents / code_rca / real_perf
 ├── docs/
 ├── tests/
 └── run-demo.ps1
@@ -518,7 +559,7 @@ UModel 代码图：`22 EntitySet / 29 Link`，`47` 个代码实体 / `76` 条代
 - **Agent 结论不是事实。** `claim_status` 只表示 Agent 声称与图 RCA 是否一致；`remediation_status=pending_validation` 表示行动尚未被 eBPF 指标验证。
 - **Gate 当前是建议性的。** `require_approval`/`deny` 不会劫持 Agent 的 syscall；要强制执行必须接 tool proxy、MCP server 或 admission controller。
 - **历史基线是合成数据。** `data/history/agent_history.json` 仅用于离线演示；生产应写入真实根会话摘要并回填图 RCA 结果。
-- **代码栈有真实 perf 校准。** `data/code_rca/perf-sample.txt` 来自 WSL Linux `perf` 的 C 微服务采样，已验证可映射到 `fintech_demo.c:5`；10 次 REA 迭代仍使用可复现回放，以便离线稳定运行。
+- **代码栈有真实 perf 校准。** `data/code_rca/perf-sample.txt` 来自 WSL Linux `perf` 的 C 微服务采样，已验证可映射到 `fintech_demo.c:5`；`real-perf-rea` 在 Linux 上对 10 个 C 故障做真实 perf 采集与修复，Python 10 次 REA 仍使用可复现回放。
 - **REA 不自动改生产。** 补丁只在临时 worktree 应用并跑测试；高风险资金改动仍需门禁与人工审批。
 - **代码图只物化命中的位置。** 当前 10 个故障对应 6 个文件、10 个函数、10 行、10 个补丁，不是整仓 AST 图。
 - **敏感数据默认不图化。** AgentSight 快照可能含 prompt、路径、命令；写入图的是摘要与派生风险，原始快照不应提交到 Git。
