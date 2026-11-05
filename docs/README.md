@@ -9,6 +9,7 @@
 | [执行前策略门禁](policy-gate.md) | allow/require_approval/deny、图上下文、CLI/API、接入 Agent Runtime |
 | [Agent 基线与评估](agent-evaluation.md) | 历史基线、token/loop 偏离、claim accuracy |
 | [代码级 RCA / REA](code-rca.md) | eBPF 代码栈、行级 RCA、伪代码、10 次修复闭环 |
+| [值班决策简报](brief.md) | 从图证据到行动：owner、依据、验收、不要做、数据来源 |
 | [AgentSight 接入](agentsight.md) | snapshot/SQLite 适配、schema 映射、风险/重试环/校验 |
 | [模型](model.md) | 22 EntitySet / 29 Link、字段、ID 规则、导入与查询 |
 | [DeepFlow 接入](deepflow.md) | L7 SQL、tag 映射、实时模式、边界 |

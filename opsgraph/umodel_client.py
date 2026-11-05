@@ -35,8 +35,8 @@ class UModelClient:
         self.session = requests.Session()
 
     # ------------------------------------------------------------------ health
-    def health(self) -> dict[str, Any]:
-        response = self.session.get(f"{self.addr}/healthz", timeout=10)
+    def health(self, timeout: int = 5) -> dict[str, Any]:
+        response = self.session.get(f"{self.addr}/healthz", timeout=timeout)
         response.raise_for_status()
         return response.json()
 

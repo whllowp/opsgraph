@@ -3,6 +3,10 @@
   "umodel_entities": 130,
   "declared_relations": 200,
   "umodel_relations": 200,
+  "code_entities": 47,
+  "code_relations": 76,
+  "umodel_total_entities": 177,
+  "umodel_total_relations": 276,
   "root_cause_field": "checkout-service",
   "service_roles": {
     "checkout-service": "root_cause",

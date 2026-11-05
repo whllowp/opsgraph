@@ -5,11 +5,13 @@ from __future__ import annotations
 import json
 import mimetypes
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import urlparse
 
 from .analysis import GraphView, analyze
+from .brief import build_brief
 from .config import (
     ARTIFACT_DIR,
     CONSOLE_HOST,
@@ -176,6 +178,7 @@ def build_console_state(
     policy: list[dict[str, Any]] | None = None,
     code_rca: dict[str, Any] | None = None,
     code_graph: dict[str, Any] | None = None,
+    real_perf: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     visible_types = {
         "svc.service",
@@ -268,12 +271,28 @@ def build_console_state(
             "spl": ".entity with(domain='code', name='code.issue') | sort p99_before_ms desc | project display_name,case_id,status,p99_before_ms,p99_after_ms",
         },
     ]
+    brief = build_brief(
+        snapshot,
+        analysis,
+        agents=agents,
+        policy=policy,
+        code_rca=code_rca,
+        code_graph=code_graph,
+        umodel_info=umodel_info,
+        real_perf=real_perf,
+    )
     return {
         "meta": {
             "workspace": snapshot.get("workspace"),
             "window": snapshot.get("window"),
             "generated_at": analysis.get("generated_at"),
             "graph_counts": snapshot.get("counts"),
+            "umodel_counts": {
+                "entities": int((snapshot.get("counts") or {}).get("entities") or 0)
+                + int((code_graph or {}).get("summary", {}).get("entities") or 0),
+                "relations": int((snapshot.get("counts") or {}).get("relations") or 0)
+                + int((code_graph or {}).get("summary", {}).get("relations") or 0),
+            },
             "type_counts": counts,
             "model": {"entity_sets": len(ENTITY_SETS), "links": len(LINKS)},
             "umodel": umodel_info or {"addr": UMODEL_ADDR, "connected": False},
@@ -289,6 +308,8 @@ def build_console_state(
         "policy": policy or [],
         "code_rca": code_rca or {},
         "code_graph": code_graph or {},
+        "real_perf": real_perf or {},
+        "brief": brief,
         "incident": next(
             (
                 item
@@ -311,7 +332,9 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     policy: list[dict[str, Any]] | None = None
     code_rca: dict[str, Any] | None = None
     code_graph: dict[str, Any] | None = None
+    real_perf: dict[str, Any] = {}
     umodel_info: dict[str, Any] = {"addr": UMODEL_ADDR, "connected": False}
+    umodel_checked_at: float = 0.0
     lock = threading.Lock()
 
     def log_message(self, fmt: str, *args: Any) -> None:
@@ -345,11 +368,29 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             cls.code_rca = read_json(code_path) if code_path.exists() else {}
             code_graph_path = ARTIFACT_DIR / "code_graph.json"
             cls.code_graph = read_json(code_graph_path) if code_graph_path.exists() else {}
+            real_perf_path = ARTIFACT_DIR / "real_perf_rea.json"
+            cls.real_perf = read_json(real_perf_path) if real_perf_path.exists() else {}
         return True
+
+    def _refresh_umodel(self) -> None:
+        cls = type(self)
+        if time.monotonic() - cls.umodel_checked_at < 5:
+            return
+        cls.umodel_checked_at = time.monotonic()
+        try:
+            info = UModelClient(UMODEL_ADDR, WORKSPACE).health(timeout=2)
+            cls.umodel_info = {
+                "addr": UMODEL_ADDR,
+                "connected": info.get("status") == "ok",
+                "provider": info.get("graphstore", {}).get("provider"),
+            }
+        except Exception:
+            cls.umodel_info = {"addr": UMODEL_ADDR, "connected": False}
 
     def _state(self) -> dict[str, Any]:
         cls = type(self)
         assert cls.snapshot is not None and cls.analysis is not None
+        self._refresh_umodel()
         return build_console_state(
             cls.snapshot,
             cls.analysis,
@@ -359,6 +400,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             cls.policy,
             cls.code_rca,
             cls.code_graph,
+            cls.real_perf,
         )
 
     def do_GET(self) -> None:
@@ -383,6 +425,18 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 self._json({"error": "report not found"}, 404)
                 return
             body = report.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/markdown; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if path == "/api/brief":
+            brief = ARTIFACT_DIR / "brief.md"
+            if not brief.exists():
+                self._json({"error": "brief not found; run `python -m opsgraph brief`"}, 404)
+                return
+            body = brief.read_bytes()
             self.send_response(200)
             self.send_header("Content-Type", "text/markdown; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
@@ -548,5 +602,7 @@ def serve(host: str = CONSOLE_HOST, port: int = CONSOLE_PORT) -> None:
         handler.umodel_info = {"addr": UMODEL_ADDR, "connected": False}
     server = ThreadingHTTPServer((host, port), handler)
     print(f"OpsGraph console: http://{host}:{port}")
-    print("  API: /api/state  /api/analyze  /api/query  /api/simulate  /api/gate  /api/report")
+    print(
+        "  API: /api/state  /api/analyze  /api/query  /api/simulate  /api/gate  /api/report  /api/brief"
+    )
     server.serve_forever()

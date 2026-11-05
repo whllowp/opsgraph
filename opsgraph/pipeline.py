@@ -131,11 +131,25 @@ def run_pipeline(
     role_write = client.write_entities(changed_entities(snapshot))
 
     umodel_snapshot = load_snapshot_from_umodel(client, declared)
+    service_entities = [
+        item
+        for item in umodel_snapshot["entities"]
+        if not str(item.get("__entity_type__") or "").startswith("code.")
+    ]
+    service_relations = [
+        item
+        for item in umodel_snapshot["relations"]
+        if item.get("__src_domain__") != "code" and item.get("__dest_domain__") != "code"
+    ]
     verification = {
         "declared_entities": len(snapshot["entities"]),
-        "umodel_entities": umodel_snapshot["counts"]["entities"],
+        "umodel_entities": len(service_entities),
         "declared_relations": len(snapshot["relations"]),
-        "umodel_relations": umodel_snapshot["counts"]["relations"],
+        "umodel_relations": len(service_relations),
+        "code_entities": umodel_snapshot["counts"]["entities"] - len(service_entities),
+        "code_relations": umodel_snapshot["counts"]["relations"] - len(service_relations),
+        "umodel_total_entities": umodel_snapshot["counts"]["entities"],
+        "umodel_total_relations": umodel_snapshot["counts"]["relations"],
         "root_cause_field": next(
             (
                 item.get("root_cause")

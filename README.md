@@ -7,7 +7,7 @@
 > 把 eBPF 观测到的服务调用、AI Agent 行为与代码栈，编译成 UModel 上可查询、可推理、可回写的运维对象图。
 > 不止定位到服务，还要定位到代码行，并用「伪代码 → 补丁 → 金融回归 → eBPF 复测」闭环修复。
 
-![OpsGraph console](docs/console.png)
+![OpsGraph console](docs/brief-tab.png)
 
 ## 为什么需要 Graph Engineering
 
@@ -76,7 +76,8 @@ cd E:\ebpf\opsgraph
 3. 导入 UModel 模型包，写入 130 个服务实体 / 200 条关系；
 4. 运行服务 RCA + Agent 风险/重试环/结论校验，并把角色回写 UModel；
 5. 运行 10 次代码级 RCA → 伪代码 → 补丁 → 金融回归 → eBPF 复测，并写入 47 个代码实体 / 76 条代码关系；
-6. 启动控制台 `http://127.0.0.1:18088`。
+6. 生成值班决策简报（根因 + owner + 验收 + 数据来源）；
+7. 启动控制台 `http://127.0.0.1:18088`。
 
 停止：
 
@@ -97,7 +98,10 @@ python -m opsgraph demo --addr http://127.0.0.1:18080
 # 3. 代码级 RCA + 10 次 REA 闭环
 python -m opsgraph code-demo
 
-# 4. 打开图控制台
+# 4. 生成值班决策简报
+python -m opsgraph brief
+
+# 5. 打开图控制台
 python -m opsgraph serve --port 18088
 ```
 
@@ -418,6 +422,28 @@ CI 新增 `real-perf` job（Linux + perf），产物为：
 
 详见 [代码级 RCA / REA](docs/code-rca.md#63-真实-perf-10-次-c-rea)。
 
+## 值班决策简报
+
+图和控制台解决「发生了什么」，简报解决「现在做什么」。
+
+```bash
+python -m opsgraph brief
+```
+
+它把 snapshot、RCA、AgentSight、门禁、代码 RCA 压缩成一页：
+
+- 根因、置信度、受害服务的 P99/错误率；
+- Agent 是否改了东西、是否高风险、处置是否待验证；
+- P0/P1 动作 + owner + 依据 + 验收标准；
+- 命中 deny 的「不要做」；
+- 数据来源：replay、真实 perf、UModel 在线状态。
+
+控制台诊断 tab 顶部直接显示，顶栏「决策简报」打开 `/api/brief`。
+
+![决策简报](docs/brief-tab.png)
+
+详见 [值班决策简报](docs/brief.md)。
+
 ## 图工程算子
 
 | 算子 | 输入 | 输出 | 说明 |
@@ -451,6 +477,7 @@ python -m opsgraph demo --agentsight agentsight_snapshot.json
 python -m opsgraph demo --no-agents                     # 只跑服务图
 python -m opsgraph code-demo                            # 10 次代码 RCA/REA 闭环
 python -m opsgraph real-perf-rea                        # Linux: 真实 perf + C 10 次闭环
+python -m opsgraph brief                                # 值班决策简报
 python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
 python -m opsgraph analyze --source umodel              # 从 UModel 重新读图分析
 python -m opsgraph rca                                  # 打印根因排序
@@ -460,7 +487,7 @@ python -m opsgraph baseline                             # 历史基线 + claim a
 python -m opsgraph serve --port 18088                   # 控制台
 python -m opsgraph doctor                               # UModel 连通性/计数
 python -m opsgraph query ".entity with(domain='svc', name='svc.service') | limit 5"
-python -m unittest discover -s tests -v                 # 52 个单测
+python -m unittest discover -s tests -v                 # 54 个单测
 ```
 
 ## UModel 查询示例
@@ -501,6 +528,7 @@ opsgraph/
 │   ├── model_pack.py      # 生成 UModel 模型包
 │   ├── materialize.py     # 观测 -> 实体/关系（证据边）
 │   ├── analysis.py        # RCA / 影响面 / 漂移 / SPOF
+│   ├── brief.py           # 值班决策简报：根因 -> 行动/owner/验收/来源
 │   ├── pipeline.py        # 全链路编排 + 报告
 │   ├── console_server.py  # 控制台 API + 静态服务
 │   ├── umodel_client.py   # UModel 公共 REST 客户端
@@ -512,7 +540,7 @@ opsgraph/
 ├── data/history/          # agent_history.json（历史基线）
 ├── data/code_rca/         # eBPF 代码栈回放
 ├── console/               # 零依赖 SVG 图控制台（服务 + AI lane + 代码）
-├── artifacts/             # snapshot / analysis / agents / code_rca / real_perf
+├── artifacts/             # snapshot / analysis / agents / code_rca / real_perf / brief
 ├── docs/
 ├── tests/
 └── run-demo.ps1

@@ -11,6 +11,7 @@ OpsGraph is a Python reference implementation of eBPF-observed operational graph
 - `opsgraph/history.py` — historical baseline + claim accuracy.
 - `opsgraph/code_rca.py` — eBPF code-stack RCA + REA loop; `opsgraph/code_cases.py` — 10 fintech incidents.
 - `opsgraph/patch_engine.py` — candidate patch safety, test rejection, rollback.
+- `opsgraph/brief.py` — operator decision brief: root cause -> action/owner/verification/provenance.
 - `demo/fintech/` — intentionally buggy financial code + 10 regression tests.
 - `demo/fintech_c/` + `opsgraph/real_perf.py` — Linux-only real perf capture -> C code RCA -> 10-case REA.
 - `opsgraph/scenario.py` — deterministic DeepFlow-shaped replay with a retry-storm incident.
@@ -26,6 +27,7 @@ python -m opsgraph demo --addr http://127.0.0.1:18080
 python -m opsgraph gate --session sre-claude-01 --tool kubectl_apply --target "kubectl apply -f checkout-retry-policy.yaml -n shop"
 python -m opsgraph baseline
 python -m opsgraph code-demo
+python -m opsgraph brief
 python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
 python -m opsgraph real-perf-rea
 python -m opsgraph analyze --source umodel
@@ -50,6 +52,8 @@ node --check console/app.js
 - `real-perf-rea` must stay skipped on non-Linux; never fake perf samples.
 - REA applies patches only in a temp worktree; never auto-commit or auto-deploy a generated fix.
 - Rejected candidate patches must stay visible in `candidates`; do not silently discard failed attempts.
+- The brief may recommend actions but must never claim to execute them; execution still goes through the policy gate and human approval.
+- Every brief action needs an owner, a `because` tied to graph/agent/code evidence, and an observable `verify`.
 - Update `docs/en`-style paired docs only if the project gains bilingual docs; currently Chinese README plus English code comments is intentional.
 - Regenerate `model/` after changing `ontology.py` (`python -m opsgraph model`).
 

@@ -28,6 +28,7 @@
       </div>
       <div class="top-actions">
         <button class="btn ghost" id="btn-focus" title="缩放到根因路径">聚焦因果路径</button>
+        <button class="btn" id="btn-brief" title="打开值班决策简报">决策简报</button>
         <button class="btn" id="btn-report" title="打开 Markdown 故障报告">故障报告</button>
         <button class="btn primary" id="btn-rerun"><span class="btn-dot"></span>重跑 RCA</button>
       </div>
@@ -149,6 +150,15 @@
         </div>
 
         <div class="tab-panel active" id="panel-diagnosis">
+          <section class="panel-block brief-block">
+            <div class="brief-kicker">ON-CALL BRIEF · DECISION</div>
+            <h2 class="brief-headline" id="brief-headline">—</h2>
+            <div class="brief-meta" id="brief-meta"></div>
+            <p class="brief-what" id="brief-what"></p>
+            <div class="brief-actions" id="brief-actions"></div>
+            <div class="brief-donot" id="brief-donot"></div>
+            <div class="brief-provenance" id="brief-provenance"></div>
+          </section>
           <section class="panel-block">
             <div class="section-head"><span>根因候选</span><em id="ranking-count">—</em></div>
             <div class="ranking" id="ranking"></div>

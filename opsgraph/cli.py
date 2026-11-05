@@ -306,6 +306,37 @@ def cmd_real_perf(args: argparse.Namespace) -> int:
     return 0 if result.get("fixed") == result.get("cases") else 1
 
 
+def cmd_brief(args: argparse.Namespace) -> int:
+    from .brief import build_brief, render_brief_markdown
+
+    snapshot_path = ARTIFACT_DIR / "snapshot.json"
+    analysis_path = ARTIFACT_DIR / "analysis.json"
+    if not snapshot_path.exists() or not analysis_path.exists():
+        print("artifacts not found; run `python -m opsgraph demo` first", file=sys.stderr)
+        return 1
+    optional = {}
+    for name in ("agents", "code_rca", "code_graph", "real_perf_rea"):
+        path = ARTIFACT_DIR / f"{name}.json"
+        optional[name] = read_json(path) if path.exists() else {}
+    policy_path = ARTIFACT_DIR / "policy.json"
+    brief = build_brief(
+        read_json(snapshot_path),
+        read_json(analysis_path),
+        optional["agents"],
+        read_json(policy_path) if policy_path.exists() else [],
+        optional["code_rca"],
+        optional["code_graph"],
+        real_perf=optional["real_perf_rea"],
+    )
+    write_json(ARTIFACT_DIR / "brief.json", brief)
+    (ARTIFACT_DIR / "brief.md").write_text(render_brief_markdown(brief), encoding="utf-8")
+    print(brief["headline"])
+    for action in brief["next_actions"]:
+        print(f"[{action['priority']}] {action['action']}  owner={action['owner']}")
+    print(ARTIFACT_DIR / "brief.md")
+    return 0
+
+
 def cmd_gate(args: argparse.Namespace) -> int:
     from .policy import evaluate_gate
 
@@ -447,6 +478,10 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(p)
     p.add_argument("--iterations", type=int, default=10)
     p.set_defaults(func=cmd_real_perf)
+
+    p = sub.add_parser("brief", help="write the on-call decision brief")
+    _add_common(p)
+    p.set_defaults(func=cmd_brief)
 
     p = sub.add_parser("gate", help="evaluate a proposed agent action before execution")
     _add_common(p)

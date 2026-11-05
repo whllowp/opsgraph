@@ -120,6 +120,7 @@ function renderAll() {
   renderIncident();
   renderVerdict();
   renderCounts();
+  renderBrief();
   renderRanking();
   renderFindings();
   renderRuledOut();
@@ -138,7 +139,8 @@ function renderHeader() {
   const connected = meta.umodel && meta.umodel.connected;
   pill.classList.toggle("on", Boolean(connected));
   pill.innerHTML = `<i></i> UModel${connected ? " · " + escapeHtml(meta.umodel.provider || "connected") : " · offline"}`;
-  $("#top-counts").textContent = `${meta.graph_counts?.entities ?? "—"} entities · ${meta.graph_counts?.relations ?? "—"} relations`;
+  const counts = meta.umodel_counts || meta.graph_counts || {};
+  $("#top-counts").textContent = `${counts.entities ?? "—"} entities · ${counts.relations ?? "—"} relations`;
   const window = meta.window || {};
   $("#stage-sub").textContent = `${fmt.clock(window.start)}–${fmt.clock(window.end)} · service → dependency → business impact`;
   const agents = meta.agents || {};
@@ -184,6 +186,41 @@ function renderCounts() {
   $("#layer-calls").textContent = edges.filter((edge) => edge.type === "calls").length;
   $("#layer-business").textContent = edges.filter((edge) => edge.type === "depends_on").length;
   $("#layer-agents").textContent = state.data.meta.agents?.sessions ?? state.data.agents?.summary?.sessions ?? 0;
+}
+
+function renderBrief() {
+  const brief = state.data.brief || {};
+  if (!brief.headline) {
+    document.querySelector(".brief-block")?.classList.add("hidden");
+    return;
+  }
+  $("#brief-headline").textContent = brief.headline;
+  $("#brief-meta").innerHTML = `
+    <span>${escapeHtml(brief.status || "")}</span>
+    <span>${escapeHtml(brief.severity || "")}</span>
+    <span>${brief.next_actions?.length || 0} actions</span>`;
+  $("#brief-what").textContent = brief.what || "";
+  $("#brief-donot").textContent = (brief.do_not || []).join(" · ");
+  $("#brief-actions").innerHTML = (brief.next_actions || [])
+    .map(
+      (action) => `
+      <div class="brief-action" title="${escapeHtml(action.because || "")}">
+        <span class="p">${escapeHtml(action.priority || "")}</span>
+        <div>
+          <strong>${escapeHtml(action.action || "")}</strong>
+          <em>owner ${escapeHtml(action.owner || "")} · verify: ${escapeHtml(action.verify || "")}</em>
+        </div>
+      </div>`
+    )
+    .join("");
+  const provenance = brief.provenance || {};
+  $("#brief-provenance").innerHTML = Object.entries(provenance)
+    .filter(([, value]) => value && value.mode)
+    .map(
+      ([key, value]) =>
+        `<span>${escapeHtml(key)}:${escapeHtml(value.mode || "")}</span>`
+    )
+    .join("");
 }
 
 function renderRanking() {
@@ -488,8 +525,12 @@ function renderCodeRca() {
     <div><strong>${summary.final_suite?.passed ? "PASS" : "FAIL"}</strong><span>regression</span></div>`;
   $("#code-headline").textContent = summary.headline || "";
   const codeGraph = state.data.code_graph?.summary || {};
+  const realPerf = state.data.real_perf || {};
+  const realPerfText = realPerf.fixed
+    ? ` · real perf ${realPerf.fixed}/${realPerf.cases}`
+    : "";
   $("#code-graph-line").textContent = codeGraph.entities
-    ? `UModel code graph · ${codeGraph.entities} entities / ${codeGraph.relations} relations · ${codeGraph.files} files / ${codeGraph.functions} functions · ${summary.candidate_attempts || 0} candidates (${summary.rejected_candidates || 0} rejected)`
+    ? `UModel code graph · ${codeGraph.entities} entities / ${codeGraph.relations} relations · ${codeGraph.files} files / ${codeGraph.functions} functions · ${summary.candidate_attempts || 0} candidates (${summary.rejected_candidates || 0} rejected)${realPerfText}`
     : "";
   if (!state.selectedCode) state.selectedCode = iterations[0].case_id;
   $("#code-list").innerHTML = iterations
@@ -1013,6 +1054,7 @@ function bindEvents() {
       button.innerHTML = '<span class="btn-dot"></span>重跑 RCA';
     }
   });
+  $("#btn-brief").addEventListener("click", () => window.open("/api/brief", "_blank"));
   $("#btn-report").addEventListener("click", () => window.open("/api/report", "_blank"));
   $("#btn-focus").addEventListener("click", focusPath);
   $("#zoom-in").addEventListener("click", () => zoomBy(1.18));

@@ -68,6 +68,10 @@ Write-Host "Running eBPF code-level RCA + REA loop ..."
 python -u -m opsgraph code-demo
 if ($LASTEXITCODE -ne 0) { throw "Code RCA/REA loop failed" }
 
+Write-Host "Writing on-call decision brief ..."
+python -u -m opsgraph brief
+if ($LASTEXITCODE -ne 0) { throw "Decision brief failed" }
+
 if (-not (Test-Url "$consoleUrl/api/health")) {
     $outLog = Join-Path $runtime "console.out.log"
     $errLog = Join-Path $runtime "console.err.log"
