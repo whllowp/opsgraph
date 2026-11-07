@@ -255,7 +255,7 @@ c10 fintech.c:93 next_settlement_date   samples=58
 
 - C 故障函数里加了短暂的 workload loop，让过短函数能被 99Hz 采样稳定命中；补丁会移除它。
 - `real-perf-rea` 只在 Linux 运行；Windows 会返回 `skipped`，不会伪造采样。
-- CI 的 `real-perf` job 在 Ubuntu 上安装 `linux-tools`/gcc 后执行该命令，并上传 artifact。
+- CI 的 `real-perf` job 在 Ubuntu 上安装 `linux-tools`/gcc 后执行该命令，并上传 artifact；该 job 是硬门禁，失败会让 CI 失败。
 
 控制台：`http://127.0.0.1:18088/?tab=code`
 

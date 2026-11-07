@@ -1,0 +1,8 @@
+# OpsGraph code owners.
+# Used by the decision brief to route code fixes to the real code owner.
+
+* @opsgraph-core
+/demo/fintech/ @commerce-core
+/demo/fintech_c/ @commerce-core
+/opsgraph/ @opsgraph-core
+/tests/ @opsgraph-core

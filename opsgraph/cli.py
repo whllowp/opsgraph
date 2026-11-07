@@ -8,7 +8,11 @@ import sys
 from pathlib import Path
 
 from .analysis import analyze, changed_entities
-from .config import ARTIFACT_DIR, MODEL_DIR, REPLAY_DIR, UMODEL_ADDR, WORKSPACE
+from .approvals import ApprovalStore
+from .brief import build_brief, render_brief_markdown
+from .brief_history import ActionLedger
+from .codeowners import OwnersIndex
+from .config import ARTIFACT_DIR, MODEL_DIR, PROJECT_ROOT, REPLAY_DIR, UMODEL_ADDR, WORKSPACE
 from .console_server import serve
 from .model_pack import build_model_pack
 from .pipeline import load_snapshot_from_umodel, run_pipeline
@@ -307,8 +311,6 @@ def cmd_real_perf(args: argparse.Namespace) -> int:
 
 
 def cmd_brief(args: argparse.Namespace) -> int:
-    from .brief import build_brief, render_brief_markdown
-
     snapshot_path = ARTIFACT_DIR / "snapshot.json"
     analysis_path = ARTIFACT_DIR / "analysis.json"
     if not snapshot_path.exists() or not analysis_path.exists():
@@ -319,21 +321,64 @@ def cmd_brief(args: argparse.Namespace) -> int:
         path = ARTIFACT_DIR / f"{name}.json"
         optional[name] = read_json(path) if path.exists() else {}
     policy_path = ARTIFACT_DIR / "policy.json"
+    policy = read_json(policy_path) if policy_path.exists() else []
+    approvals = ApprovalStore(ARTIFACT_DIR / "approvals.json")
+    approvals.ensure_from_policy(policy)
+    snapshot = read_json(snapshot_path)
     brief = build_brief(
-        read_json(snapshot_path),
+        snapshot,
         read_json(analysis_path),
         optional["agents"],
-        read_json(policy_path) if policy_path.exists() else [],
+        policy,
         optional["code_rca"],
         optional["code_graph"],
         real_perf=optional["real_perf_rea"],
+        codeowners=OwnersIndex(PROJECT_ROOT),
+        approvals=approvals.requests,
+    )
+    ledger = ActionLedger(ARTIFACT_DIR / "brief_history.jsonl")
+    brief = ledger.reconcile(
+        brief,
+        snapshot,
+        approvals=approvals.requests,
+        code_rca=optional["code_rca"],
     )
     write_json(ARTIFACT_DIR / "brief.json", brief)
     (ARTIFACT_DIR / "brief.md").write_text(render_brief_markdown(brief), encoding="utf-8")
     print(brief["headline"])
     for action in brief["next_actions"]:
-        print(f"[{action['priority']}] {action['action']}  owner={action['owner']}")
+        check = action.get("check_result") or {}
+        print(
+            f"[{action['priority']}] {action['action']}  owner={action['owner']} "
+            f"status={action['status']} check={check.get('status', 'unknown')}"
+        )
+    print(f"approvals: {len(approvals.requests)} ticket(s)")
     print(ARTIFACT_DIR / "brief.md")
+    return 0
+
+
+def cmd_approvals(args: argparse.Namespace) -> int:
+    store = ApprovalStore(ARTIFACT_DIR / "approvals.json")
+    if args.decide:
+        try:
+            ticket = store.decide(
+                args.decide,
+                args.decision,
+                args.actor,
+                args.reason,
+            )
+        except (KeyError, ValueError) as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        print(f"{ticket['request_id']} -> {ticket['status']} by {ticket['decided_by']}")
+        return 0
+    summary = store.summary()
+    print(f"Approval tickets: {summary['total']} {summary['by_status']}")
+    for ticket in summary["requests"]:
+        print(
+            f"  {ticket['request_id']}  {ticket['status']:<8} "
+            f"{ticket['target']}  approvers={','.join(ticket.get('approvers') or [])}"
+        )
     return 0
 
 
@@ -482,6 +527,14 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("brief", help="write the on-call decision brief")
     _add_common(p)
     p.set_defaults(func=cmd_brief)
+
+    p = sub.add_parser("approvals", help="list or decide approval tickets")
+    _add_common(p)
+    p.add_argument("--decide", default="", help="approval request id")
+    p.add_argument("--decision", choices=["approved", "denied"], default="approved")
+    p.add_argument("--actor", default="on-call")
+    p.add_argument("--reason", default="")
+    p.set_defaults(func=cmd_approvals)
 
     p = sub.add_parser("gate", help="evaluate a proposed agent action before execution")
     _add_common(p)

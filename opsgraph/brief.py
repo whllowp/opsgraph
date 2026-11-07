@@ -15,8 +15,21 @@ invents a root cause; every action links back to a graph/agent/code fact.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any
+
+
+def _slo_target(victim: dict[str, Any], incident: dict[str, Any]) -> float:
+    for value in (victim.get("slo_p99_ms"),):
+        try:
+            if value:
+                return float(value)
+        except (TypeError, ValueError):
+            pass
+    text = str(incident.get("summary") or "")
+    match = re.search(r"(\d+(?:\.\d+)?)\s*ms\s*SLO", text, re.IGNORECASE)
+    return float(match.group(1)) if match else 0.0
 
 
 def _service(snapshot: dict[str, Any], name: str) -> dict[str, Any]:
@@ -47,13 +60,19 @@ def _action(
     owner: str,
     because: str,
     verify: str,
-) -> dict[str, str]:
+    check: dict[str, Any] | None = None,
+    owner_source: str = "service",
+    key: str = "",
+) -> dict[str, Any]:
     return {
         "priority": priority,
         "action": action,
+        "key": key or action,
         "owner": owner,
+        "owner_source": owner_source,
         "because": because,
         "verify": verify,
+        "check": check or {"kind": "manual"},
     }
 
 
@@ -66,9 +85,12 @@ def build_brief(
     code_graph: dict[str, Any] | None = None,
     umodel_info: dict[str, Any] | None = None,
     real_perf: dict[str, Any] | None = None,
+    codeowners: Any = None,
+    approvals: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     agents = agents or {}
     policy = policy or []
+    approvals = approvals or []
     code_rca = code_rca or {}
     code_graph = code_graph or {}
     incident = _incident(snapshot)
@@ -76,6 +98,7 @@ def build_brief(
     root = str(analysis.get("root_cause") or incident.get("root_cause") or "")
     victim = _service(snapshot, victim_name)
     root_service = _service(snapshot, root)
+    slo = _slo_target(victim, incident)
     ranking = analysis.get("ranking") or []
     top = ranking[0] if ranking else {}
     reasons = list(top.get("reasons") or [])[:3]
@@ -97,7 +120,7 @@ def build_brief(
     do_not: list[str] = []
 
     deny = [item for item in policy if item.get("decision") == "deny"]
-    approvals = [item for item in policy if item.get("decision") == "require_approval"]
+    approval_decisions = [item for item in policy if item.get("decision") == "require_approval"]
     if deny:
         do_not.append(f"不要执行 `{deny[0].get('target')}`（{deny[0].get('rule')}）")
     if pending:
@@ -109,7 +132,21 @@ def build_brief(
                 owner,
                 "Agent 已执行 rollout，但同窗口 eBPF 仍显示服务 critical/warning；"
                 "`remediation_status=pending_validation`。",
-                "P99 回到基线附近、错误率回落，且连续一个窗口无新告警。",
+                (
+                    f"P99 回到 {slo:.0f}ms SLO 以内，错误率回落，且连续一个窗口无新告警。"
+                    if slo
+                    else "P99 回到基线附近、错误率回落，且连续一个窗口无新告警。"
+                ),
+                {
+                    "kind": "slo",
+                    "service": victim_name,
+                    "metric": "latency_p99_ms",
+                    "operator": "<=",
+                    "target": slo,
+                }
+                if slo
+                else {"kind": "manual"},
+                key=f"slo:{victim_name or root}",
             )
         )
     if high_risk_effects:
@@ -121,31 +158,59 @@ def build_brief(
                 f"Agent 产生 {high_risk_effects} 个高风险系统效果；"
                 f"claim verified={claim_verified}, mismatch={claim_mismatch}。",
                 "每个 prod 变更都有审批人、变更单和可回滚版本。",
+                key="agent-high-risk",
             )
         )
-    if approvals:
-        first = approvals[0]
+    if approval_decisions:
+        first = approval_decisions[0]
+        ticket = next(
+            (item for item in approvals if item.get("target") == first.get("target")),
+            {},
+        )
+        approvers = list(ticket.get("approvers") or first.get("approvers") or ["change-manager"])
+        action_text = (
+            f"审批单 `{ticket.get('request_id')}`：`{first.get('target')}` 通过后再执行"
+            if ticket
+            else f"对 `{first.get('target')}` 发起审批后再执行"
+        )
         actions.append(
             _action(
                 "P0",
-                f"对 `{first.get('target')}` 发起审批后再执行",
-                ", ".join(first.get("approvers") or ["change-manager"]),
+                action_text,
+                ", ".join(approvers),
                 f"门禁命中 `{first.get('rule')}`：{'; '.join(first.get('reasons') or [])}",
                 "审批通过 + 只影响目标服务 + 执行后 eBPF 复测。",
+                {
+                    "kind": "approval",
+                    "request_id": ticket.get("request_id"),
+                }
+                if ticket
+                else {"kind": "manual"},
+                key=f"approval:{first.get('target')}",
             )
         )
     code_summary = code_rca.get("summary") or {}
     code_fixed = int(code_summary.get("fixed") or 0)
     code_iterations = int(code_summary.get("iterations") or 0)
+    code_file = ""
+    if code_rca.get("iterations"):
+        code_file = str(
+            (code_rca["iterations"][0].get("rca") or {}).get("finding", {}).get("file") or ""
+        )
+    code_path = f"{code_rca.get('repo', '')}/{code_file}".lstrip("/")
+    code_owner = codeowners.owner_for(code_path) if codeowners and code_path else ""
     if code_fixed:
         actions.append(
             _action(
                 "P1",
                 f"把 {code_fixed} 个代码级修复纳入发布计划",
-                str(root_service.get("owner") or "commerce-core"),
+                code_owner or str(root_service.get("owner") or "commerce-core"),
                 f"REA 在 {code_iterations} 个故障上完成补丁、回归与复测；"
                 f"UModel 代码图 {int((code_graph.get('summary') or {}).get('entities') or 0)} 个实体。",
                 "代码回归 PASS + canary 指标稳定 + 回滚包就绪。",
+                {"kind": "manual"},
+                owner_source="CODEOWNERS" if code_owner else "service",
+                key="code-release",
             )
         )
     if not actions:
@@ -156,10 +221,14 @@ def build_brief(
                 str(root_service.get("owner") or "on-call"),
                 "当前没有 Agent 处置或代码补丁动作；先用图查询验证根因。",
                 "被怀疑的变更回滚后，P99/错误率在同一窗口回落。",
+                key="verify-root",
             )
         )
     actions.sort(key=lambda item: item["priority"])
     actions = actions[:4]
+    from .verification import attach_checks
+
+    actions = attach_checks(actions, snapshot, approvals=approvals, code_rca=code_rca)
 
     status = "mitigation_pending" if pending else "investigating"
     headline = (
@@ -169,6 +238,7 @@ def build_brief(
     )
     what = (
         f"{victim_name or '受害服务'} P99 {p99:.0f}ms"
+        + (f"（SLO {slo:.0f}ms）" if slo else "")
         + (f"（基线 {baseline:.0f}ms，+{delta:.0f}%）" if baseline else "")
         + f"，错误率 {error_rate * 100:.2f}%，QPS {float(victim.get('qps') or 0):.0f}。"
     )
@@ -218,6 +288,7 @@ def build_brief(
             "candidates": int(code_summary.get("candidate_attempts") or 0),
             "rejected": int(code_summary.get("rejected_candidates") or 0),
             "entities": int((code_graph.get("summary") or {}).get("entities") or 0),
+            "owner": code_owner,
         },
         "next_actions": actions,
         "do_not": do_not,
@@ -265,12 +336,23 @@ def render_brief_markdown(brief: dict[str, Any]) -> str:
         lines.append(f"- {reason}")
     lines += ["", "## 下一步", ""]
     for action in brief.get("next_actions") or []:
+        check = action.get("check_result") or {}
         lines.append(
             f"- **[{action['priority']}] {action['action']}**  "
-            f"owner: `{action['owner']}`  \n"
+            f"owner: `{action['owner']}` · status: **{action.get('status', 'open')}**  \n"
             f"  依据：{action['because']}  \n"
-            f"  验证：{action['verify']}"
+            f"  验证：{action['verify']}  \n"
+            f"  检查：`{check.get('kind', 'manual')}` {check.get('status', 'unknown')}"
+            + (f" · {check.get('message')}" if check.get("message") else "")
         )
+    if brief.get("history"):
+        lines += ["", "## 审计链", ""]
+        for event in brief["history"][-12:]:
+            lines.append(
+                f"- `{event.get('ts')}` **{event.get('event')}** "
+                f"[{event.get('priority')}] {event.get('action')} "
+                f"→ {event.get('status')}"
+            )
     if brief.get("do_not"):
         lines += ["", "## 不要做", ""]
         for item in brief["do_not"]:

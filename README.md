@@ -415,7 +415,7 @@ c02 fintech.c:18 calculate_fee     samples=84
 c10 fintech.c:93 next_settlement_date samples=58
 ```
 
-CI 新增 `real-perf` job（Linux + perf），产物为：
+CI 新增 `real-perf` job（Linux + perf，**硬门禁**，不再 `continue-on-error`），产物为：
 
 - `artifacts/real_perf_rea.json`
 - `artifacts/real-perf-rea.md`
@@ -434,9 +434,50 @@ python -m opsgraph brief
 
 - 根因、置信度、受害服务的 P99/错误率；
 - Agent 是否改了东西、是否高风险、处置是否待验证；
-- P0/P1 动作 + owner + 依据 + 验收标准；
+- P0/P1 动作 + owner + 依据 + **可执行检查**；
 - 命中 deny 的「不要做」；
 - 数据来源：replay、真实 perf、UModel 在线状态。
+
+### 验证、审批、所有权、审计链
+
+简报里的 `verify` 不是一句话，而是一个 `check`：
+
+```json
+{
+  "kind": "slo",
+  "service": "payment-gateway",
+  "metric": "latency_p99_ms",
+  "operator": "<=",
+  "target": 800
+}
+```
+
+- 当前 P99 2255ms：`check.failed`，动作保持 `open`；
+- 新窗口 P99 700ms：`check.passed`，动作自动 `closed`，并写入审计链；
+- 如果之后再次恶化到 900ms：动作自动 `reopened`。
+
+审批不再只提示，`require_approval` 会生成审批单：
+
+```bash
+python -m opsgraph approvals
+python -m opsgraph approvals --decide APR-308d652d3f --decision approved --actor cto
+```
+
+`approval` 通过后动作状态是 `unblocked`，不是 `closed`；执行是否完成仍要人确认。
+代码动作的 owner 来自 `CODEOWNERS`：
+
+```text
+demo/fintech/payments.py -> @commerce-core
+opsgraph/brief.py         -> @opsgraph-core
+```
+
+所有状态变化写入 `artifacts/brief_history.jsonl`：
+
+```text
+opened -> verification failed -> closed / reopened
+```
+
+控制台简报底部显示 AUDIT 链；`/api/approvals` 可查审批单。
 
 控制台诊断 tab 顶部直接显示，顶栏「决策简报」打开 `/api/brief`。
 
@@ -478,6 +519,7 @@ python -m opsgraph demo --no-agents                     # 只跑服务图
 python -m opsgraph code-demo                            # 10 次代码 RCA/REA 闭环
 python -m opsgraph real-perf-rea                        # Linux: 真实 perf + C 10 次闭环
 python -m opsgraph brief                                # 值班决策简报
+python -m opsgraph approvals                            # 审批单
 python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
 python -m opsgraph analyze --source umodel              # 从 UModel 重新读图分析
 python -m opsgraph rca                                  # 打印根因排序
@@ -487,7 +529,7 @@ python -m opsgraph baseline                             # 历史基线 + claim a
 python -m opsgraph serve --port 18088                   # 控制台
 python -m opsgraph doctor                               # UModel 连通性/计数
 python -m opsgraph query ".entity with(domain='svc', name='svc.service') | limit 5"
-python -m unittest discover -s tests -v                 # 54 个单测
+python -m unittest discover -s tests -v                 # 59 个单测
 ```
 
 ## UModel 查询示例
@@ -529,6 +571,10 @@ opsgraph/
 │   ├── materialize.py     # 观测 -> 实体/关系（证据边）
 │   ├── analysis.py        # RCA / 影响面 / 漂移 / SPOF
 │   ├── brief.py           # 值班决策简报：根因 -> 行动/owner/验收/来源
+│   ├── verification.py    # 可执行 SLO / 审批 / 回归检查
+│   ├── brief_history.py   # 动作状态机与审计链
+│   ├── approvals.py       # require_approval -> 审批单
+│   ├── codeowners.py      # CODEOWNERS -> 代码动作 owner
 │   ├── pipeline.py        # 全链路编排 + 报告
 │   ├── console_server.py  # 控制台 API + 静态服务
 │   ├── umodel_client.py   # UModel 公共 REST 客户端

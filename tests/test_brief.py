@@ -1,6 +1,8 @@
 import unittest
+from pathlib import Path
 
 from opsgraph.brief import build_brief, render_brief_markdown
+from opsgraph.codeowners import OwnersIndex
 
 
 class BriefTests(unittest.TestCase):
@@ -24,6 +26,7 @@ class BriefTests(unittest.TestCase):
                     "p99_delta_pct": 1915,
                     "error_rate": 0.012,
                     "qps": 3334,
+                    "slo_p99_ms": 800,
                 },
                 {
                     "__entity_type__": "svc.service",
@@ -72,6 +75,8 @@ class BriefTests(unittest.TestCase):
         ]
         self.code = {
             "source": "ebpf.code_stack + REA",
+            "repo": "demo/fintech",
+            "iterations": [{"rca": {"finding": {"file": "payments.py", "line": 22}}}],
             "summary": {
                 "fixed": 10,
                 "iterations": 10,
@@ -80,6 +85,15 @@ class BriefTests(unittest.TestCase):
             },
         }
         self.code_graph = {"summary": {"entities": 47, "relations": 76}}
+        self.codeowners = OwnersIndex(Path(__file__).resolve().parent.parent)
+        self.approvals = [
+            {
+                "request_id": "APR-test",
+                "target": "kubectl apply retry-policy",
+                "status": "pending",
+                "approvers": ["commerce-core"],
+            }
+        ]
 
     def test_brief_has_actions_and_guards(self):
         brief = build_brief(
@@ -89,15 +103,19 @@ class BriefTests(unittest.TestCase):
             self.policy,
             self.code,
             self.code_graph,
+            codeowners=self.codeowners,
+            approvals=self.approvals,
         )
         self.assertEqual(brief["status"], "mitigation_pending")
         self.assertIn("checkout-service", brief["headline"])
         priorities = [item["priority"] for item in brief["next_actions"]]
         self.assertIn("P0", priorities)
-        self.assertTrue(any("审批" in item["action"] for item in brief["next_actions"]))
+        self.assertTrue(any("APR-test" in item["action"] for item in brief["next_actions"]))
         self.assertTrue(any("不要执行" in item for item in brief["do_not"]))
         self.assertEqual(brief["code"]["fixed"], 10)
+        self.assertEqual(brief["code"]["owner"], "@commerce-core")
         self.assertEqual(brief["provenance"]["service"]["mode"], "replay")
+        self.assertTrue(brief["next_actions"][0]["check_result"]["status"] == "failed")
 
     def test_brief_markdown(self):
         brief = build_brief(self.snapshot, self.analysis)

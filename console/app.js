@@ -198,21 +198,34 @@ function renderBrief() {
   $("#brief-meta").innerHTML = `
     <span>${escapeHtml(brief.status || "")}</span>
     <span>${escapeHtml(brief.severity || "")}</span>
-    <span>${brief.next_actions?.length || 0} actions</span>`;
+    <span>${brief.next_actions?.length || 0} actions</span>
+    <span>${brief.audit?.closed || 0} closed</span>`;
   $("#brief-what").textContent = brief.what || "";
   $("#brief-donot").textContent = (brief.do_not || []).join(" · ");
   $("#brief-actions").innerHTML = (brief.next_actions || [])
-    .map(
-      (action) => `
+    .map((action) => {
+      const check = action.check_result || {};
+      return `
       <div class="brief-action" title="${escapeHtml(action.because || "")}">
         <span class="p">${escapeHtml(action.priority || "")}</span>
         <div>
           <strong>${escapeHtml(action.action || "")}</strong>
-          <em>owner ${escapeHtml(action.owner || "")} · verify: ${escapeHtml(action.verify || "")}</em>
+          <em>owner ${escapeHtml(action.owner || "")} · ${escapeHtml(action.status || "open")} · check: ${escapeHtml(check.status || "unknown")}</em>
         </div>
-      </div>`
-    )
+      </div>`;
+    })
     .join("");
+  const history = (brief.history || []).slice(-4).reverse();
+  $("#brief-history").innerHTML = history.length
+    ? `AUDIT ${history
+        .map(
+          (event) =>
+            `<b>${escapeHtml(event.event || "")}</b> ${escapeHtml(
+              (event.action || "").slice(0, 34)
+            )}`
+        )
+        .join(" · ")}`
+    : "";
   const provenance = brief.provenance || {};
   $("#brief-provenance").innerHTML = Object.entries(provenance)
     .filter(([, value]) => value && value.mode)

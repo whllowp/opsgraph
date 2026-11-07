@@ -658,6 +658,7 @@ class Materializer:
                 "owner": meta.get("owner", "unknown"),
                 "criticality": meta.get("criticality", "silver"),
                 "version": meta.get("version", "observed"),
+                "slo_p99_ms": meta.get("slo_p99_ms", 0),
                 "environment": "prod",
                 "replicas": meta.get("replicas", 0),
                 "qps": primary["rps"],

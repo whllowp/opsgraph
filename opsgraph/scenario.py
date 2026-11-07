@@ -174,6 +174,7 @@ SERVICES = [
         "owner": "payments-backend",
         "criticality": "platinum",
         "version": "v3.2.1",
+        "slo_p99_ms": 800,
         "replicas": 3,
         "nodes": ["node-1", "node-2", "node-4"],
         "endpoints": [("POST", "/api/v1/pay")],

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-05T18:42:00+00:00",
+  "generated_at": "2026-11-07T18:47:35+00:00",
   "status": "mitigation_pending",
   "severity": "P1",
   "headline": "Payment P99 SLO breach：根因 checkout-service（78%），受害 payment-gateway；Agent 处置尚未验证。",
-  "what": "payment-gateway P99 2255ms（基线 112ms，+1915%），错误率 1.20%，QPS 3335。",
+  "what": "payment-gateway P99 2255ms（SLO 800ms）（基线 112ms，+1915%），错误率 1.20%，QPS 3335。",
   "why": [
     "P99 1952ms, anomaly 17.1",
     "high-risk config at 00:10 touching retry/timeout settings",
@@ -26,36 +26,115 @@
     "iterations": 10,
     "candidates": 11,
     "rejected": 1,
-    "entities": 47
+    "entities": 47,
+    "owner": "@commerce-core"
   },
   "next_actions": [
     {
       "priority": "P0",
       "action": "验证 Agent 对 `checkout-service` 的处置是否真正恢复了 SLO",
+      "key": "slo:payment-gateway",
       "owner": "payments-backend",
+      "owner_source": "service",
       "because": "Agent 已执行 rollout，但同窗口 eBPF 仍显示服务 critical/warning；`remediation_status=pending_validation`。",
-      "verify": "P99 回到基线附近、错误率回落，且连续一个窗口无新告警。"
+      "verify": "P99 回到 800ms SLO 以内，错误率回落，且连续一个窗口无新告警。",
+      "check": {
+        "kind": "slo",
+        "service": "payment-gateway",
+        "metric": "latency_p99_ms",
+        "operator": "<=",
+        "target": 800.0
+      },
+      "check_result": {
+        "kind": "slo",
+        "status": "failed",
+        "message": "payment-gateway latency_p99_ms=2254.9 <= 800.0",
+        "actual": 2254.92,
+        "target": 800.0,
+        "observed_at": "2026-11-02T01:00:00+08:00",
+        "evidence": {
+          "service": "payment-gateway",
+          "metric": "latency_p99_ms"
+        }
+      },
+      "status": "open",
+      "action_id": "ACT-827a7b7e4b"
     },
     {
       "priority": "P0",
-      "action": "对 `kubectl apply -f checkout-retry-policy.yaml -n shop` 发起审批后再执行",
+      "action": "审批单 `APR-308d652d3f`：`kubectl apply -f checkout-retry-policy.yaml -n shop` 通过后再执行",
+      "key": "approval:kubectl apply -f checkout-retry-policy.yaml -n shop",
       "owner": "commerce-core, change-manager",
+      "owner_source": "service",
       "because": "门禁命中 `approve-prod-write-during-incident`：write action on a production/critical surface needs a human approver; target maps to checkout-service (critical, platinum, role=root_cause); incident Payment P99 SLO breach is still active; agent session risk is 100/100",
-      "verify": "审批通过 + 只影响目标服务 + 执行后 eBPF 复测。"
+      "verify": "审批通过 + 只影响目标服务 + 执行后 eBPF 复测。",
+      "check": {
+        "kind": "approval",
+        "request_id": "APR-308d652d3f"
+      },
+      "check_result": {
+        "kind": "approval",
+        "status": "pending",
+        "message": "approval APR-308d652d3f is pending",
+        "actual": null,
+        "target": null,
+        "observed_at": "",
+        "evidence": {
+          "target": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+          "approvers": [
+            "commerce-core",
+            "change-manager"
+          ]
+        }
+      },
+      "status": "blocked",
+      "action_id": "ACT-b3166d80d7"
     },
     {
       "priority": "P1",
       "action": "复核 Agent 的高风险变更并补齐审批记录",
+      "key": "agent-high-risk",
       "owner": "change-manager",
+      "owner_source": "service",
       "because": "Agent 产生 4 个高风险系统效果；claim verified=1, mismatch=0。",
-      "verify": "每个 prod 变更都有审批人、变更单和可回滚版本。"
+      "verify": "每个 prod 变更都有审批人、变更单和可回滚版本。",
+      "check": {
+        "kind": "manual"
+      },
+      "check_result": {
+        "kind": "manual",
+        "status": "unknown",
+        "message": "manual verification required",
+        "actual": null,
+        "target": null,
+        "observed_at": "",
+        "evidence": {}
+      },
+      "status": "open",
+      "action_id": "ACT-36808601d7"
     },
     {
       "priority": "P1",
       "action": "把 10 个代码级修复纳入发布计划",
-      "owner": "commerce-core",
+      "key": "code-release",
+      "owner": "@commerce-core",
+      "owner_source": "CODEOWNERS",
       "because": "REA 在 10 个故障上完成补丁、回归与复测；UModel 代码图 47 个实体。",
-      "verify": "代码回归 PASS + canary 指标稳定 + 回滚包就绪。"
+      "verify": "代码回归 PASS + canary 指标稳定 + 回滚包就绪。",
+      "check": {
+        "kind": "manual"
+      },
+      "check_result": {
+        "kind": "manual",
+        "status": "unknown",
+        "message": "manual verification required",
+        "actual": null,
+        "target": null,
+        "observed_at": "",
+        "evidence": {}
+      },
+      "status": "open",
+      "action_id": "ACT-2f9a82d3d5"
     }
   ],
   "do_not": [
@@ -91,9 +170,99 @@
     "umodel": {}
   },
   "novice": {
-    "what": "payment-gateway P99 2255ms（基线 112ms，+1915%），错误率 1.20%，QPS 3335。",
+    "what": "payment-gateway P99 2255ms（SLO 800ms）（基线 112ms，+1915%），错误率 1.20%，QPS 3335。",
     "why": "P99 1952ms, anomaly 17.1 high-risk config at 00:10 touching retry/timeout settings",
     "now": "先做 P0 的验证动作，再决定是否继续变更；不要同时改多个变量。"
   },
-  "headline_short": "checkout-service → payment-gateway · 处置待验证"
+  "headline_short": "checkout-service → payment-gateway · 处置待验证",
+  "audit": {
+    "action_count": 4,
+    "closed": 0,
+    "open": 4,
+    "transition_count": 4,
+    "ledger": "E:\\ebpf\\opsgraph\\artifacts\\brief_history.jsonl"
+  },
+  "history": [
+    {
+      "ts": "2026-11-07T18:47:35+00:00",
+      "event": "opened",
+      "action_id": "ACT-827a7b7e4b",
+      "priority": "P0",
+      "action": "验证 Agent 对 `checkout-service` 的处置是否真正恢复了 SLO",
+      "owner": "payments-backend",
+      "status": "open",
+      "check_result": {
+        "kind": "slo",
+        "status": "failed",
+        "message": "payment-gateway latency_p99_ms=2254.9 <= 800.0",
+        "actual": 2254.92,
+        "target": 800.0,
+        "observed_at": "2026-11-02T01:00:00+08:00",
+        "evidence": {
+          "service": "payment-gateway",
+          "metric": "latency_p99_ms"
+        }
+      }
+    },
+    {
+      "ts": "2026-11-07T18:47:35+00:00",
+      "event": "opened",
+      "action_id": "ACT-b3166d80d7",
+      "priority": "P0",
+      "action": "审批单 `APR-308d652d3f`：`kubectl apply -f checkout-retry-policy.yaml -n shop` 通过后再执行",
+      "owner": "commerce-core, change-manager",
+      "status": "blocked",
+      "check_result": {
+        "kind": "approval",
+        "status": "pending",
+        "message": "approval APR-308d652d3f is pending",
+        "actual": null,
+        "target": null,
+        "observed_at": "",
+        "evidence": {
+          "target": "kubectl apply -f checkout-retry-policy.yaml -n shop",
+          "approvers": [
+            "commerce-core",
+            "change-manager"
+          ]
+        }
+      }
+    },
+    {
+      "ts": "2026-11-07T18:47:35+00:00",
+      "event": "opened",
+      "action_id": "ACT-36808601d7",
+      "priority": "P1",
+      "action": "复核 Agent 的高风险变更并补齐审批记录",
+      "owner": "change-manager",
+      "status": "open",
+      "check_result": {
+        "kind": "manual",
+        "status": "unknown",
+        "message": "manual verification required",
+        "actual": null,
+        "target": null,
+        "observed_at": "",
+        "evidence": {}
+      }
+    },
+    {
+      "ts": "2026-11-07T18:47:35+00:00",
+      "event": "opened",
+      "action_id": "ACT-2f9a82d3d5",
+      "priority": "P1",
+      "action": "把 10 个代码级修复纳入发布计划",
+      "owner": "@commerce-core",
+      "status": "open",
+      "check_result": {
+        "kind": "manual",
+        "status": "unknown",
+        "message": "manual verification required",
+        "actual": null,
+        "target": null,
+        "observed_at": "",
+        "evidence": {}
+      }
+    }
+  ]
 }

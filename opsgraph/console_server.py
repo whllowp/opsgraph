@@ -11,7 +11,10 @@ from typing import Any
 from urllib.parse import urlparse
 
 from .analysis import GraphView, analyze
+from .approvals import ApprovalStore
 from .brief import build_brief
+from .brief_history import ActionLedger
+from .codeowners import OwnersIndex
 from .config import (
     ARTIFACT_DIR,
     CONSOLE_HOST,
@@ -179,6 +182,8 @@ def build_console_state(
     code_rca: dict[str, Any] | None = None,
     code_graph: dict[str, Any] | None = None,
     real_perf: dict[str, Any] | None = None,
+    approvals: list[dict[str, Any]] | None = None,
+    codeowners: Any = None,
 ) -> dict[str, Any]:
     visible_types = {
         "svc.service",
@@ -280,6 +285,8 @@ def build_console_state(
         code_graph=code_graph,
         umodel_info=umodel_info,
         real_perf=real_perf,
+        codeowners=codeowners,
+        approvals=approvals,
     )
     return {
         "meta": {
@@ -333,6 +340,8 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     code_rca: dict[str, Any] | None = None
     code_graph: dict[str, Any] | None = None
     real_perf: dict[str, Any] = {}
+    approvals: list[dict[str, Any]] = []
+    codeowners: Any = None
     umodel_info: dict[str, Any] = {"addr": UMODEL_ADDR, "connected": False}
     umodel_checked_at: float = 0.0
     lock = threading.Lock()
@@ -370,6 +379,10 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             cls.code_graph = read_json(code_graph_path) if code_graph_path.exists() else {}
             real_perf_path = ARTIFACT_DIR / "real_perf_rea.json"
             cls.real_perf = read_json(real_perf_path) if real_perf_path.exists() else {}
+            approvals_path = ARTIFACT_DIR / "approvals.json"
+            if approvals_path.exists():
+                cls.approvals = list(read_json(approvals_path).get("requests") or [])
+            cls.codeowners = OwnersIndex(PROJECT_ROOT)
         return True
 
     def _refresh_umodel(self) -> None:
@@ -387,11 +400,21 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         except Exception:
             cls.umodel_info = {"addr": UMODEL_ADDR, "connected": False}
 
+    def _refresh_approvals(self) -> None:
+        cls = type(self)
+        path = ARTIFACT_DIR / "approvals.json"
+        if path.exists():
+            try:
+                cls.approvals = list(read_json(path).get("requests") or [])
+            except Exception:
+                pass
+
     def _state(self) -> dict[str, Any]:
         cls = type(self)
         assert cls.snapshot is not None and cls.analysis is not None
         self._refresh_umodel()
-        return build_console_state(
+        self._refresh_approvals()
+        state = build_console_state(
             cls.snapshot,
             cls.analysis,
             cls.umodel_info,
@@ -401,7 +424,16 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             cls.code_rca,
             cls.code_graph,
             cls.real_perf,
+            cls.approvals,
+            cls.codeowners,
         )
+        state["brief"] = ActionLedger(ARTIFACT_DIR / "brief_history.jsonl").reconcile(
+            state["brief"],
+            cls.snapshot,
+            approvals=cls.approvals,
+            code_rca=cls.code_rca,
+        )
+        return state
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
@@ -418,6 +450,15 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                     )
                     return
                 self._json(self._state())
+            return
+        if path == "/api/approvals":
+            self._refresh_approvals()
+            requests = type(self).approvals
+            counts: dict[str, int] = {}
+            for ticket in requests:
+                status = str(ticket.get("status") or "pending")
+                counts[status] = counts.get(status, 0) + 1
+            self._json({"total": len(requests), "by_status": counts, "requests": requests})
             return
         if path == "/api/report":
             report = ARTIFACT_DIR / "incident-report.md"
@@ -540,6 +581,23 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 self._json(decision)
             return
 
+        if parsed.path == "/api/approvals/decide":
+            with self.lock:
+                store = ApprovalStore(ARTIFACT_DIR / "approvals.json")
+                try:
+                    ticket = store.decide(
+                        str(payload.get("request_id") or ""),
+                        str(payload.get("decision") or ""),
+                        str(payload.get("actor") or "on-call"),
+                        str(payload.get("reason") or ""),
+                    )
+                except (KeyError, ValueError) as exc:
+                    self._json({"error": str(exc)}, 400)
+                    return
+                type(self).approvals = store.requests
+                self._json(ticket)
+            return
+
         if parsed.path == "/api/query":
             spl = str(payload.get("spl") or "")
             if not spl:
@@ -603,6 +661,6 @@ def serve(host: str = CONSOLE_HOST, port: int = CONSOLE_PORT) -> None:
     server = ThreadingHTTPServer((host, port), handler)
     print(f"OpsGraph console: http://{host}:{port}")
     print(
-        "  API: /api/state  /api/analyze  /api/query  /api/simulate  /api/gate  /api/report  /api/brief"
+        "  API: /api/state  /api/analyze  /api/query  /api/simulate  /api/gate  /api/report  /api/brief  /api/approvals"
     )
     server.serve_forever()

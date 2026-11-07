@@ -18,6 +18,8 @@ artifacts/*.md
 !artifacts/real-perf-rea.md
 !artifacts/brief.json
 !artifacts/brief.md
+!artifacts/approvals.json
+!artifacts/brief_history.jsonl
 !artifacts/code-fixes.patch
 data/code_rca/ebpf_samples.json
 .venv/

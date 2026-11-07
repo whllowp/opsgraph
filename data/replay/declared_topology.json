@@ -217,6 +217,7 @@
       "owner": "payments-backend",
       "criticality": "platinum",
       "version": "v3.2.1",
+      "slo_p99_ms": 800,
       "replicas": 3,
       "nodes": [
         "node-1",
