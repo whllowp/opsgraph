@@ -627,6 +627,22 @@ a { color: inherit; text-decoration: none; }
 .code-card-head em { margin-left: auto; color: var(--dim); font-family: var(--mono); font-size: 8px; font-style: normal; }
 .code-card-meta { display: flex; gap: 8px; margin-top: 3px; color: var(--muted); font-family: var(--mono); font-size: 8.2px; }
 .code-card-meta b { color: var(--teal); font-weight: 500; }
+.alert-policies { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 7px; }
+.alert-policy { padding: 4px 6px; border: 1px solid var(--line); border-radius: 5px; background: rgba(10, 17, 29, 0.55); }
+.alert-policy b { display: block; color: #dbe7f4; font-size: 8.4px; font-weight: 600; }
+.alert-policy span { color: var(--dim); font-family: var(--mono); font-size: 7.2px; }
+.alert-groups { display: flex; flex-direction: column; gap: 5px; }
+.alert-group { border: 1px solid var(--line); border-left: 2px solid var(--rose); border-radius: 7px; padding: 7px 8px; cursor: pointer; background: rgba(10, 17, 29, 0.55); }
+.alert-group:hover, .alert-group.active { border-color: rgba(255, 154, 162, 0.5); background: rgba(255, 154, 162, 0.045); }
+.alert-group-head { display: flex; align-items: center; gap: 6px; }
+.alert-group-head strong { color: #e6eef9; font-size: 10px; font-weight: 600; }
+.alert-group-head em { margin-left: auto; color: var(--rose); font-family: var(--mono); font-size: 8px; font-style: normal; }
+.alert-group-meta { display: flex; gap: 8px; margin-top: 3px; color: var(--muted); font-family: var(--mono); font-size: 7.8px; }
+.alert-group-meta b { color: var(--teal); font-weight: 500; }
+.alert-detail { color: var(--muted); font-size: 9px; line-height: 1.5; }
+.alert-member { display: grid; grid-template-columns: 1fr 58px 62px; gap: 5px; padding: 3px 0; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 7.6px; }
+.alert-member span:first-child { color: #dce8f6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alert-member span:last-child { color: var(--dim); text-align: right; }
 .code-card-status { padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 7.5px; text-transform: uppercase; }
 .code-card-status.fixed { color: #a7f3e7; background: rgba(45, 212, 191, 0.1); border: 1px solid rgba(45, 212, 191, 0.25); }
 .code-card-status.failed { color: #ffb3bd; background: rgba(255, 91, 110, 0.1); border: 1px solid rgba(255, 91, 110, 0.3); }

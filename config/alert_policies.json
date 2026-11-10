@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "description": "Smart alert policies for the OpsGraph payment incident.",
+  "policies": [
+    {
+      "id": "slo-burn",
+      "name": "SLO burn rate",
+      "enabled": true,
+      "metric": "slo_burn_rate",
+      "target_type": "svc.service",
+      "operator": ">=",
+      "threshold": 2.0,
+      "severity": "P1",
+      "group_by": ["root"],
+      "dedupe_window_seconds": 300,
+      "compress_window_seconds": 900,
+      "inhibit_downstream": true,
+      "auto_rca": true
+    },
+    {
+      "id": "latency",
+      "name": "P99 latency vs baseline",
+      "enabled": true,
+      "metric": "latency_ratio",
+      "target_type": "svc.service",
+      "operator": ">=",
+      "threshold": 2.0,
+      "severity": "P2",
+      "group_by": ["root"],
+      "dedupe_window_seconds": 300,
+      "compress_window_seconds": 900,
+      "inhibit_downstream": true,
+      "auto_rca": true
+    },
+    {
+      "id": "errors",
+      "name": "Error rate",
+      "enabled": true,
+      "metric": "error_rate",
+      "target_type": "svc.service",
+      "operator": ">=",
+      "threshold": 0.01,
+      "severity": "P2",
+      "group_by": ["root"],
+      "dedupe_window_seconds": 300,
+      "compress_window_seconds": 900,
+      "inhibit_downstream": true,
+      "auto_rca": true
+    },
+    {
+      "id": "node-cpu",
+      "name": "Node CPU saturation",
+      "enabled": true,
+      "metric": "cpu_utilization",
+      "target_type": "infra.node",
+      "operator": ">=",
+      "threshold": 0.8,
+      "severity": "P3",
+      "group_by": ["node"],
+      "dedupe_window_seconds": 300,
+      "compress_window_seconds": 900,
+      "inhibit_downstream": false,
+      "auto_rca": false
+    }
+  ],
+  "silences": [
+    {
+      "id": "batch-window",
+      "target": "node-3",
+      "start_minute": 0,
+      "end_minute": 30,
+      "reason": "nightly batch reporter window"
+    }
+  ]
+}

@@ -87,10 +87,12 @@ def build_brief(
     real_perf: dict[str, Any] | None = None,
     codeowners: Any = None,
     approvals: list[dict[str, Any]] | None = None,
+    alerts: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     agents = agents or {}
     policy = policy or []
     approvals = approvals or []
+    alerts = alerts or {}
     code_rca = code_rca or {}
     code_graph = code_graph or {}
     incident = _incident(snapshot)
@@ -265,6 +267,12 @@ def build_brief(
             "iterations": code_iterations,
             "real_perf": (real_perf or {}).get("summary") or "",
         },
+        "alerts": {
+            "source": "alert policy engine",
+            "mode": "replay",
+            "input_events": int((alerts.get("stats") or {}).get("input_events") or 0),
+            "groups": int((alerts.get("stats") or {}).get("groups") or 0),
+        },
         "umodel": umodel_info or {},
     }
     return {
@@ -281,6 +289,17 @@ def build_brief(
             "claim_verified": claim_verified,
             "claim_mismatch": claim_mismatch,
             "pending_remediation": [item.get("name") for item in pending],
+        },
+        "alerts": {
+            "input_events": int((alerts.get("stats") or {}).get("input_events") or 0),
+            "groups": int((alerts.get("stats") or {}).get("groups") or 0),
+            "compressed": int((alerts.get("stats") or {}).get("deduped") or 0)
+            + int((alerts.get("stats") or {}).get("inhibited") or 0),
+            "compression_ratio": float((alerts.get("stats") or {}).get("compression_ratio") or 0),
+            "p1_groups": len(
+                [item for item in alerts.get("groups") or [] if item.get("severity") == "P1"]
+            ),
+            "top_group": (alerts.get("groups") or [{}])[0].get("title", ""),
         },
         "code": {
             "fixed": code_fixed,

@@ -144,6 +144,7 @@
           <button class="tab active" data-tab="diagnosis" role="tab">诊断</button>
           <button class="tab" data-tab="blast" role="tab">影响面</button>
           <button class="tab" data-tab="timeline" role="tab">时间线</button>
+          <button class="tab" data-tab="alerts" role="tab">告警</button>
           <button class="tab" data-tab="agents" role="tab">Agent</button>
           <button class="tab" data-tab="code" role="tab">代码</button>
           <button class="tab" data-tab="queries" role="tab">查询</button>
@@ -190,6 +191,19 @@
           <section class="panel-block">
             <div class="section-head"><span>事故时间线</span><em>UTC+8</em></div>
             <div class="timeline" id="timeline"></div>
+          </section>
+        </div>
+
+        <div class="tab-panel" id="panel-alerts">
+          <section class="panel-block">
+            <div class="section-head"><span>智能告警</span><em id="alert-group-count">—</em></div>
+            <div class="code-summary" id="alert-summary"></div>
+            <div class="alert-policies" id="alert-policies"></div>
+            <div class="alert-groups" id="alert-groups"></div>
+          </section>
+          <section class="panel-block">
+            <div class="section-head"><span>告警组详情</span><em id="alert-detail-count">—</em></div>
+            <div class="alert-detail" id="alert-detail"></div>
           </section>
         </div>
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-07T18:47:35+00:00",
+  "generated_at": "2026-11-10T17:52:25+00:00",
   "status": "mitigation_pending",
   "severity": "P1",
   "headline": "Payment P99 SLO breach：根因 checkout-service（78%），受害 payment-gateway；Agent 处置尚未验证。",
@@ -20,6 +20,14 @@
     "pending_remediation": [
       "claude:sre-claude-01"
     ]
+  },
+  "alerts": {
+    "input_events": 206,
+    "groups": 1,
+    "compressed": 188,
+    "compression_ratio": 0.995,
+    "p1_groups": 1,
+    "top_group": "checkout-service 告警组"
   },
   "code": {
     "fixed": 10,
@@ -167,6 +175,12 @@
       "iterations": 10,
       "real_perf": "10/10 C 金融故障通过真实 perf 栈定位并修复。"
     },
+    "alerts": {
+      "source": "alert policy engine",
+      "mode": "replay",
+      "input_events": 206,
+      "groups": 1
+    },
     "umodel": {}
   },
   "novice": {
@@ -179,7 +193,7 @@
     "action_count": 4,
     "closed": 0,
     "open": 4,
-    "transition_count": 4,
+    "transition_count": 0,
     "ledger": "E:\\ebpf\\opsgraph\\artifacts\\brief_history.jsonl"
   },
   "history": [

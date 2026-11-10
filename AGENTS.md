@@ -12,6 +12,8 @@ OpsGraph is a Python reference implementation of eBPF-observed operational graph
 - `opsgraph/code_rca.py` — eBPF code-stack RCA + REA loop; `opsgraph/code_cases.py` — 10 fintech incidents.
 - `opsgraph/patch_engine.py` — candidate patch safety, test rejection, rollback.
 - `opsgraph/brief.py` — operator decision brief: root cause -> action/owner/verification/provenance.
+- `opsgraph/alerting.py` — alert policy evaluation, dedupe/group/inhibit, auto RCA.
+- `config/alert_policies.json` — alert policy-as-code.
 - `opsgraph/verification.py` — executable SLO/approval/regression checks.
 - `opsgraph/brief_history.py` — action state machine + append-only audit ledger.
 - `opsgraph/approvals.py` — require_approval -> durable approval ticket.
@@ -32,6 +34,8 @@ python -m opsgraph gate --session sre-claude-01 --tool kubectl_apply --target "k
 python -m opsgraph baseline
 python -m opsgraph code-demo
 python -m opsgraph brief
+python -m opsgraph alerts
+python -m opsgraph alert-policy --list
 python -m opsgraph approvals
 python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
 python -m opsgraph real-perf-rea
@@ -63,6 +67,9 @@ node --check console/app.js
 - Code action owners come from `CODEOWNERS`; fallback to service owner only when no rule matches.
 - `brief_history.jsonl` is append-only; do not rewrite past transitions to hide a regression.
 - `real-perf` is a hard CI gate; do not re-add `continue-on-error` to hide perf failures.
+- Alert compression must never drop members silently: deduped/silenced/inhibited counts and `groups[].members` stay in `alerts.json`.
+- Node-level alerts must not claim a service root cause when `auto_rca=false`.
+- Alert policies are configuration, not code branches; update `config/alert_policies.json` and let the engine evaluate.
 - Update `docs/en`-style paired docs only if the project gains bilingual docs; currently Chinese README plus English code comments is intentional.
 - Regenerate `model/` after changing `ontology.py` (`python -m opsgraph model`).
 

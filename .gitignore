@@ -20,6 +20,8 @@ artifacts/*.md
 !artifacts/brief.md
 !artifacts/approvals.json
 !artifacts/brief_history.jsonl
+!artifacts/alerts.json
+!artifacts/alerts.md
 !artifacts/code-fixes.patch
 data/code_rca/ebpf_samples.json
 .venv/

@@ -17,7 +17,9 @@ OpsGraph 已经有服务图、Agent 图、代码 RCA、门禁和历史基线。�
 5. **不要做**：命中 deny 的破坏性动作；
 6. **证据来源**：哪些是 replay、哪些是真实 perf、UModel 是否在线。
 
-它不是新的事实源，只是对 `snapshot + analysis + agents + policy + code_rca + code_graph` 的确定性编排。
+它不是新的事实源，只是对 `snapshot + analysis + agents + policy + alerts + code_rca + code_graph` 的确定性编排。
+
+简报顶部同时显示告警压缩摘要（如 `206 events -> 1 group / 99.5%`），避免值班的人再打开一个告警系统。
 
 ## 动作生成逻辑
 

@@ -5,6 +5,7 @@ const state = {
   selected: null,
   selectedAgent: null,
   selectedCode: null,
+  selectedAlert: null,
   tab: "diagnosis",
   filters: { calls: true, business: true, agents: true, ops: false, observedOnly: false },
   transform: { x: 0, y: 0, k: 1 },
@@ -127,6 +128,7 @@ function renderAll() {
   renderBlast();
   renderTimeline();
   renderAgents();
+  renderAlerts();
   renderCodeRca();
   renderQueries();
   renderGraph();
@@ -199,7 +201,8 @@ function renderBrief() {
     <span>${escapeHtml(brief.status || "")}</span>
     <span>${escapeHtml(brief.severity || "")}</span>
     <span>${brief.next_actions?.length || 0} actions</span>
-    <span>${brief.audit?.closed || 0} closed</span>`;
+    <span>${brief.audit?.closed || 0} closed</span>
+    ${brief.alerts?.groups ? `<span>${brief.alerts.groups} alert group · ${(Math.round((brief.alerts.compression_ratio || 0) * 1000) / 10)}% compressed</span>` : ""}`;
   $("#brief-what").textContent = brief.what || "";
   $("#brief-donot").textContent = (brief.do_not || []).join(" · ");
   $("#brief-actions").innerHTML = (brief.next_actions || [])
@@ -517,6 +520,74 @@ function selectAgent(key) {
   }
   renderAgents();
   renderGraph();
+}
+
+function renderAlerts() {
+  const data = state.data.alerts || {};
+  const groups = data.groups || [];
+  const stats = data.stats || {};
+  const policies = data.policies || [];
+  $("#alert-group-count").textContent = `${groups.length} groups`;
+  $("#alert-summary").innerHTML = `
+    <div><strong>${stats.input_events || 0}</strong><span>input events</span></div>
+    <div><strong>${stats.groups || 0}</strong><span>groups</span></div>
+    <div><strong>${Math.round((stats.compression_ratio || 0) * 1000) / 10}%</strong><span>compressed</span></div>
+    <div><strong>${stats.silenced || 0}</strong><span>silenced</span></div>`;
+  $("#alert-policies").innerHTML = policies
+    .map(
+      (policy) => `
+      <div class="alert-policy">
+        <b>${escapeHtml(policy.name || "")}</b>
+        <span>${escapeHtml(policy.metric || "")} ${escapeHtml(policy.operator || "")} ${policy.threshold} · ${escapeHtml(policy.severity || "")}</span>
+      </div>`
+    )
+    .join("");
+  $("#alert-groups").innerHTML = groups
+    .map(
+      (group) => `
+      <div class="alert-group ${state.selectedAlert === group.id ? "active" : ""}" data-alert="${escapeHtml(group.id || "")}">
+        <div class="alert-group-head"><strong>${escapeHtml(group.title || "")}</strong><em>${escapeHtml(group.severity || "")}</em></div>
+        <div class="alert-group-meta">
+          <span><b>${group.member_count || 0}</b> members</span>
+          <span><b>${group.inhibited_count || 0}</b> inhibited</span>
+          <span>root ${escapeHtml((group.rca || {}).root_cause || "-")}</span>
+        </div>
+      </div>`
+    )
+    .join("");
+  $$("#alert-groups .alert-group").forEach((card) => {
+    card.addEventListener("click", () => selectAlert(card.dataset.alert));
+  });
+  if (!state.selectedAlert && groups.length) state.selectedAlert = groups[0].id;
+  const selected = groups.find((group) => group.id === state.selectedAlert) || groups[0];
+  $("#alert-detail-count").textContent = selected ? selected.id : "—";
+  if (!selected) {
+    $("#alert-detail").textContent = "暂无告警组";
+    return;
+  }
+  const rca = selected.rca || {};
+  const members = (selected.members || [])
+    .slice(0, 12)
+    .map(
+      (member) => `
+      <div class="alert-member">
+        <span>${escapeHtml(member.target || "")} · ${escapeHtml(member.policy_name || "")}</span>
+        <span>${escapeHtml(member.severity || "")}</span>
+        <span>${member.inhibited_by ? "inhibited" : escapeHtml(member.status || "")}</span>
+      </div>`
+    )
+    .join("");
+  $("#alert-detail").innerHTML = `
+    <p><b>自动 RCA：</b>${rca.auto ? "on" : "off"} · root <b>${escapeHtml(rca.root_cause || "-")}</b>
+      ${rca.confidence ? `· ${Math.round(rca.confidence * 100)}%` : ""}</p>
+    <p>${(rca.reasons || []).map(escapeHtml).join(" · ") || escapeHtml(rca.reason || "")}</p>
+    <div>${members}</div>
+    ${data.silenced_events?.length ? `<p><b>静默：</b>${data.silenced_events.length} 条（维护窗口）</p>` : ""}`;
+}
+
+function selectAlert(id) {
+  state.selectedAlert = id;
+  renderAlerts();
 }
 
 function renderCodeRca() {

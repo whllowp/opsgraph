@@ -7,6 +7,12 @@ import json
 import sys
 from pathlib import Path
 
+from .alerting import (
+    DEFAULT_POLICY_PATH,
+    load_policies,
+    run_alerting,
+    write_alert_artifacts,
+)
 from .analysis import analyze, changed_entities
 from .approvals import ApprovalStore
 from .brief import build_brief, render_brief_markdown
@@ -310,6 +316,75 @@ def cmd_real_perf(args: argparse.Namespace) -> int:
     return 0 if result.get("fixed") == result.get("cases") else 1
 
 
+def cmd_alert_policy(args: argparse.Namespace) -> int:
+    path = args.policy or DEFAULT_POLICY_PATH
+    config = load_policies(path)
+    policies = list(config.get("policies") or [])
+    if args.list or not args.id:
+        for policy in policies:
+            print(
+                f"{policy.get('id'):<12} enabled={policy.get('enabled', True)!s:<5} "
+                f"{policy.get('metric')} {policy.get('operator')} {policy.get('threshold')} "
+                f"{policy.get('severity')} auto_rca={policy.get('auto_rca')}"
+            )
+        return 0
+    target = next((item for item in policies if item.get("id") == args.id), None)
+    if not target:
+        print(f"unknown policy: {args.id}", file=sys.stderr)
+        return 1
+    if args.threshold is not None:
+        target["threshold"] = args.threshold
+    if args.severity:
+        if args.severity not in {"P1", "P2", "P3", "P4", "P5"}:
+            print("severity must be P1..P5", file=sys.stderr)
+            return 1
+        target["severity"] = args.severity
+    if args.enable:
+        target["enabled"] = True
+    if args.disable:
+        target["enabled"] = False
+    write_json(path, config)
+    print(
+        f"{target['id']} -> enabled={target.get('enabled', True)} "
+        f"threshold={target.get('threshold')} severity={target.get('severity')}"
+    )
+    return 0
+
+
+def cmd_alerts(args: argparse.Namespace) -> int:
+    snapshot_path = ARTIFACT_DIR / "snapshot.json"
+    analysis_path = ARTIFACT_DIR / "analysis.json"
+    if not snapshot_path.exists() or not analysis_path.exists():
+        print("artifacts not found; run `python -m opsgraph demo` first", file=sys.stderr)
+        return 1
+    code_path = ARTIFACT_DIR / "code_rca.json"
+    result = run_alerting(
+        read_json(snapshot_path),
+        read_json(analysis_path),
+        args.policy or None,
+        read_json(code_path) if code_path.exists() else {},
+    )
+    paths = write_alert_artifacts(result, ARTIFACT_DIR)
+    stats = result["stats"]
+    print("=" * 78)
+    print("Smart alert pipeline complete")
+    print("=" * 78)
+    print(
+        f"input={stats['input_events']} dedupe={stats['deduped']} "
+        f"silenced={stats['silenced']} groups={stats['groups']} "
+        f"compression={stats['compression_ratio'] * 100:.1f}%"
+    )
+    for group in result["groups"]:
+        print(
+            f"  {group['rank']}. {group['severity']} {group['title']} "
+            f"members={group['member_count']} inhibited={group['inhibited_count']} "
+            f"root={group['rca'].get('root_cause') or '-'}"
+        )
+    print(f"Artifacts: {paths['json']}")
+    print(f"Report:    {paths['report']}")
+    return 0
+
+
 def cmd_brief(args: argparse.Namespace) -> int:
     snapshot_path = ARTIFACT_DIR / "snapshot.json"
     analysis_path = ARTIFACT_DIR / "analysis.json"
@@ -317,7 +392,7 @@ def cmd_brief(args: argparse.Namespace) -> int:
         print("artifacts not found; run `python -m opsgraph demo` first", file=sys.stderr)
         return 1
     optional = {}
-    for name in ("agents", "code_rca", "code_graph", "real_perf_rea"):
+    for name in ("agents", "code_rca", "code_graph", "real_perf_rea", "alerts"):
         path = ARTIFACT_DIR / f"{name}.json"
         optional[name] = read_json(path) if path.exists() else {}
     policy_path = ARTIFACT_DIR / "policy.json"
@@ -335,6 +410,7 @@ def cmd_brief(args: argparse.Namespace) -> int:
         real_perf=optional["real_perf_rea"],
         codeowners=OwnersIndex(PROJECT_ROOT),
         approvals=approvals.requests,
+        alerts=optional["alerts"],
     )
     ledger = ActionLedger(ARTIFACT_DIR / "brief_history.jsonl")
     brief = ledger.reconcile(
@@ -527,6 +603,22 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("brief", help="write the on-call decision brief")
     _add_common(p)
     p.set_defaults(func=cmd_brief)
+
+    p = sub.add_parser("alerts", help="evaluate, compress and RCA alerts")
+    _add_common(p)
+    p.add_argument("--policy", default="", help="alert policy JSON path")
+    p.set_defaults(func=cmd_alerts)
+
+    p = sub.add_parser("alert-policy", help="list or update an alert policy")
+    _add_common(p)
+    p.add_argument("--list", action="store_true")
+    p.add_argument("--id", default="")
+    p.add_argument("--threshold", type=float)
+    p.add_argument("--severity", default="")
+    p.add_argument("--enable", action="store_true")
+    p.add_argument("--disable", action="store_true")
+    p.add_argument("--policy", default="", help="override policy JSON path")
+    p.set_defaults(func=cmd_alert_policy)
 
     p = sub.add_parser("approvals", help="list or decide approval tickets")
     _add_common(p)

@@ -76,8 +76,9 @@ cd E:\ebpf\opsgraph
 3. 导入 UModel 模型包，写入 130 个服务实体 / 200 条关系；
 4. 运行服务 RCA + Agent 风险/重试环/结论校验，并把角色回写 UModel；
 5. 运行 10 次代码级 RCA → 伪代码 → 补丁 → 金融回归 → eBPF 复测，并写入 47 个代码实体 / 76 条代码关系；
-6. 生成值班决策简报（根因 + owner + 验收 + 数据来源）；
-7. 启动控制台 `http://127.0.0.1:18088`。
+6. 压缩告警：去重/静默/分组/抑制，并自动关联根因；
+7. 生成值班决策简报（根因 + owner + 验收 + 数据来源）；
+8. 启动控制台 `http://127.0.0.1:18088`。
 
 停止：
 
@@ -98,10 +99,13 @@ python -m opsgraph demo --addr http://127.0.0.1:18080
 # 3. 代码级 RCA + 10 次 REA 闭环
 python -m opsgraph code-demo
 
-# 4. 生成值班决策简报
+# 4. 智能告警压缩 + 自动 RCA
+python -m opsgraph alerts
+
+# 5. 生成值班决策简报
 python -m opsgraph brief
 
-# 5. 打开图控制台
+# 6. 打开图控制台
 python -m opsgraph serve --port 18088
 ```
 
@@ -422,6 +426,33 @@ CI 新增 `real-perf` job（Linux + perf，**硬门禁**，不再 `continue-on-e
 
 详见 [代码级 RCA / REA](docs/code-rca.md#63-真实-perf-10-次-c-rea)。
 
+## 智能监控告警
+
+不只是“发告警”，而是把告警风暴压成根因组：
+
+```bash
+python -m opsgraph alerts
+python -m opsgraph alert-policy --list
+```
+
+- 策略配置：`config/alert_policies.json`，支持阈值、级别、去重窗口、抑制、自动 RCA；
+- 压缩：去重 → 静默 → 按根因分组 → 下游抑制；
+- 自动 RCA：服务组复用 UModel 图排序；节点组不硬猜服务根因。
+
+实测：
+
+```text
+206 input events
+  -> 1 group
+  -> 99.5% compression
+  -> 144 deduped / 13 silenced / 44 inhibited
+  -> root checkout-service (78%)
+```
+
+![智能告警](docs/alerts-tab.png)
+
+详见 [智能监控告警](docs/alerts.md)。
+
 ## 值班决策简报
 
 图和控制台解决「发生了什么」，简报解决「现在做什么」。
@@ -518,6 +549,8 @@ python -m opsgraph demo --agentsight agentsight_snapshot.json
 python -m opsgraph demo --no-agents                     # 只跑服务图
 python -m opsgraph code-demo                            # 10 次代码 RCA/REA 闭环
 python -m opsgraph real-perf-rea                        # Linux: 真实 perf + C 10 次闭环
+python -m opsgraph alerts                               # 智能告警压缩 + 自动 RCA
+python -m opsgraph alert-policy --list                  # 查看告警策略
 python -m opsgraph brief                                # 值班决策简报
 python -m opsgraph approvals                            # 审批单
 python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
@@ -529,7 +562,7 @@ python -m opsgraph baseline                             # 历史基线 + claim a
 python -m opsgraph serve --port 18088                   # 控制台
 python -m opsgraph doctor                               # UModel 连通性/计数
 python -m opsgraph query ".entity with(domain='svc', name='svc.service') | limit 5"
-python -m unittest discover -s tests -v                 # 59 个单测
+python -m unittest discover -s tests -v                 # 61 个单测
 ```
 
 ## UModel 查询示例
@@ -571,6 +604,7 @@ opsgraph/
 │   ├── materialize.py     # 观测 -> 实体/关系（证据边）
 │   ├── analysis.py        # RCA / 影响面 / 漂移 / SPOF
 │   ├── brief.py           # 值班决策简报：根因 -> 行动/owner/验收/来源
+│   ├── alerting.py        # 告警策略、去重/静默/分组/抑制、自动 RCA
 │   ├── verification.py    # 可执行 SLO / 审批 / 回归检查
 │   ├── brief_history.py   # 动作状态机与审计链
 │   ├── approvals.py       # require_approval -> 审批单
@@ -579,6 +613,7 @@ opsgraph/
 │   ├── console_server.py  # 控制台 API + 静态服务
 │   ├── umodel_client.py   # UModel 公共 REST 客户端
 │   └── cli.py
+├── config/                # alert_policies.json 告警策略
 ├── model/                 # 生成的 UModel 模型包
 ├── demo/fintech/          # 金融故障代码库 + 10 个回归用例
 ├── demo/fintech_c/        # C 金融故障 + 真实 perf 10 次 REA
@@ -586,7 +621,7 @@ opsgraph/
 ├── data/history/          # agent_history.json（历史基线）
 ├── data/code_rca/         # eBPF 代码栈回放
 ├── console/               # 零依赖 SVG 图控制台（服务 + AI lane + 代码）
-├── artifacts/             # snapshot / analysis / agents / code_rca / real_perf / brief
+├── artifacts/             # snapshot / analysis / agents / alerts / code_rca / real_perf / brief
 ├── docs/
 ├── tests/
 └── run-demo.ps1
