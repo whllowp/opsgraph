@@ -217,8 +217,13 @@ def _group_key(
     root: str,
 ) -> str:
     target = str(event.get("target") or "")
-    if str(event.get("target_type")) == "infra.node":
+    group_by = [str(item) for item in (policy.get("group_by") or [])]
+    if str(event.get("target_type")) == "infra.node" or "node" in group_by:
         return f"node:{target}"
+    if "target" in group_by:
+        return f"svc:{target}"
+    if "root" in group_by and root:
+        return f"svc:{root}"
     if policy.get("inhibit_downstream") and root:
         return f"svc:{root}"
     return f"svc:{target}"

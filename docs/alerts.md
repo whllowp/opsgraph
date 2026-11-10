@@ -18,7 +18,6 @@
   "threshold": 2.0,
   "severity": "P1",
   "dedupe_window_seconds": 300,
-  "compress_window_seconds": 900,
   "inhibit_downstream": true,
   "auto_rca": true
 }
