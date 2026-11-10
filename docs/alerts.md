@@ -83,6 +83,8 @@ compression_ratio: 99.5%
 - 节点组：`auto_rca=false`，只给 node correlation，不硬猜服务根因；
 - 代码修复数来自 REA artifact，可把告警组与代码修复计划关联。
 
+告警组随后进入 [Laya + LLM 大脑](brain.md)：Laya 给出 `p(root)` 与期望损失动作，LLM 只做候选内提议并受守卫约束。
+
 ## 使用
 
 ```bash

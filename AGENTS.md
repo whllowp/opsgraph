@@ -13,6 +13,9 @@ OpsGraph is a Python reference implementation of eBPF-observed operational graph
 - `opsgraph/patch_engine.py` — candidate patch safety, test rejection, rollback.
 - `opsgraph/brief.py` — operator decision brief: root cause -> action/owner/verification/provenance.
 - `opsgraph/alerting.py` — alert policy evaluation, dedupe/group/inhibit, auto RCA.
+- `opsgraph/laya.py` — explainable alert decision model (probability + expected loss).
+- `opsgraph/llm.py` — optional LLM proposer, strict JSON, disabled without credentials.
+- `opsgraph/brain.py` — Laya + LLM combination and guardrails.
 - `config/alert_policies.json` — alert policy-as-code.
 - `opsgraph/verification.py` — executable SLO/approval/regression checks.
 - `opsgraph/brief_history.py` — action state machine + append-only audit ledger.
@@ -70,6 +73,9 @@ node --check console/app.js
 - Alert compression must never drop members silently: deduped/silenced/inhibited counts and `groups[].members` stay in `alerts.json`.
 - Node-level alerts must not claim a service root cause when `auto_rca=false`.
 - Alert policies are configuration, not code branches; update `config/alert_policies.json` and let the engine evaluate.
+- Laya is the deterministic baseline; an LLM may only propose. No key must mean LLM disabled, never fabricated.
+- LLM output must be schema-validated and graph-candidate constrained; it cannot suppress a high-probability P1 root.
+- Node-only alerts must stay watch/suppress, never page a service root.
 - Update `docs/en`-style paired docs only if the project gains bilingual docs; currently Chinese README plus English code comments is intentional.
 - Regenerate `model/` after changing `ontology.py` (`python -m opsgraph model`).
 

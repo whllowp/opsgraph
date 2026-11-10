@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-10T17:52:25+00:00",
+  "generated_at": "2026-11-10T18:01:46+00:00",
   "status": "mitigation_pending",
   "severity": "P1",
   "headline": "Payment P99 SLO breach：根因 checkout-service（78%），受害 payment-gateway；Agent 处置尚未验证。",
@@ -27,7 +27,11 @@
     "compressed": 188,
     "compression_ratio": 0.995,
     "p1_groups": 1,
-    "top_group": "checkout-service 告警组"
+    "top_group": "checkout-service 告警组",
+    "decision": "page",
+    "false_alarm_probability": 0.0452,
+    "brain": "laya",
+    "llm": false
   },
   "code": {
     "fixed": 10,

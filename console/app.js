@@ -202,7 +202,8 @@ function renderBrief() {
     <span>${escapeHtml(brief.severity || "")}</span>
     <span>${brief.next_actions?.length || 0} actions</span>
     <span>${brief.audit?.closed || 0} closed</span>
-    ${brief.alerts?.groups ? `<span>${brief.alerts.groups} alert group · ${(Math.round((brief.alerts.compression_ratio || 0) * 1000) / 10)}% compressed</span>` : ""}`;
+    ${brief.alerts?.groups ? `<span>${brief.alerts.groups} alert group · ${(Math.round((brief.alerts.compression_ratio || 0) * 1000) / 10)}% compressed</span>` : ""}
+    ${brief.alerts?.decision ? `<span>${escapeHtml(brief.alerts.decision)} · FP ${Math.round((brief.alerts.false_alarm_probability || 0) * 100)}%</span>` : ""}`;
   $("#brief-what").textContent = brief.what || "";
   $("#brief-donot").textContent = (brief.do_not || []).join(" · ");
   $("#brief-actions").innerHTML = (brief.next_actions || [])
@@ -527,7 +528,10 @@ function renderAlerts() {
   const groups = data.groups || [];
   const stats = data.stats || {};
   const policies = data.policies || [];
+  const brain = data.brain || {};
+  const llm = brain.llm || {};
   $("#alert-group-count").textContent = `${groups.length} groups`;
+  $("#alert-brain").textContent = `B R A I N · Laya ${llm.enabled ? "+ LLM" : "only (LLM off)"} · ${Object.entries(brain.actions || {}).map(([k, v]) => `${k}:${v}`).join(" · ")}`;
   $("#alert-summary").innerHTML = `
     <div><strong>${stats.input_events || 0}</strong><span>input events</span></div>
     <div><strong>${stats.groups || 0}</strong><span>groups</span></div>
@@ -551,6 +555,7 @@ function renderAlerts() {
           <span><b>${group.member_count || 0}</b> members</span>
           <span><b>${group.inhibited_count || 0}</b> inhibited</span>
           <span>root ${escapeHtml((group.rca || {}).root_cause || "-")}</span>
+          <span>${escapeHtml((group.decision || {}).source || "laya")} / ${escapeHtml((group.decision || {}).action || "-")} · FP ${Math.round(((group.decision || {}).false_alarm_probability || 0) * 100)}%</span>
         </div>
       </div>`
     )
@@ -566,6 +571,7 @@ function renderAlerts() {
     return;
   }
   const rca = selected.rca || {};
+  const decision = selected.decision || {};
   const members = (selected.members || [])
     .slice(0, 12)
     .map(
@@ -580,6 +586,10 @@ function renderAlerts() {
   $("#alert-detail").innerHTML = `
     <p><b>自动 RCA：</b>${rca.auto ? "on" : "off"} · root <b>${escapeHtml(rca.root_cause || "-")}</b>
       ${rca.confidence ? `· ${Math.round(rca.confidence * 100)}%` : ""}</p>
+    <p><b>Brain：</b>${escapeHtml(decision.source || "-")} / ${escapeHtml(decision.action || "-")} ·
+      root prob ${Math.round((decision.root_probability || 0) * 100)}% ·
+      误判风险 ${Math.round((decision.false_alarm_probability || 0) * 100)}% ·
+      LLM ${escapeHtml((decision.llm || {}).status || "disabled")}</p>
     <p>${(rca.reasons || []).map(escapeHtml).join(" · ") || escapeHtml(rca.reason || "")}</p>
     <div>${members}</div>
     ${data.silenced_events?.length ? `<p><b>静默：</b>${data.silenced_events.length} 条（维护窗口）</p>` : ""}`;

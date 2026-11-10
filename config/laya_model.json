@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "description": "Laya alert triage model: likelihood evidence -> expected-loss action.",
+  "intercept": -0.8,
+  "weights": {
+    "confidence": 2.8,
+    "service_alert": 0.8,
+    "severity_p1": 0.4,
+    "node_only": -2.4,
+    "inhibited_ratio": 0.3,
+    "code_fix": 0.2
+  },
+  "costs": {
+    "page": {"miss": 10.0, "false_page": 0.2},
+    "investigate": {"miss": 4.0, "false_page": 1.0},
+    "watch": {"miss": 12.0, "false_page": 0.2},
+    "suppress": {"miss": 20.0, "false_page": 0.0}
+  },
+  "thresholds": {
+    "page": 0.7,
+    "investigate": 0.45,
+    "watch": 0.2
+  },
+  "guardrails": {
+    "p1_suppress_probability": 0.4
+  }
+}

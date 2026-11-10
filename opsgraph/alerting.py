@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .brain import apply_brain
 from .config import PROJECT_ROOT
 from .util import write_json
 
@@ -399,6 +400,7 @@ def run_alerting(
     silences = list(config.get("silences") or [])
     events = _generated_events(snapshot, policies) + _declared_events(snapshot, policies)
     result = compress(events, policies, silences, snapshot, analysis, code_rca)
+    brain = apply_brain(result["groups"], analysis)
     return {
         "schema_version": 1,
         "generated_at": _now(),
@@ -407,6 +409,7 @@ def run_alerting(
         "policies": policies,
         "silences": silences,
         "stats": result["stats"],
+        "brain": brain,
         "groups": result["groups"],
         "silenced_events": result["silenced_events"],
         "events": result["events"],
@@ -438,15 +441,18 @@ def render_alert_markdown(result: dict[str, Any]) -> str:
         "",
         "## 告警组",
         "",
-        "| # | 组 | 级别 | 成员 | 抑制 | 根因 |",
-        "|---:|---|---|---:|---:|---|",
+        "| # | 组 | 级别 | 成员 | 抑制 | 根因 | Brain | 误判风险 |",
+        "|---:|---|---|---:|---:|---|---|---:|",
     ]
     for group in result.get("groups") or []:
         rca = group.get("rca") or {}
+        decision = group.get("decision") or {}
         lines.append(
             f"| {group.get('rank')} | {group.get('title')} | {group.get('severity')} | "
             f"{group.get('member_count')} | {group.get('inhibited_count')} | "
-            f"`{rca.get('root_cause') or '-'}` |"
+            f"`{decision.get('root_cause') or rca.get('root_cause') or '-'}` | "
+            f"{decision.get('source', '-')} / {decision.get('action', '-')} | "
+            f"{float(decision.get('false_alarm_probability') or 0) * 100:.0f}% |"
         )
     lines += ["", "## 静默", ""]
     for event in result.get("silenced_events") or []:

@@ -451,6 +451,33 @@ python -m opsgraph alert-policy --list
 
 ![智能告警](docs/alerts-tab.png)
 
+### Laya + LLM 告警大脑
+
+告警组再经过一层可解释决策：
+
+- **Laya**：把图置信度、P1、节点单点、抑制比例、代码修复等特征变成 `p(root)`，再按最小期望损失选择 `page/investigate/watch/suppress`；
+- **LLM**：可选 OpenAI-compatible 提议者，只返回严格 JSON，必须通过图候选、概率范围、P1 抑制守卫；
+- 没有 LLM key 时完全回退 Laya，不伪装成有 LLM；
+- 节点组不允许 `page`，避免把 node-3 CPU 当成支付根因。
+
+实测主组：
+
+```text
+Laya p(root)=0.955  false_alarm=4.5%  action=page
+LLM: disabled (no API key) -> Laya only
+```
+
+配置：
+
+```bash
+export OPSGRAPH_LLM_URL=https://api.openai.com/v1/chat/completions
+export OPSGRAPH_LLM_API_KEY=...
+export OPSGRAPH_LLM_MODEL=gpt-4o-mini
+python -m opsgraph alerts
+```
+
+详见 [Laya + LLM 大脑](docs/brain.md)。
+
 详见 [智能监控告警](docs/alerts.md)。
 
 ## 值班决策简报
@@ -562,7 +589,7 @@ python -m opsgraph baseline                             # 历史基线 + claim a
 python -m opsgraph serve --port 18088                   # 控制台
 python -m opsgraph doctor                               # UModel 连通性/计数
 python -m opsgraph query ".entity with(domain='svc', name='svc.service') | limit 5"
-python -m unittest discover -s tests -v                 # 61 个单测
+python -m unittest discover -s tests -v                 # 64 个单测
 ```
 
 ## UModel 查询示例
@@ -605,6 +632,9 @@ opsgraph/
 │   ├── analysis.py        # RCA / 影响面 / 漂移 / SPOF
 │   ├── brief.py           # 值班决策简报：根因 -> 行动/owner/验收/来源
 │   ├── alerting.py        # 告警策略、去重/静默/分组/抑制、自动 RCA
+│   ├── laya.py            # 可解释告警决策模型
+│   ├── llm.py             # 可选 LLM 提议者（严格 JSON + 回退）
+│   ├── brain.py           # Laya + LLM 组合与守卫
 │   ├── verification.py    # 可执行 SLO / 审批 / 回归检查
 │   ├── brief_history.py   # 动作状态机与审计链
 │   ├── approvals.py       # require_approval -> 审批单
@@ -613,7 +643,7 @@ opsgraph/
 │   ├── console_server.py  # 控制台 API + 静态服务
 │   ├── umodel_client.py   # UModel 公共 REST 客户端
 │   └── cli.py
-├── config/                # alert_policies.json 告警策略
+├── config/                # alert_policies.json + laya_model.json
 ├── model/                 # 生成的 UModel 模型包
 ├── demo/fintech/          # 金融故障代码库 + 10 个回归用例
 ├── demo/fintech_c/        # C 金融故障 + 真实 perf 10 次 REA

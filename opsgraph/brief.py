@@ -300,6 +300,12 @@ def build_brief(
                 [item for item in alerts.get("groups") or [] if item.get("severity") == "P1"]
             ),
             "top_group": (alerts.get("groups") or [{}])[0].get("title", ""),
+            "decision": ((alerts.get("groups") or [{}])[0].get("decision") or {}).get("action", ""),
+            "false_alarm_probability": (
+                (alerts.get("groups") or [{}])[0].get("decision") or {}
+            ).get("false_alarm_probability", 0),
+            "brain": (alerts.get("brain") or {}).get("laya", {}).get("model", ""),
+            "llm": (alerts.get("brain") or {}).get("llm", {}).get("enabled", False),
         },
         "code": {
             "fixed": code_fixed,

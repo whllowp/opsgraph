@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-10T17:54:24+00:00",
+  "generated_at": "2026-11-10T18:01:46+00:00",
   "source": "deepflow replay + alert policy engine",
   "policy_file": "E:\\ebpf\\opsgraph\\config\\alert_policies.json",
   "policies": [
@@ -87,6 +87,22 @@
     "silenced": 13,
     "inhibited": 44,
     "compression_ratio": 0.995
+  },
+  "brain": {
+    "laya": {
+      "model": "laya",
+      "config": "E:\\ebpf\\opsgraph\\config\\laya_model.json"
+    },
+    "llm": {
+      "enabled": false,
+      "model": "",
+      "reason": "OPSGRAPH_LLM_URL/API_KEY not configured",
+      "last_error": ""
+    },
+    "actions": {
+      "page": 1
+    },
+    "groups": 1
   },
   "groups": [
     {
@@ -1300,6 +1316,59 @@
           }
         ],
         "code_fixes": 10
+      },
+      "decision": {
+        "source": "laya",
+        "action": "page",
+        "root_cause": "checkout-service",
+        "root_probability": 0.9548,
+        "false_alarm_probability": 0.0452,
+        "confidence": 0.9548,
+        "reasons": [
+          "graph confidence 0.78",
+          "inhibited ratio 0.90",
+          "P1 group",
+          "code fix is available"
+        ],
+        "expected_costs": {
+          "page": 0.6429,
+          "investigate": 1.1356,
+          "watch": 0.7333,
+          "suppress": 0.9038
+        },
+        "guardrail": "",
+        "llm": {
+          "status": "disabled",
+          "reason": "OPSGRAPH_LLM_URL/API_KEY not configured"
+        },
+        "laya": {
+          "source": "laya",
+          "model": "laya",
+          "root_probability": 0.9548,
+          "false_alarm_probability": 0.0452,
+          "action": "page",
+          "expected_costs": {
+            "page": 0.6429,
+            "investigate": 1.1356,
+            "watch": 0.7333,
+            "suppress": 0.9038
+          },
+          "features": {
+            "confidence": 0.779,
+            "service_alert": 1.0,
+            "severity_p1": 1.0,
+            "node_only": 0.0,
+            "inhibited_ratio": 0.8979591836734694,
+            "code_fix": 1.0
+          },
+          "guardrail": "",
+          "reasons": [
+            "graph confidence 0.78",
+            "inhibited ratio 0.90",
+            "P1 group",
+            "code fix is available"
+          ]
+        }
       }
     }
   ],

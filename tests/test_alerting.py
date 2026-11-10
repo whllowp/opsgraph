@@ -88,6 +88,10 @@ class AlertingTests(unittest.TestCase):
         self.assertEqual(group["rca"]["root_cause"], "checkout-service")
         self.assertTrue(group["rca"]["auto"])
         self.assertGreater(group["inhibited_count"], 0)
+        self.assertEqual(group["decision"]["source"], "laya")
+        self.assertEqual(group["decision"]["action"], "page")
+        self.assertGreater(group["decision"]["root_probability"], 0.8)
+        self.assertFalse(result["brain"]["llm"]["enabled"])
 
     def test_artifact_writer(self):
         with tempfile.TemporaryDirectory() as tmp:
