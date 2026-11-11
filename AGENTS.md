@@ -76,6 +76,8 @@ node --check console/app.js
 - Laya is the deterministic baseline; an LLM may only propose. No key must mean LLM disabled, never fabricated.
 - LLM output must be schema-validated and graph-candidate constrained; it cannot suppress a high-probability P1 root.
 - Node-only alerts must stay watch/suppress, never page a service root.
+- NodeNotReady may become a node root only through pod->node->service correlation; service symptoms must be re-parented/inhibited, not paged separately.
+- Alert storm mode (`alerts --node-failure`) is an explicit simulation and writes separate artifacts; never overwrite the normal `alerts.json`.
 - Update `docs/en`-style paired docs only if the project gains bilingual docs; currently Chinese README plus English code comments is intentional.
 - Regenerate `model/` after changing `ontology.py` (`python -m opsgraph model`).
 

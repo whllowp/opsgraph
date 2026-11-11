@@ -165,6 +165,7 @@ def _declared_events(
     by_signal = {
         "slo_burn_rate": "slo-burn",
         "node_cpu_utilization": "node-cpu",
+        "node_ready": "node-not-ready",
     }
     by_id = {str(item["id"]): item for item in policies}
     events: list[dict[str, Any]] = []
@@ -202,6 +203,81 @@ def _declared_events(
     return events
 
 
+def node_service_map(snapshot: dict[str, Any]) -> dict[str, list[str]]:
+    """Map node -> services via pod display-name prefixes."""
+    services = [
+        str(item.get("display_name"))
+        for item in snapshot.get("entities", [])
+        if item.get("__entity_type__") == "svc.service"
+    ]
+    result: dict[str, list[str]] = {}
+    for pod in snapshot.get("entities", []):
+        if pod.get("__entity_type__") != "infra.pod":
+            continue
+        node = str(pod.get("node") or "")
+        name = str(pod.get("display_name") or "")
+        matches = [service for service in services if name.startswith(service + "-")]
+        if not node:
+            continue
+        for service in matches:
+            bucket = result.setdefault(node, [])
+            if service not in bucket:
+                bucket.append(service)
+    return result
+
+
+def _node_failure_events(
+    snapshot: dict[str, Any],
+    policies: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Simulate an infrastructure storm: one node NotReady + duplicate pages."""
+    policy = next(
+        (item for item in policies if item.get("id") == "node-not-ready"),
+        None,
+    )
+    if not policy:
+        return []
+    start = int((snapshot.get("window") or {}).get("start") or 0)
+    by_node = node_service_map(snapshot)
+    candidates = sorted(by_node.items(), key=lambda item: len(item[1]), reverse=True)
+    node = candidates[0][0] if candidates else "node-4"
+    events = []
+    for seq in range(40):
+        events.append(
+            _event(
+                policy,
+                node,
+                "infra.node",
+                0,
+                start + 12 * 60,
+                seq,
+                "replay.node_failure",
+                {
+                    "node": node,
+                    "reason": "NodeNotReady storm",
+                    "impacted_count": len(by_node.get(node, [])),
+                },
+            )
+        )
+    return events
+
+
+def _storm(events: list[dict[str, Any]], start: int, threshold: int) -> dict[str, Any]:
+    counts: dict[int, int] = {}
+    for event in events:
+        minute = (int(event.get("fired_ts") or start) - start) // 60
+        counts[minute] = counts.get(minute, 0) + 1
+    peak = max(counts.values(), default=0)
+    peak_minute = max(counts, key=counts.get) if counts else 0
+    return {
+        "detected": peak >= threshold,
+        "peak_per_minute": peak,
+        "peak_minute": peak_minute,
+        "threshold": threshold,
+        "input_events": len(events),
+    }
+
+
 def _silenced(event: dict[str, Any], silences: list[dict[str, Any]], start: int) -> bool:
     minute = (int(event.get("fired_ts") or 0) - start) // 60
     for silence in silences:
@@ -216,11 +292,15 @@ def _group_key(
     event: dict[str, Any],
     policy: dict[str, Any],
     root: str,
+    node_root: str = "",
+    node_services: list[str] | None = None,
 ) -> str:
     target = str(event.get("target") or "")
     group_by = [str(item) for item in (policy.get("group_by") or [])]
     if str(event.get("target_type")) == "infra.node" or "node" in group_by:
         return f"node:{target}"
+    if node_root and target in (node_services or []):
+        return f"node:{node_root}"
     if "target" in group_by:
         return f"svc:{target}"
     if "root" in group_by and root:
@@ -237,9 +317,25 @@ def _group_rca(
     policy_auto: bool,
 ) -> dict[str, Any]:
     root = str(group.get("root_service") or "")
+    node = str(group.get("root_node") or "")
     ranking = analysis.get("ranking") or []
     top = ranking[0] if ranking else {}
     code = code_rca.get("summary") or {}
+    if node:
+        impacted = list(group.get("impacted_services") or [])
+        return {
+            "auto": True,
+            "mode": "infra-rca",
+            "root_cause": node,
+            "confidence": 0.86,
+            "impacted_services": impacted,
+            "reasons": [
+                f"{node} NodeNotReady",
+                f"{len(impacted)} services on the node are impacted",
+                "service symptoms are grouped under the infrastructure root",
+            ],
+            "code_fixes": int(code.get("fixed") or 0),
+        }
     if not policy_auto:
         return {
             "auto": False,
@@ -304,14 +400,23 @@ def compress(
         kept.append(event)
 
     groups: dict[str, dict[str, Any]] = {}
+    node_roots = [
+        str(event.get("target"))
+        for event in kept
+        if str(event.get("policy_id")) == "node-not-ready"
+    ]
+    node_root = node_roots[0] if node_roots else ""
+    node_services = node_service_map(snapshot).get(node_root, []) if node_root else []
     for event in kept:
         policy = policy_by_id.get(str(event.get("policy_id")), {})
-        key = _group_key(event, policy, root)
+        key = _group_key(event, policy, root, node_root, node_services)
         group = groups.setdefault(
             key,
             {
                 "key": key,
                 "root_service": root if key.startswith("svc:") else "",
+                "root_node": node_root if key == f"node:{node_root}" else "",
+                "impacted_services": node_services if key == f"node:{node_root}" else [],
                 "members": [],
                 "policy_ids": set(),
                 "first_seen": event.get("fired_at"),
@@ -330,8 +435,9 @@ def compress(
     output_groups = []
     for index, group in enumerate(groups.values(), start=1):
         members = group["members"]
+        root_target = str(group.get("root_service") or group.get("root_node") or "")
         root_event = next(
-            (item for item in members if item.get("target") == group.get("root_service")),
+            (item for item in members if item.get("target") == root_target),
             None,
         )
         inhibited = 0
@@ -350,11 +456,15 @@ def compress(
             "title": (
                 f"{group['root_service']} 告警组"
                 if group.get("root_service")
+                else f"{group.get('root_node')} 节点故障组"
+                if group.get("root_node")
                 else f"{group['key']} 告警组"
             ),
             "severity": group.get("max_severity"),
             "status": "firing",
             "root_service": group.get("root_service"),
+            "root_node": group.get("root_node"),
+            "impacted_services": group.get("impacted_services") or [],
             "policy_ids": sorted(group["policy_ids"]),
             "member_count": len(members),
             "inhibited_count": inhibited,
@@ -394,11 +504,20 @@ def run_alerting(
     analysis: dict[str, Any],
     policy_path: str | Path | None = None,
     code_rca: dict[str, Any] | None = None,
+    node_failure: bool = False,
 ) -> dict[str, Any]:
     config = load_policies(policy_path)
     policies = list(config.get("policies") or [])
     silences = list(config.get("silences") or [])
     events = _generated_events(snapshot, policies) + _declared_events(snapshot, policies)
+    if node_failure:
+        events += _node_failure_events(snapshot, policies)
+    start = int((snapshot.get("window") or {}).get("start") or 0)
+    storm = _storm(
+        events,
+        start,
+        int(config.get("storm_threshold_per_minute") or 20),
+    )
     result = compress(events, policies, silences, snapshot, analysis, code_rca)
     brain = apply_brain(result["groups"], analysis)
     return {
@@ -409,6 +528,7 @@ def run_alerting(
         "policies": policies,
         "silences": silences,
         "stats": result["stats"],
+        "storm": storm,
         "brain": brain,
         "groups": result["groups"],
         "silenced_events": result["silenced_events"],
@@ -463,10 +583,12 @@ def render_alert_markdown(result: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def write_alert_artifacts(result: dict[str, Any], root: str | Path) -> dict[str, str]:
+def write_alert_artifacts(
+    result: dict[str, Any], root: str | Path, prefix: str = "alerts"
+) -> dict[str, str]:
     target = Path(root)
     target.mkdir(parents=True, exist_ok=True)
-    json_path = write_json(target / "alerts.json", result)
-    md_path = target / "alerts.md"
+    json_path = write_json(target / f"{prefix}.json", result)
+    md_path = target / f"{prefix}.md"
     md_path.write_text(render_alert_markdown(result), encoding="utf-8")
     return {"json": str(json_path), "report": str(md_path)}

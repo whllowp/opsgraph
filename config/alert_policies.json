@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "description": "Smart alert policies for the OpsGraph payment incident.",
+  "version": 2,
+  "description": "Smart alert policies for service, node and storm scenarios.",
   "policies": [
     {
       "id": "slo-burn",
@@ -55,11 +55,25 @@
       "severity": "P3",
       "group_by": ["node"],
       "dedupe_window_seconds": 300,
-      "compress_window_seconds": 900,
       "inhibit_downstream": false,
       "auto_rca": false
+    },
+    {
+      "id": "node-not-ready",
+      "name": "Node NotReady",
+      "enabled": true,
+      "metric": "node_ready",
+      "target_type": "infra.node",
+      "operator": "<=",
+      "threshold": 0,
+      "severity": "P1",
+      "group_by": ["node"],
+      "dedupe_window_seconds": 60,
+      "inhibit_downstream": true,
+      "auto_rca": true
     }
   ],
+  "storm_threshold_per_minute": 20,
   "silences": [
     {
       "id": "batch-window",

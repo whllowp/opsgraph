@@ -64,6 +64,42 @@ compression_ratio: 99.5%
 
 结果不是“丢告警”，每条成员仍保留在 `groups[].members`，只是进入同一个根因组。
 
+## 节点故障与告警风暴
+
+节点故障会在 1 分钟内产生大量“下游症状”：NodeNotReady、Pod 驱逐、服务 5xx、P99、SLO burn 同时触发。OpsGraph 不把这些都当成独立故障。
+
+```bash
+python -m opsgraph alerts --node-failure
+```
+
+演练结果：
+
+```text
+input=246  peak=57/min  storm detected
+groups=2
+  P1 node-2 节点故障组  members=32  inhibited=27  root=node-2
+  P2 checkout-service 告警组  members=18
+```
+
+机制：
+
+1. `node_service_map()` 通过 `infra.pod.scheduled_on + 服务名前缀` 找到节点上的服务；
+2. NodeNotReady P1 成为 `node_root`，该节点上的服务告警被 re-parent 到节点组；
+3. 同组 P2/P3 标记 `inhibited_by`，只 page 节点根因；
+4. `storm_threshold_per_minute=20` 检测峰值 57/min，UI 显示告警风暴；
+5. Laya 对节点组给出 `page`（有 5 个受影响服务、P1），而 node-3 CPU 红鲱鱼仍是 `watch`。
+
+产物：
+
+```text
+artifacts/alerts_node_failure.json
+artifacts/alerts_node_failure.md
+```
+
+默认演练不模拟节点故障，避免覆盖正常 `alerts.json`；这是显式 `--node-failure` 场景。
+
+![节点故障告警风暴](storm-tab.png)
+
 ## 自动 RCA
 
 每个告警组带 `rca`：

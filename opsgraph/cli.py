@@ -363,8 +363,13 @@ def cmd_alerts(args: argparse.Namespace) -> int:
         read_json(analysis_path),
         args.policy or None,
         read_json(code_path) if code_path.exists() else {},
+        node_failure=args.node_failure,
     )
-    paths = write_alert_artifacts(result, ARTIFACT_DIR)
+    paths = write_alert_artifacts(
+        result,
+        ARTIFACT_DIR,
+        "alerts_node_failure" if args.node_failure else "alerts",
+    )
     stats = result["stats"]
     print("=" * 78)
     print("Smart alert pipeline complete")
@@ -374,6 +379,11 @@ def cmd_alerts(args: argparse.Namespace) -> int:
         f"silenced={stats['silenced']} groups={stats['groups']} "
         f"compression={stats['compression_ratio'] * 100:.1f}%"
     )
+    if result.get("storm", {}).get("detected"):
+        print(
+            f"storm: peak={result['storm']['peak_per_minute']}/min "
+            f"threshold={result['storm']['threshold']}"
+        )
     for group in result["groups"]:
         print(
             f"  {group['rank']}. {group['severity']} {group['title']} "
@@ -607,6 +617,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("alerts", help="evaluate, compress and RCA alerts")
     _add_common(p)
     p.add_argument("--policy", default="", help="alert policy JSON path")
+    p.add_argument(
+        "--node-failure",
+        action="store_true",
+        help="simulate an infrastructure storm with a NodeNotReady root",
+    )
     p.set_defaults(func=cmd_alerts)
 
     p = sub.add_parser("alert-policy", help="list or update an alert policy")

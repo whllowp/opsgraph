@@ -480,6 +480,27 @@ python -m opsgraph alerts
 
 详见 [智能监控告警](docs/alerts.md)。
 
+### 节点故障与告警风暴
+
+底层节点故障会短时间产生大量服务症状。显式演练：
+
+```bash
+python -m opsgraph alerts --node-failure
+```
+
+```text
+input=246  peak=57/min  storm detected
+groups=2
+  P1 node-2 节点故障组  members=32  inhibited=27  root=node-2
+  P2 checkout-service 告警组  members=18
+```
+
+节点 NotReady 会通过 `scheduled_on` 找到节点上的服务，把服务告警 re-parent 到节点根因组；下游症状标记 `inhibited_by`，不再逐条 page。默认场景不模拟节点故障，避免覆盖正常告警。
+
+![节点故障告警风暴](docs/storm-tab.png)
+
+详见 [智能监控告警](docs/alerts.md#节点故障与告警风暴)。
+
 ## 值班决策简报
 
 图和控制台解决「发生了什么」，简报解决「现在做什么」。
@@ -577,6 +598,7 @@ python -m opsgraph demo --no-agents                     # 只跑服务图
 python -m opsgraph code-demo                            # 10 次代码 RCA/REA 闭环
 python -m opsgraph real-perf-rea                        # Linux: 真实 perf + C 10 次闭环
 python -m opsgraph alerts                               # 智能告警压缩 + 自动 RCA
+python -m opsgraph alerts --node-failure                # 节点故障 / 告警风暴演练
 python -m opsgraph alert-policy --list                  # 查看告警策略
 python -m opsgraph brief                                # 值班决策简报
 python -m opsgraph approvals                            # 审批单
@@ -589,7 +611,7 @@ python -m opsgraph baseline                             # 历史基线 + claim a
 python -m opsgraph serve --port 18088                   # 控制台
 python -m opsgraph doctor                               # UModel 连通性/计数
 python -m opsgraph query ".entity with(domain='svc', name='svc.service') | limit 5"
-python -m unittest discover -s tests -v                 # 64 个单测
+python -m unittest discover -s tests -v                 # 65 个单测
 ```
 
 ## UModel 查询示例

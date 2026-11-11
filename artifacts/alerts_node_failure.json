@@ -1,0 +1,2827 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-11T16:39:26+00:00",
+  "source": "deepflow replay + alert policy engine",
+  "policy_file": "E:\\ebpf\\opsgraph\\config\\alert_policies.json",
+  "policies": [
+    {
+      "id": "slo-burn",
+      "name": "SLO burn rate",
+      "enabled": true,
+      "metric": "slo_burn_rate",
+      "target_type": "svc.service",
+      "operator": ">=",
+      "threshold": 2.0,
+      "severity": "P1",
+      "group_by": [
+        "root"
+      ],
+      "dedupe_window_seconds": 300,
+      "inhibit_downstream": true,
+      "auto_rca": true
+    },
+    {
+      "id": "latency",
+      "name": "P99 latency vs baseline",
+      "enabled": true,
+      "metric": "latency_ratio",
+      "target_type": "svc.service",
+      "operator": ">=",
+      "threshold": 2.0,
+      "severity": "P2",
+      "group_by": [
+        "root"
+      ],
+      "dedupe_window_seconds": 300,
+      "inhibit_downstream": true,
+      "auto_rca": true
+    },
+    {
+      "id": "errors",
+      "name": "Error rate",
+      "enabled": true,
+      "metric": "error_rate",
+      "target_type": "svc.service",
+      "operator": ">=",
+      "threshold": 0.01,
+      "severity": "P2",
+      "group_by": [
+        "root"
+      ],
+      "dedupe_window_seconds": 300,
+      "inhibit_downstream": true,
+      "auto_rca": true
+    },
+    {
+      "id": "node-cpu",
+      "name": "Node CPU saturation",
+      "enabled": true,
+      "metric": "cpu_utilization",
+      "target_type": "infra.node",
+      "operator": ">=",
+      "threshold": 0.8,
+      "severity": "P3",
+      "group_by": [
+        "node"
+      ],
+      "dedupe_window_seconds": 300,
+      "inhibit_downstream": false,
+      "auto_rca": false
+    },
+    {
+      "id": "node-not-ready",
+      "name": "Node NotReady",
+      "enabled": true,
+      "metric": "node_ready",
+      "target_type": "infra.node",
+      "operator": "<=",
+      "threshold": 0,
+      "severity": "P1",
+      "group_by": [
+        "node"
+      ],
+      "dedupe_window_seconds": 60,
+      "inhibit_downstream": true,
+      "auto_rca": true
+    }
+  ],
+  "silences": [
+    {
+      "id": "batch-window",
+      "target": "node-3",
+      "start_minute": 0,
+      "end_minute": 30,
+      "reason": "nightly batch reporter window"
+    }
+  ],
+  "stats": {
+    "input_events": 246,
+    "after_dedupe": 50,
+    "groups": 2,
+    "deduped": 183,
+    "silenced": 13,
+    "inhibited": 27,
+    "compression_ratio": 0.992
+  },
+  "storm": {
+    "detected": true,
+    "peak_per_minute": 57,
+    "peak_minute": 12,
+    "threshold": 20,
+    "input_events": 246
+  },
+  "brain": {
+    "laya": {
+      "model": "laya",
+      "config": "E:\\ebpf\\opsgraph\\config\\laya_model.json"
+    },
+    "llm": {
+      "enabled": false,
+      "model": "",
+      "reason": "OPSGRAPH_LLM_URL/API_KEY not configured",
+      "last_error": ""
+    },
+    "actions": {
+      "page": 2
+    },
+    "groups": 2
+  },
+  "groups": [
+    {
+      "id": "GRP-91e0b30a",
+      "rank": 1,
+      "key": "node:node-2",
+      "title": "node-2 节点故障组",
+      "severity": "P1",
+      "status": "firing",
+      "root_service": "",
+      "root_node": "node-2",
+      "impacted_services": [
+        "checkout-service",
+        "cart-service",
+        "payment-gateway",
+        "payment-router",
+        "ledger-service"
+      ],
+      "policy_ids": [
+        "errors",
+        "latency",
+        "node-not-ready",
+        "slo-burn"
+      ],
+      "member_count": 32,
+      "inhibited_count": 27,
+      "first_seen": "2026-11-01T16:10:00+00:00",
+      "last_seen": "2026-11-01T16:40:00+00:00",
+      "members": [
+        {
+          "id": "ALT-1ec0525383",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "cart-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.4516,
+          "threshold": 2.0,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "cart-service",
+            "role": "downstream",
+            "namespace": "shop"
+          },
+          "summary": "cart-service P99 / baseline=5.452",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-4304903fc5",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "payment-router",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 21.3548,
+          "threshold": 2.0,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "payment-router",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "payment-router P99 / baseline=21.355",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-537ee3ac8b",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "checkout-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 14.4333,
+          "threshold": 2.0,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "checkout-service",
+            "role": "root_cause",
+            "namespace": "shop"
+          },
+          "summary": "checkout-service P99 / baseline=14.433",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-6a3cbe1b5e",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "payment-router",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0113,
+          "threshold": 0.01,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "payment-router",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "payment-router error rate=0.011",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-8f5619cb34",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "ledger-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 15.8612,
+          "threshold": 2.0,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "ledger-service",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "ledger-service P99 / baseline=15.861",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-934e0b9a0f",
+          "policy_id": "slo-burn",
+          "policy_name": "SLO burn rate",
+          "target": "payment-gateway",
+          "target_type": "svc.service",
+          "severity": "P1",
+          "status": "firing",
+          "metric": "slo_burn_rate",
+          "value": 2.8186,
+          "threshold": 2.0,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "payment-gateway",
+            "role": "victim",
+            "namespace": "payments"
+          },
+          "summary": "payment-gateway SLO burn=2.819",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-9678b979d9",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "checkout-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0116,
+          "threshold": 0.01,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "checkout-service",
+            "role": "root_cause",
+            "namespace": "shop"
+          },
+          "summary": "checkout-service error rate=0.012",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-bd5ede5091",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "payment-gateway",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.012,
+          "threshold": 0.01,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "payment-gateway",
+            "role": "victim",
+            "namespace": "payments"
+          },
+          "summary": "payment-gateway error rate=0.012",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-db538ca07e",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "ledger-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0128,
+          "threshold": 0.01,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "ledger-service",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "ledger-service error rate=0.013",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-dec8dd6189",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "payment-gateway",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 20.1548,
+          "threshold": 2.0,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "payment-gateway",
+            "role": "victim",
+            "namespace": "payments"
+          },
+          "summary": "payment-gateway P99 / baseline=20.155",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-02284e215d",
+          "policy_id": "node-not-ready",
+          "policy_name": "Node NotReady",
+          "target": "node-2",
+          "target_type": "infra.node",
+          "severity": "P1",
+          "status": "firing",
+          "metric": "node_ready",
+          "value": 0,
+          "threshold": 0,
+          "fired_ts": 1793549520,
+          "fired_at": "2026-11-01T16:12:00+00:00",
+          "labels": {
+            "node": "node-2",
+            "reason": "NodeNotReady storm",
+            "impacted_count": 5
+          },
+          "summary": "node-2 node_ready=0.000",
+          "source": "replay.node_failure"
+        },
+        {
+          "id": "ALT-1d90a0e463",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "payment-gateway",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.012,
+          "threshold": 0.01,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "payment-gateway",
+            "role": "victim",
+            "namespace": "payments"
+          },
+          "summary": "payment-gateway error rate=0.012",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-234e314e90",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "ledger-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0128,
+          "threshold": 0.01,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "ledger-service",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "ledger-service error rate=0.013",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-265b3f51ec",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "checkout-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 14.4333,
+          "threshold": 2.0,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "checkout-service",
+            "role": "root_cause",
+            "namespace": "shop"
+          },
+          "summary": "checkout-service P99 / baseline=14.433",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-29d104a30f",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "payment-router",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 21.3548,
+          "threshold": 2.0,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "payment-router",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "payment-router P99 / baseline=21.355",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-6df4cd340a",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "cart-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.4516,
+          "threshold": 2.0,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "cart-service",
+            "role": "downstream",
+            "namespace": "shop"
+          },
+          "summary": "cart-service P99 / baseline=5.452",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-a6eadd1637",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "ledger-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 15.8612,
+          "threshold": 2.0,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "ledger-service",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "ledger-service P99 / baseline=15.861",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-aeb992e430",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "checkout-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0116,
+          "threshold": 0.01,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "checkout-service",
+            "role": "root_cause",
+            "namespace": "shop"
+          },
+          "summary": "checkout-service error rate=0.012",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-ba5306a8b5",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "payment-router",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0113,
+          "threshold": 0.01,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "payment-router",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "payment-router error rate=0.011",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-d0cbee44c6",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "payment-gateway",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 20.1548,
+          "threshold": 2.0,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "payment-gateway",
+            "role": "victim",
+            "namespace": "payments"
+          },
+          "summary": "payment-gateway P99 / baseline=20.155",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-daf05b4fec",
+          "policy_id": "slo-burn",
+          "policy_name": "SLO burn rate",
+          "target": "payment-gateway",
+          "target_type": "svc.service",
+          "severity": "P1",
+          "status": "firing",
+          "metric": "slo_burn_rate",
+          "value": 2.8186,
+          "threshold": 2.0,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "payment-gateway",
+            "role": "victim",
+            "namespace": "payments"
+          },
+          "summary": "payment-gateway SLO burn=2.819",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-2652970fb6",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "payment-router",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0113,
+          "threshold": 0.01,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "payment-router",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "payment-router error rate=0.011",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-3d3a5f518f",
+          "policy_id": "slo-burn",
+          "policy_name": "SLO burn rate",
+          "target": "payment-gateway",
+          "target_type": "svc.service",
+          "severity": "P1",
+          "status": "firing",
+          "metric": "slo_burn_rate",
+          "value": 2.8186,
+          "threshold": 2.0,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "payment-gateway",
+            "role": "victim",
+            "namespace": "payments"
+          },
+          "summary": "payment-gateway SLO burn=2.819",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-4f7fdc40e5",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "payment-router",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 21.3548,
+          "threshold": 2.0,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "payment-router",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "payment-router P99 / baseline=21.355",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-59713718a8",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "checkout-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 14.4333,
+          "threshold": 2.0,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "checkout-service",
+            "role": "root_cause",
+            "namespace": "shop"
+          },
+          "summary": "checkout-service P99 / baseline=14.433",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-7846a5cb1c",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "cart-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.4516,
+          "threshold": 2.0,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "cart-service",
+            "role": "downstream",
+            "namespace": "shop"
+          },
+          "summary": "cart-service P99 / baseline=5.452",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-a039c93347",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "ledger-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0128,
+          "threshold": 0.01,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "ledger-service",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "ledger-service error rate=0.013",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-b1a3706247",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "payment-gateway",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 20.1548,
+          "threshold": 2.0,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "payment-gateway",
+            "role": "victim",
+            "namespace": "payments"
+          },
+          "summary": "payment-gateway P99 / baseline=20.155",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-ba215f59e1",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "ledger-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 15.8612,
+          "threshold": 2.0,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "ledger-service",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "ledger-service P99 / baseline=15.861",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-bc8bd05f60",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "payment-gateway",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.012,
+          "threshold": 0.01,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "payment-gateway",
+            "role": "victim",
+            "namespace": "payments"
+          },
+          "summary": "payment-gateway error rate=0.012",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-c587452bd7",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "checkout-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0116,
+          "threshold": 0.01,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "checkout-service",
+            "role": "root_cause",
+            "namespace": "shop"
+          },
+          "summary": "checkout-service error rate=0.012",
+          "source": "replay.deepflow",
+          "inhibited_by": "ALT-02284e215d"
+        },
+        {
+          "id": "ALT-0c6718e29c",
+          "policy_id": "slo-burn",
+          "policy_name": "SLO burn rate",
+          "target": "payment-gateway",
+          "target_type": "svc.service",
+          "severity": "P1",
+          "status": "firing",
+          "metric": "slo_burn_rate",
+          "value": 14.2,
+          "threshold": 2.0,
+          "fired_ts": 1793551200,
+          "fired_at": "2026-11-01T16:40:00+00:00",
+          "labels": {
+            "alert": "payment-gateway SLO burn rate 14.2x"
+          },
+          "summary": "payment-gateway SLO burn=14.200",
+          "source": "replay.alert"
+        }
+      ],
+      "rca": {
+        "auto": true,
+        "mode": "infra-rca",
+        "root_cause": "node-2",
+        "confidence": 0.86,
+        "impacted_services": [
+          "checkout-service",
+          "cart-service",
+          "payment-gateway",
+          "payment-router",
+          "ledger-service"
+        ],
+        "reasons": [
+          "node-2 NodeNotReady",
+          "5 services on the node are impacted",
+          "service symptoms are grouped under the infrastructure root"
+        ],
+        "code_fixes": 10
+      },
+      "decision": {
+        "source": "laya",
+        "action": "page",
+        "root_cause": "node-2",
+        "root_probability": 0.9631,
+        "false_alarm_probability": 0.0369,
+        "confidence": 0.9631,
+        "reasons": [
+          "graph confidence 0.86",
+          "inhibited ratio 0.84",
+          "P1 group",
+          "code fix is available"
+        ],
+        "expected_costs": {
+          "page": 0.5619,
+          "investigate": 1.1108,
+          "watch": 0.6358,
+          "suppress": 0.7386
+        },
+        "guardrail": "",
+        "llm": {
+          "status": "disabled",
+          "reason": "OPSGRAPH_LLM_URL/API_KEY not configured"
+        },
+        "laya": {
+          "source": "laya",
+          "model": "laya",
+          "root_probability": 0.9631,
+          "false_alarm_probability": 0.0369,
+          "action": "page",
+          "expected_costs": {
+            "page": 0.5619,
+            "investigate": 1.1108,
+            "watch": 0.6358,
+            "suppress": 0.7386
+          },
+          "features": {
+            "confidence": 0.86,
+            "service_alert": 1.0,
+            "severity_p1": 1.0,
+            "node_only": 0.0,
+            "inhibited_ratio": 0.84375,
+            "code_fix": 1.0
+          },
+          "guardrail": "",
+          "reasons": [
+            "graph confidence 0.86",
+            "inhibited ratio 0.84",
+            "P1 group",
+            "code fix is available"
+          ]
+        }
+      }
+    },
+    {
+      "id": "GRP-11f8b64e",
+      "rank": 2,
+      "key": "svc:checkout-service",
+      "title": "checkout-service 告警组",
+      "severity": "P2",
+      "status": "firing",
+      "root_service": "checkout-service",
+      "root_node": "",
+      "impacted_services": [],
+      "policy_ids": [
+        "errors",
+        "latency"
+      ],
+      "member_count": 18,
+      "inhibited_count": 0,
+      "first_seen": "2026-11-01T16:10:00+00:00",
+      "last_seen": "2026-11-01T16:20:00+00:00",
+      "members": [
+        {
+          "id": "ALT-1233048d4f",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "notification-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.358,
+          "threshold": 2.0,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "notification-service",
+            "role": "downstream",
+            "namespace": "platform"
+          },
+          "summary": "notification-service P99 / baseline=5.358",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-4c9388343d",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "frontend-web",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 11.4184,
+          "threshold": 2.0,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "frontend-web",
+            "role": "upstream",
+            "namespace": "shop"
+          },
+          "summary": "frontend-web P99 / baseline=11.418",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-4efffe1e2e",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "risk-control",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0135,
+          "threshold": 0.01,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "risk-control",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "risk-control error rate=0.013",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-af5f30a14d",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "inventory-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.2117,
+          "threshold": 2.0,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "inventory-service",
+            "role": "downstream",
+            "namespace": "shop"
+          },
+          "summary": "inventory-service P99 / baseline=5.212",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-c7cfaee225",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "order-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.2669,
+          "threshold": 2.0,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "order-service",
+            "role": "downstream",
+            "namespace": "shop"
+          },
+          "summary": "order-service P99 / baseline=5.267",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-e3c76ae339",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "risk-control",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 20.5427,
+          "threshold": 2.0,
+          "fired_ts": 1793549400,
+          "fired_at": "2026-11-01T16:10:00+00:00",
+          "labels": {
+            "service": "risk-control",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "risk-control P99 / baseline=20.543",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-0d593e1c14",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "risk-control",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0135,
+          "threshold": 0.01,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "risk-control",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "risk-control error rate=0.013",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-29c0cb4722",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "inventory-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.2117,
+          "threshold": 2.0,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "inventory-service",
+            "role": "downstream",
+            "namespace": "shop"
+          },
+          "summary": "inventory-service P99 / baseline=5.212",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-64d0fb5047",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "risk-control",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 20.5427,
+          "threshold": 2.0,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "risk-control",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "risk-control P99 / baseline=20.543",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-74430d9a6a",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "order-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.2669,
+          "threshold": 2.0,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "order-service",
+            "role": "downstream",
+            "namespace": "shop"
+          },
+          "summary": "order-service P99 / baseline=5.267",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-9a23c0575b",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "frontend-web",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 11.4184,
+          "threshold": 2.0,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "frontend-web",
+            "role": "upstream",
+            "namespace": "shop"
+          },
+          "summary": "frontend-web P99 / baseline=11.418",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-cac2bd5b38",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "notification-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.358,
+          "threshold": 2.0,
+          "fired_ts": 1793549700,
+          "fired_at": "2026-11-01T16:15:00+00:00",
+          "labels": {
+            "service": "notification-service",
+            "role": "downstream",
+            "namespace": "platform"
+          },
+          "summary": "notification-service P99 / baseline=5.358",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-06493642d8",
+          "policy_id": "errors",
+          "policy_name": "Error rate",
+          "target": "risk-control",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "error_rate",
+          "value": 0.0135,
+          "threshold": 0.01,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "risk-control",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "risk-control error rate=0.013",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-622afe9eaf",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "inventory-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.2117,
+          "threshold": 2.0,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "inventory-service",
+            "role": "downstream",
+            "namespace": "shop"
+          },
+          "summary": "inventory-service P99 / baseline=5.212",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-7296dc93c7",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "frontend-web",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 11.4184,
+          "threshold": 2.0,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "frontend-web",
+            "role": "upstream",
+            "namespace": "shop"
+          },
+          "summary": "frontend-web P99 / baseline=11.418",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-a69b9d74bd",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "order-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.2669,
+          "threshold": 2.0,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "order-service",
+            "role": "downstream",
+            "namespace": "shop"
+          },
+          "summary": "order-service P99 / baseline=5.267",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-dc8b392b0d",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "notification-service",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 5.358,
+          "threshold": 2.0,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "notification-service",
+            "role": "downstream",
+            "namespace": "platform"
+          },
+          "summary": "notification-service P99 / baseline=5.358",
+          "source": "replay.deepflow"
+        },
+        {
+          "id": "ALT-ea2c67c6c3",
+          "policy_id": "latency",
+          "policy_name": "P99 latency vs baseline",
+          "target": "risk-control",
+          "target_type": "svc.service",
+          "severity": "P2",
+          "status": "firing",
+          "metric": "latency_ratio",
+          "value": 20.5427,
+          "threshold": 2.0,
+          "fired_ts": 1793550000,
+          "fired_at": "2026-11-01T16:20:00+00:00",
+          "labels": {
+            "service": "risk-control",
+            "role": "downstream",
+            "namespace": "payments"
+          },
+          "summary": "risk-control P99 / baseline=20.543",
+          "source": "replay.deepflow"
+        }
+      ],
+      "rca": {
+        "auto": true,
+        "mode": "graph-rca",
+        "root_cause": "checkout-service",
+        "confidence": 0.779,
+        "reasons": [
+          "P99 1952ms, anomaly 17.1",
+          "high-risk config at 00:10 touching retry/timeout settings",
+          "outbound 4.6x baseline"
+        ],
+        "ranking": [
+          {
+            "service": "checkout-service",
+            "display_name": "checkout-service",
+            "score": 0.959,
+            "status": "critical",
+            "confidence": 0.779,
+            "components": {
+              "self_severity": 0.132,
+              "change_affinity": 0.52,
+              "outbound_amplification": 0.061,
+              "causal_lead": 0.016,
+              "propagation": 0.031,
+              "graph_position": 0.2
+            },
+            "reasons": [
+              "P99 1952ms, anomaly 17.1",
+              "high-risk config at 00:10 touching retry/timeout settings",
+              "outbound 4.6x baseline",
+              "upstream of victim (1 hop)",
+              "onset 3 min before victim",
+              "7/16 downstream services anomalous"
+            ],
+            "change": null,
+            "change_risk": "high",
+            "metrics": {
+              "qps": 1413.333,
+              "p99_ms": 1951.81,
+              "baseline_p99_ms": 135.23,
+              "p99_delta_pct": 1343.3,
+              "error_rate": 0.01156,
+              "outbound_amp": 4.56,
+              "onset_ts": 1793549580,
+              "amplification_onset_ts": 1793549400
+            },
+            "rank": 1
+          },
+          {
+            "service": "payment-gateway",
+            "display_name": "payment-gateway",
+            "score": 0.47,
+            "status": "critical",
+            "confidence": 0.0,
+            "components": {
+              "self_severity": 0.198,
+              "change_affinity": 0.01,
+              "outbound_amplification": 0.12,
+              "causal_lead": 0.016,
+              "propagation": 0.026,
+              "graph_position": 0.1
+            },
+            "reasons": [
+              "P99 2255ms, anomaly 25.7",
+              "recent deployment is low risk",
+              "outbound 8.0x baseline",
+              "victim service",
+              "onset 3 min before victim",
+              "3/8 downstream services anomalous"
+            ],
+            "change": null,
+            "change_risk": "low",
+            "metrics": {
+              "qps": 3334.7,
+              "p99_ms": 2254.92,
+              "baseline_p99_ms": 111.88,
+              "p99_delta_pct": 1915.4,
+              "error_rate": 0.012,
+              "outbound_amp": 8.0,
+              "onset_ts": 1793549580,
+              "amplification_onset_ts": 1793549400
+            },
+            "rank": 2
+          },
+          {
+            "service": "payment-router",
+            "display_name": "payment-router",
+            "score": 0.413,
+            "status": "critical",
+            "confidence": 0.0,
+            "components": {
+              "self_severity": 0.28,
+              "change_affinity": 0.0,
+              "outbound_amplification": 0.117,
+              "causal_lead": 0.016,
+              "propagation": 0.0,
+              "graph_position": 0.0
+            },
+            "reasons": [
+              "P99 1983ms, anomaly 36.4",
+              "no recent change",
+              "outbound 7.8x baseline",
+              "not upstream of victim",
+              "onset 3 min before victim",
+              "0/3 downstream services anomalous"
+            ],
+            "change": null,
+            "change_risk": null,
+            "metrics": {
+              "qps": 3186.617,
+              "p99_ms": 1983.43,
+              "baseline_p99_ms": 92.88,
+              "p99_delta_pct": 2035.5,
+              "error_rate": 0.01133,
+              "outbound_amp": 7.84,
+              "onset_ts": 1793549580,
+              "amplification_onset_ts": 1793549400
+            },
+            "rank": 3
+          }
+        ],
+        "code_fixes": 10
+      },
+      "decision": {
+        "source": "laya",
+        "action": "page",
+        "root_cause": "checkout-service",
+        "root_probability": 0.9154,
+        "false_alarm_probability": 0.0846,
+        "confidence": 0.9154,
+        "reasons": [
+          "graph confidence 0.78",
+          "inhibited ratio 0.00",
+          "code fix is available"
+        ],
+        "expected_costs": {
+          "page": 1.0293,
+          "investigate": 1.2539,
+          "watch": 1.1985,
+          "suppress": 1.6924
+        },
+        "guardrail": "",
+        "llm": {
+          "status": "disabled",
+          "reason": "OPSGRAPH_LLM_URL/API_KEY not configured"
+        },
+        "laya": {
+          "source": "laya",
+          "model": "laya",
+          "root_probability": 0.9154,
+          "false_alarm_probability": 0.0846,
+          "action": "page",
+          "expected_costs": {
+            "page": 1.0293,
+            "investigate": 1.2539,
+            "watch": 1.1985,
+            "suppress": 1.6924
+          },
+          "features": {
+            "confidence": 0.779,
+            "service_alert": 1.0,
+            "severity_p1": 0.0,
+            "node_only": 0.0,
+            "inhibited_ratio": 0.0,
+            "code_fix": 1.0
+          },
+          "guardrail": "",
+          "reasons": [
+            "graph confidence 0.78",
+            "inhibited ratio 0.00",
+            "code fix is available"
+          ]
+        }
+      }
+    }
+  ],
+  "silenced_events": [
+    {
+      "id": "ALT-74013ddabc",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-727d6d9865",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793549460,
+      "fired_at": "2026-11-01T16:11:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-f8440e4bdc",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793549520,
+      "fired_at": "2026-11-01T16:12:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-51f91cee18",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793549580,
+      "fired_at": "2026-11-01T16:13:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-f854566941",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793549640,
+      "fired_at": "2026-11-01T16:14:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-d658a07870",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-2929198e78",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793549760,
+      "fired_at": "2026-11-01T16:16:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-004b861a5f",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793549820,
+      "fired_at": "2026-11-01T16:17:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-c40af2c3b8",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793549880,
+      "fired_at": "2026-11-01T16:18:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-3bece6dddd",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793549940,
+      "fired_at": "2026-11-01T16:19:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-5e43b8685f",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-fcdcb25864",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 0.92,
+      "threshold": 0.8,
+      "fired_ts": 1793550060,
+      "fired_at": "2026-11-01T16:21:00+00:00",
+      "labels": {
+        "node": "node-3"
+      },
+      "summary": "node-3 CPU=0.920",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-b68db00367",
+      "policy_id": "node-cpu",
+      "policy_name": "Node CPU saturation",
+      "target": "node-3",
+      "target_type": "infra.node",
+      "severity": "P3",
+      "status": "firing",
+      "metric": "cpu_utilization",
+      "value": 92.0,
+      "threshold": 0.8,
+      "fired_ts": 1793550300,
+      "fired_at": "2026-11-01T16:25:00+00:00",
+      "labels": {
+        "alert": "node-3 CPU saturation 92%"
+      },
+      "summary": "node-3 CPU=92.000",
+      "source": "replay.alert"
+    }
+  ],
+  "events": [
+    {
+      "id": "ALT-1233048d4f",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "notification-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.358,
+      "threshold": 2.0,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "notification-service",
+        "role": "downstream",
+        "namespace": "platform"
+      },
+      "summary": "notification-service P99 / baseline=5.358",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-1ec0525383",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "cart-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.4516,
+      "threshold": 2.0,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "cart-service",
+        "role": "downstream",
+        "namespace": "shop"
+      },
+      "summary": "cart-service P99 / baseline=5.452",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-4304903fc5",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "payment-router",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 21.3548,
+      "threshold": 2.0,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "payment-router",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "payment-router P99 / baseline=21.355",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-4c9388343d",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "frontend-web",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 11.4184,
+      "threshold": 2.0,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "frontend-web",
+        "role": "upstream",
+        "namespace": "shop"
+      },
+      "summary": "frontend-web P99 / baseline=11.418",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-4efffe1e2e",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "risk-control",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0135,
+      "threshold": 0.01,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "risk-control",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "risk-control error rate=0.013",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-537ee3ac8b",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "checkout-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 14.4333,
+      "threshold": 2.0,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "checkout-service",
+        "role": "root_cause",
+        "namespace": "shop"
+      },
+      "summary": "checkout-service P99 / baseline=14.433",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-6a3cbe1b5e",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "payment-router",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0113,
+      "threshold": 0.01,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "payment-router",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "payment-router error rate=0.011",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-8f5619cb34",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "ledger-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 15.8612,
+      "threshold": 2.0,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "ledger-service",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "ledger-service P99 / baseline=15.861",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-934e0b9a0f",
+      "policy_id": "slo-burn",
+      "policy_name": "SLO burn rate",
+      "target": "payment-gateway",
+      "target_type": "svc.service",
+      "severity": "P1",
+      "status": "firing",
+      "metric": "slo_burn_rate",
+      "value": 2.8186,
+      "threshold": 2.0,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "payment-gateway",
+        "role": "victim",
+        "namespace": "payments"
+      },
+      "summary": "payment-gateway SLO burn=2.819",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-9678b979d9",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "checkout-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0116,
+      "threshold": 0.01,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "checkout-service",
+        "role": "root_cause",
+        "namespace": "shop"
+      },
+      "summary": "checkout-service error rate=0.012",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-af5f30a14d",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "inventory-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.2117,
+      "threshold": 2.0,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "inventory-service",
+        "role": "downstream",
+        "namespace": "shop"
+      },
+      "summary": "inventory-service P99 / baseline=5.212",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-bd5ede5091",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "payment-gateway",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.012,
+      "threshold": 0.01,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "payment-gateway",
+        "role": "victim",
+        "namespace": "payments"
+      },
+      "summary": "payment-gateway error rate=0.012",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-c7cfaee225",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "order-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.2669,
+      "threshold": 2.0,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "order-service",
+        "role": "downstream",
+        "namespace": "shop"
+      },
+      "summary": "order-service P99 / baseline=5.267",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-db538ca07e",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "ledger-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0128,
+      "threshold": 0.01,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "ledger-service",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "ledger-service error rate=0.013",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-dec8dd6189",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "payment-gateway",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 20.1548,
+      "threshold": 2.0,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "payment-gateway",
+        "role": "victim",
+        "namespace": "payments"
+      },
+      "summary": "payment-gateway P99 / baseline=20.155",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-e3c76ae339",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "risk-control",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 20.5427,
+      "threshold": 2.0,
+      "fired_ts": 1793549400,
+      "fired_at": "2026-11-01T16:10:00+00:00",
+      "labels": {
+        "service": "risk-control",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "risk-control P99 / baseline=20.543",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-02284e215d",
+      "policy_id": "node-not-ready",
+      "policy_name": "Node NotReady",
+      "target": "node-2",
+      "target_type": "infra.node",
+      "severity": "P1",
+      "status": "firing",
+      "metric": "node_ready",
+      "value": 0,
+      "threshold": 0,
+      "fired_ts": 1793549520,
+      "fired_at": "2026-11-01T16:12:00+00:00",
+      "labels": {
+        "node": "node-2",
+        "reason": "NodeNotReady storm",
+        "impacted_count": 5
+      },
+      "summary": "node-2 node_ready=0.000",
+      "source": "replay.node_failure"
+    },
+    {
+      "id": "ALT-0d593e1c14",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "risk-control",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0135,
+      "threshold": 0.01,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "risk-control",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "risk-control error rate=0.013",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-1d90a0e463",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "payment-gateway",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.012,
+      "threshold": 0.01,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "payment-gateway",
+        "role": "victim",
+        "namespace": "payments"
+      },
+      "summary": "payment-gateway error rate=0.012",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-234e314e90",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "ledger-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0128,
+      "threshold": 0.01,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "ledger-service",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "ledger-service error rate=0.013",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-265b3f51ec",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "checkout-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 14.4333,
+      "threshold": 2.0,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "checkout-service",
+        "role": "root_cause",
+        "namespace": "shop"
+      },
+      "summary": "checkout-service P99 / baseline=14.433",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-29c0cb4722",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "inventory-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.2117,
+      "threshold": 2.0,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "inventory-service",
+        "role": "downstream",
+        "namespace": "shop"
+      },
+      "summary": "inventory-service P99 / baseline=5.212",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-29d104a30f",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "payment-router",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 21.3548,
+      "threshold": 2.0,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "payment-router",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "payment-router P99 / baseline=21.355",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-64d0fb5047",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "risk-control",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 20.5427,
+      "threshold": 2.0,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "risk-control",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "risk-control P99 / baseline=20.543",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-6df4cd340a",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "cart-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.4516,
+      "threshold": 2.0,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "cart-service",
+        "role": "downstream",
+        "namespace": "shop"
+      },
+      "summary": "cart-service P99 / baseline=5.452",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-74430d9a6a",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "order-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.2669,
+      "threshold": 2.0,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "order-service",
+        "role": "downstream",
+        "namespace": "shop"
+      },
+      "summary": "order-service P99 / baseline=5.267",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-9a23c0575b",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "frontend-web",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 11.4184,
+      "threshold": 2.0,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "frontend-web",
+        "role": "upstream",
+        "namespace": "shop"
+      },
+      "summary": "frontend-web P99 / baseline=11.418",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-a6eadd1637",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "ledger-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 15.8612,
+      "threshold": 2.0,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "ledger-service",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "ledger-service P99 / baseline=15.861",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-aeb992e430",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "checkout-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0116,
+      "threshold": 0.01,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "checkout-service",
+        "role": "root_cause",
+        "namespace": "shop"
+      },
+      "summary": "checkout-service error rate=0.012",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-ba5306a8b5",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "payment-router",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0113,
+      "threshold": 0.01,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "payment-router",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "payment-router error rate=0.011",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-cac2bd5b38",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "notification-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.358,
+      "threshold": 2.0,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "notification-service",
+        "role": "downstream",
+        "namespace": "platform"
+      },
+      "summary": "notification-service P99 / baseline=5.358",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-d0cbee44c6",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "payment-gateway",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 20.1548,
+      "threshold": 2.0,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "payment-gateway",
+        "role": "victim",
+        "namespace": "payments"
+      },
+      "summary": "payment-gateway P99 / baseline=20.155",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-daf05b4fec",
+      "policy_id": "slo-burn",
+      "policy_name": "SLO burn rate",
+      "target": "payment-gateway",
+      "target_type": "svc.service",
+      "severity": "P1",
+      "status": "firing",
+      "metric": "slo_burn_rate",
+      "value": 2.8186,
+      "threshold": 2.0,
+      "fired_ts": 1793549700,
+      "fired_at": "2026-11-01T16:15:00+00:00",
+      "labels": {
+        "service": "payment-gateway",
+        "role": "victim",
+        "namespace": "payments"
+      },
+      "summary": "payment-gateway SLO burn=2.819",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-06493642d8",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "risk-control",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0135,
+      "threshold": 0.01,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "risk-control",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "risk-control error rate=0.013",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-2652970fb6",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "payment-router",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0113,
+      "threshold": 0.01,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "payment-router",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "payment-router error rate=0.011",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-3d3a5f518f",
+      "policy_id": "slo-burn",
+      "policy_name": "SLO burn rate",
+      "target": "payment-gateway",
+      "target_type": "svc.service",
+      "severity": "P1",
+      "status": "firing",
+      "metric": "slo_burn_rate",
+      "value": 2.8186,
+      "threshold": 2.0,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "payment-gateway",
+        "role": "victim",
+        "namespace": "payments"
+      },
+      "summary": "payment-gateway SLO burn=2.819",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-4f7fdc40e5",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "payment-router",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 21.3548,
+      "threshold": 2.0,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "payment-router",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "payment-router P99 / baseline=21.355",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-59713718a8",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "checkout-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 14.4333,
+      "threshold": 2.0,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "checkout-service",
+        "role": "root_cause",
+        "namespace": "shop"
+      },
+      "summary": "checkout-service P99 / baseline=14.433",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-622afe9eaf",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "inventory-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.2117,
+      "threshold": 2.0,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "inventory-service",
+        "role": "downstream",
+        "namespace": "shop"
+      },
+      "summary": "inventory-service P99 / baseline=5.212",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-7296dc93c7",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "frontend-web",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 11.4184,
+      "threshold": 2.0,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "frontend-web",
+        "role": "upstream",
+        "namespace": "shop"
+      },
+      "summary": "frontend-web P99 / baseline=11.418",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-7846a5cb1c",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "cart-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.4516,
+      "threshold": 2.0,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "cart-service",
+        "role": "downstream",
+        "namespace": "shop"
+      },
+      "summary": "cart-service P99 / baseline=5.452",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-a039c93347",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "ledger-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0128,
+      "threshold": 0.01,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "ledger-service",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "ledger-service error rate=0.013",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-a69b9d74bd",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "order-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.2669,
+      "threshold": 2.0,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "order-service",
+        "role": "downstream",
+        "namespace": "shop"
+      },
+      "summary": "order-service P99 / baseline=5.267",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-b1a3706247",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "payment-gateway",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 20.1548,
+      "threshold": 2.0,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "payment-gateway",
+        "role": "victim",
+        "namespace": "payments"
+      },
+      "summary": "payment-gateway P99 / baseline=20.155",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-ba215f59e1",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "ledger-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 15.8612,
+      "threshold": 2.0,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "ledger-service",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "ledger-service P99 / baseline=15.861",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-bc8bd05f60",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "payment-gateway",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.012,
+      "threshold": 0.01,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "payment-gateway",
+        "role": "victim",
+        "namespace": "payments"
+      },
+      "summary": "payment-gateway error rate=0.012",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-c587452bd7",
+      "policy_id": "errors",
+      "policy_name": "Error rate",
+      "target": "checkout-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "error_rate",
+      "value": 0.0116,
+      "threshold": 0.01,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "checkout-service",
+        "role": "root_cause",
+        "namespace": "shop"
+      },
+      "summary": "checkout-service error rate=0.012",
+      "source": "replay.deepflow",
+      "inhibited_by": "ALT-02284e215d"
+    },
+    {
+      "id": "ALT-dc8b392b0d",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "notification-service",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 5.358,
+      "threshold": 2.0,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "notification-service",
+        "role": "downstream",
+        "namespace": "platform"
+      },
+      "summary": "notification-service P99 / baseline=5.358",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-ea2c67c6c3",
+      "policy_id": "latency",
+      "policy_name": "P99 latency vs baseline",
+      "target": "risk-control",
+      "target_type": "svc.service",
+      "severity": "P2",
+      "status": "firing",
+      "metric": "latency_ratio",
+      "value": 20.5427,
+      "threshold": 2.0,
+      "fired_ts": 1793550000,
+      "fired_at": "2026-11-01T16:20:00+00:00",
+      "labels": {
+        "service": "risk-control",
+        "role": "downstream",
+        "namespace": "payments"
+      },
+      "summary": "risk-control P99 / baseline=20.543",
+      "source": "replay.deepflow"
+    },
+    {
+      "id": "ALT-0c6718e29c",
+      "policy_id": "slo-burn",
+      "policy_name": "SLO burn rate",
+      "target": "payment-gateway",
+      "target_type": "svc.service",
+      "severity": "P1",
+      "status": "firing",
+      "metric": "slo_burn_rate",
+      "value": 14.2,
+      "threshold": 2.0,
+      "fired_ts": 1793551200,
+      "fired_at": "2026-11-01T16:40:00+00:00",
+      "labels": {
+        "alert": "payment-gateway SLO burn rate 14.2x"
+      },
+      "summary": "payment-gateway SLO burn=14.200",
+      "source": "replay.alert"
+    }
+  ]
+}

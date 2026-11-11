@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-10T18:01:46+00:00",
+  "generated_at": "2026-11-11T16:39:25+00:00",
   "source": "deepflow replay + alert policy engine",
   "policy_file": "E:\\ebpf\\opsgraph\\config\\alert_policies.json",
   "policies": [
@@ -65,9 +65,24 @@
         "node"
       ],
       "dedupe_window_seconds": 300,
-      "compress_window_seconds": 900,
       "inhibit_downstream": false,
       "auto_rca": false
+    },
+    {
+      "id": "node-not-ready",
+      "name": "Node NotReady",
+      "enabled": true,
+      "metric": "node_ready",
+      "target_type": "infra.node",
+      "operator": "<=",
+      "threshold": 0,
+      "severity": "P1",
+      "group_by": [
+        "node"
+      ],
+      "dedupe_window_seconds": 60,
+      "inhibit_downstream": true,
+      "auto_rca": true
     }
   ],
   "silences": [
@@ -87,6 +102,13 @@
     "silenced": 13,
     "inhibited": 44,
     "compression_ratio": 0.995
+  },
+  "storm": {
+    "detected": false,
+    "peak_per_minute": 17,
+    "peak_minute": 10,
+    "threshold": 20,
+    "input_events": 206
   },
   "brain": {
     "laya": {
@@ -113,6 +135,8 @@
       "severity": "P1",
       "status": "firing",
       "root_service": "checkout-service",
+      "root_node": "",
+      "impacted_services": [],
       "policy_ids": [
         "errors",
         "latency",

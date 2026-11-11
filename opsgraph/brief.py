@@ -306,6 +306,7 @@ def build_brief(
             ).get("false_alarm_probability", 0),
             "brain": (alerts.get("brain") or {}).get("laya", {}).get("model", ""),
             "llm": (alerts.get("brain") or {}).get("llm", {}).get("enabled", False),
+            "storm": alerts.get("storm") or {},
         },
         "code": {
             "fixed": code_fixed,

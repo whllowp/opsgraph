@@ -14,6 +14,7 @@
 | P99 latency vs baseline | `latency_ratio` | 2.0 | P2 | yes |
 | Error rate | `error_rate` | 0.01 | P2 | yes |
 | Node CPU saturation | `cpu_utilization` | 0.8 | P3 | no |
+| Node NotReady | `node_ready` | 0 | P1 | yes |
 
 ## 告警组
 

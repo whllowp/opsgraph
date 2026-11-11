@@ -203,7 +203,8 @@ function renderBrief() {
     <span>${brief.next_actions?.length || 0} actions</span>
     <span>${brief.audit?.closed || 0} closed</span>
     ${brief.alerts?.groups ? `<span>${brief.alerts.groups} alert group · ${(Math.round((brief.alerts.compression_ratio || 0) * 1000) / 10)}% compressed</span>` : ""}
-    ${brief.alerts?.decision ? `<span>${escapeHtml(brief.alerts.decision)} · FP ${Math.round((brief.alerts.false_alarm_probability || 0) * 100)}%</span>` : ""}`;
+    ${brief.alerts?.decision ? `<span>${escapeHtml(brief.alerts.decision)} · FP ${Math.round((brief.alerts.false_alarm_probability || 0) * 100)}%</span>` : ""}
+    ${brief.alerts?.storm?.detected ? `<span>STORM ${brief.alerts.storm.peak_per_minute}/min</span>` : ""}`;
   $("#brief-what").textContent = brief.what || "";
   $("#brief-donot").textContent = (brief.do_not || []).join(" · ");
   $("#brief-actions").innerHTML = (brief.next_actions || [])
@@ -530,6 +531,11 @@ function renderAlerts() {
   const policies = data.policies || [];
   const brain = data.brain || {};
   const llm = brain.llm || {};
+  const storm = data.storm || {};
+  $("#alert-storm").classList.toggle("hidden", !storm.detected);
+  $("#alert-storm").textContent = storm.detected
+    ? `⚠ 告警风暴：峰值 ${storm.peak_per_minute}/min（阈值 ${storm.threshold}）· 已压缩为 ${groups.length} 个根因组`
+    : "";
   $("#alert-group-count").textContent = `${groups.length} groups`;
   $("#alert-brain").textContent = `B R A I N · Laya ${llm.enabled ? "+ LLM" : "only (LLM off)"} · ${Object.entries(brain.actions || {}).map(([k, v]) => `${k}:${v}`).join(" · ")}`;
   $("#alert-summary").innerHTML = `
