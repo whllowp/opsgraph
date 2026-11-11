@@ -145,6 +145,7 @@
           <button class="tab" data-tab="blast" role="tab">影响面</button>
           <button class="tab" data-tab="timeline" role="tab">时间线</button>
           <button class="tab" data-tab="alerts" role="tab">告警</button>
+          <button class="tab" data-tab="partial" role="tab">盲区</button>
           <button class="tab" data-tab="agents" role="tab">Agent</button>
           <button class="tab" data-tab="code" role="tab">代码</button>
           <button class="tab" data-tab="queries" role="tab">查询</button>
@@ -206,6 +207,15 @@
           <section class="panel-block">
             <div class="section-head"><span>告警组详情</span><em id="alert-detail-count">—</em></div>
             <div class="alert-detail" id="alert-detail"></div>
+          </section>
+        </div>
+
+        <div class="tab-panel" id="panel-partial">
+          <section class="panel-block">
+            <div class="section-head"><span>60% 覆盖下的 RCA</span><em id="partial-state">—</em></div>
+            <div class="code-summary" id="partial-summary"></div>
+            <div class="partial-coverage" id="partial-coverage"></div>
+            <div class="partial-iterations" id="partial-iterations-list"></div>
           </section>
         </div>
 

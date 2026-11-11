@@ -24,6 +24,8 @@ artifacts/*.md
 !artifacts/alerts.md
 !artifacts/alerts_node_failure.json
 !artifacts/alerts_node_failure.md
+!artifacts/partial_rca.json
+!artifacts/partial-rca.md
 !artifacts/code-fixes.patch
 data/code_rca/ebpf_samples.json
 .venv/

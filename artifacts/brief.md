@@ -51,6 +51,7 @@ payment-gateway P99 2255ms（SLO 800ms）（基线 112ms，+1915%），错误率
 - `agents`：{'source': 'agentsight.snapshot', 'mode': 'replay', 'sessions': 4}
 - `code`：{'source': 'ebpf.code_stack + REA', 'mode': 'replay + real perf calibration', 'iterations': 10, 'real_perf': '10/10 C 金融故障通过真实 perf 栈定位并修复。'}
 - `alerts`：{'source': 'alert policy engine', 'mode': 'replay', 'input_events': 206, 'groups': 1}
+- `partial`：{'source': 'partial-observability dossier', 'mode': 'replay + knowledge', 'coverage_pct': 60.0}
 - `umodel`：{}
 
 ## 小白版

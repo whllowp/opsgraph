@@ -16,6 +16,8 @@ OpsGraph is a Python reference implementation of eBPF-observed operational graph
 - `opsgraph/laya.py` — explainable alert decision model (probability + expected loss).
 - `opsgraph/llm.py` — optional LLM proposer, strict JSON, disabled without credentials.
 - `opsgraph/brain.py` — Laya + LLM combination and guardrails.
+- `opsgraph/partial.py` — 60%-coverage Bayesian RCA + 10-step recovery; fixture in `partial_cases.py`.
+- `data/knowledge/failure_signatures.json` — versioned failure knowledge.
 - `config/alert_policies.json` — alert policy-as-code.
 - `opsgraph/verification.py` — executable SLO/approval/regression checks.
 - `opsgraph/brief_history.py` — action state machine + append-only audit ledger.
@@ -38,6 +40,7 @@ python -m opsgraph baseline
 python -m opsgraph code-demo
 python -m opsgraph brief
 python -m opsgraph alerts
+python -m opsgraph partial-demo
 python -m opsgraph alert-policy --list
 python -m opsgraph approvals
 python -m opsgraph code-ingest --input perf-stacks.txt --case case-01
@@ -78,6 +81,9 @@ node --check console/app.js
 - Node-only alerts must stay watch/suppress, never page a service root.
 - NodeNotReady may become a node root only through pod->node->service correlation; service symptoms must be re-parented/inhibited, not paged separately.
 - Alert storm mode (`alerts --node-failure`) is an explicit simulation and writes separate artifacts; never overwrite the normal `alerts.json`.
+- In partial-observability mode, missing eBPF data is never evidence of health. A blind service must remain a candidate until another source (metrics/logs/config/knowledge/probe) excludes it.
+- The 60% case's `root_hint` is test-only; the inference engine must not read it.
+- Partial recovery must pass an SLO/verification step and propose coverage hardening, not just apply a rollback.
 - Update `docs/en`-style paired docs only if the project gains bilingual docs; currently Chinese README plus English code comments is intentional.
 - Regenerate `model/` after changing `ontology.py` (`python -m opsgraph model`).
 

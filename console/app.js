@@ -129,6 +129,7 @@ function renderAll() {
   renderTimeline();
   renderAgents();
   renderAlerts();
+  renderPartial();
   renderCodeRca();
   renderQueries();
   renderGraph();
@@ -204,7 +205,8 @@ function renderBrief() {
     <span>${brief.audit?.closed || 0} closed</span>
     ${brief.alerts?.groups ? `<span>${brief.alerts.groups} alert group · ${(Math.round((brief.alerts.compression_ratio || 0) * 1000) / 10)}% compressed</span>` : ""}
     ${brief.alerts?.decision ? `<span>${escapeHtml(brief.alerts.decision)} · FP ${Math.round((brief.alerts.false_alarm_probability || 0) * 100)}%</span>` : ""}
-    ${brief.alerts?.storm?.detected ? `<span>STORM ${brief.alerts.storm.peak_per_minute}/min</span>` : ""}`;
+    ${brief.alerts?.storm?.detected ? `<span>STORM ${brief.alerts.storm.peak_per_minute}/min</span>` : ""}
+    ${brief.partial?.coverage_pct ? `<span>coverage ${brief.partial.coverage_pct}% · ${brief.partial.recovered ? "recovered" : "inferring"}</span>` : ""}`;
   $("#brief-what").textContent = brief.what || "";
   $("#brief-donot").textContent = (brief.do_not || []).join(" · ");
   $("#brief-actions").innerHTML = (brief.next_actions || [])
@@ -604,6 +606,46 @@ function renderAlerts() {
 function selectAlert(id) {
   state.selectedAlert = id;
   renderAlerts();
+}
+
+function renderPartial() {
+  const data = state.data.partial || {};
+  const summary = data.summary || {};
+  const coverage = data.coverage || {};
+  const iterations = data.iterations || [];
+  if (!iterations.length) {
+    $("#partial-state").textContent = "—";
+    $("#partial-summary").innerHTML = "";
+    $("#partial-coverage").innerHTML = "";
+    $("#partial-iterations-list").innerHTML = "暂无盲区诊断数据；运行 python -m opsgraph partial-demo";
+    return;
+  }
+  $("#partial-state").textContent = summary.recovered ? "RECOVERED" : "ACTIVE";
+  $("#partial-summary").innerHTML = `
+    <div><strong>${summary.iterations || 0}</strong><span>iterations</span></div>
+    <div><strong>${coverage.service_pct || 0}%</strong><span>eBPF coverage</span></div>
+    <div><strong>${Math.round((summary.confidence || 0) * 100)}%</strong><span>root confidence</span></div>
+    <div><strong>${summary.final_p99_ms || 0}ms</strong><span>P99 after</span></div>`;
+  $("#partial-coverage").innerHTML = `
+    <span class="partial-covered">covered ${coverage.covered_services}/${coverage.services} services</span>
+    <span class="partial-covered">covered ${coverage.covered_edges}/${coverage.edges} edges</span>
+    ${(coverage.blind_services || [])
+      .map((name) => `<span class="partial-blind">blind ${escapeHtml(name)}</span>`)
+      .join("")}
+    <span class="partial-blind">inferred root ${escapeHtml(summary.root_service || "-")}</span>`;
+  $("#partial-iterations-list").innerHTML = iterations
+    .map(
+      (item) => `
+      <div class="partial-step">
+        <span class="n">${item.iteration}</span>
+        <div>
+          <strong>${escapeHtml(item.action || "")}</strong>
+          <em>${escapeHtml(item.phase || "")} · ${escapeHtml(item.source || "")} · ${escapeHtml(item.top_hypothesis || "-")}</em>
+        </div>
+        <span class="conf">${Math.round((item.confidence || 0) * 100)}%</span>
+      </div>`
+    )
+    .join("");
 }
 
 function renderCodeRca() {

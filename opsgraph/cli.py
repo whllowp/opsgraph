@@ -21,6 +21,7 @@ from .codeowners import OwnersIndex
 from .config import ARTIFACT_DIR, MODEL_DIR, PROJECT_ROOT, REPLAY_DIR, UMODEL_ADDR, WORKSPACE
 from .console_server import serve
 from .model_pack import build_model_pack
+from .partial import run_partial_rea, write_partial_artifacts
 from .pipeline import load_snapshot_from_umodel, run_pipeline
 from .scenario import generate_replay
 from .umodel_client import UModelClient
@@ -316,6 +317,29 @@ def cmd_real_perf(args: argparse.Namespace) -> int:
     return 0 if result.get("fixed") == result.get("cases") else 1
 
 
+def cmd_partial(args: argparse.Namespace) -> int:
+    result = run_partial_rea(iterations=args.iterations)
+    paths = write_partial_artifacts(result, ARTIFACT_DIR)
+    summary = result["summary"]
+    coverage = result["coverage"]
+    print("=" * 78)
+    print("Partial-observability RCA / recovery")
+    print("=" * 78)
+    print(f"Coverage:        {coverage['service_pct']}% services / {coverage['edge_pct']}% edges")
+    print(f"Blind spots:     {', '.join(coverage['blind_services'])}")
+    print(f"Iterations:      {summary['iterations']}")
+    print(
+        f"Root:            {summary['root_service']} / {summary['root_cause']} "
+        f"({summary['confidence'] * 100:.1f}%)"
+    )
+    print(
+        f"Recovered:       {'PASS' if summary['recovered'] else 'FAIL'} · P99 {summary['final_p99_ms']}ms"
+    )
+    print(f"Artifacts:       {paths['json']}")
+    print(f"Report:          {paths['report']}")
+    return 0 if summary["recovered"] else 1
+
+
 def cmd_alert_policy(args: argparse.Namespace) -> int:
     path = args.policy or DEFAULT_POLICY_PATH
     config = load_policies(path)
@@ -402,7 +426,7 @@ def cmd_brief(args: argparse.Namespace) -> int:
         print("artifacts not found; run `python -m opsgraph demo` first", file=sys.stderr)
         return 1
     optional = {}
-    for name in ("agents", "code_rca", "code_graph", "real_perf_rea", "alerts"):
+    for name in ("agents", "code_rca", "code_graph", "real_perf_rea", "alerts", "partial_rca"):
         path = ARTIFACT_DIR / f"{name}.json"
         optional[name] = read_json(path) if path.exists() else {}
     policy_path = ARTIFACT_DIR / "policy.json"
@@ -421,6 +445,7 @@ def cmd_brief(args: argparse.Namespace) -> int:
         codeowners=OwnersIndex(PROJECT_ROOT),
         approvals=approvals.requests,
         alerts=optional["alerts"],
+        partial=optional["partial_rca"],
     )
     ledger = ActionLedger(ARTIFACT_DIR / "brief_history.jsonl")
     brief = ledger.reconcile(
@@ -634,6 +659,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--disable", action="store_true")
     p.add_argument("--policy", default="", help="override policy JSON path")
     p.set_defaults(func=cmd_alert_policy)
+
+    p = sub.add_parser("partial-demo", help="60%% coverage inference + 10-step recovery")
+    _add_common(p)
+    p.add_argument("--iterations", type=int, default=10)
+    p.set_defaults(func=cmd_partial)
 
     p = sub.add_parser("approvals", help="list or decide approval tickets")
     _add_common(p)

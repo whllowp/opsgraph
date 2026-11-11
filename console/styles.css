@@ -645,6 +645,15 @@ a { color: inherit; text-decoration: none; }
 .alert-member { display: grid; grid-template-columns: 1fr 58px 62px; gap: 5px; padding: 3px 0; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 7.6px; }
 .alert-member span:first-child { color: #dce8f6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .alert-member span:last-child { color: var(--dim); text-align: right; }
+.partial-coverage { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+.partial-covered { padding: 3px 5px; border: 1px solid rgba(45, 212, 191, 0.25); border-radius: 4px; color: #9ce8dc; font-family: var(--mono); font-size: 7.4px; }
+.partial-blind { padding: 3px 5px; border: 1px solid rgba(255, 154, 162, 0.35); border-radius: 4px; color: #ffb7bb; font-family: var(--mono); font-size: 7.4px; }
+.partial-iterations { display: flex; flex-direction: column; gap: 4px; }
+.partial-step { display: grid; grid-template-columns: 20px 1fr 34px; gap: 5px; padding: 4px 5px; border: 1px solid var(--line); border-radius: 5px; background: rgba(10, 17, 29, 0.5); }
+.partial-step .n { color: var(--amber); font-family: var(--mono); font-size: 8px; }
+.partial-step strong { display: block; color: #e3edf9; font-size: 8.8px; font-weight: 600; }
+.partial-step em { display: block; color: var(--dim); font-family: var(--mono); font-size: 7.2px; font-style: normal; margin-top: 2px; }
+.partial-step .conf { color: var(--teal); font-family: var(--mono); font-size: 7.4px; text-align: right; }
 .code-card-status { padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 7.5px; text-transform: uppercase; }
 .code-card-status.fixed { color: #a7f3e7; background: rgba(45, 212, 191, 0.1); border: 1px solid rgba(45, 212, 191, 0.25); }
 .code-card-status.failed { color: #ffb3bd; background: rgba(255, 91, 110, 0.1); border: 1px solid rgba(255, 91, 110, 0.3); }

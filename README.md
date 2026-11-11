@@ -426,6 +426,47 @@ CI 新增 `real-perf` job（Linux + perf，**硬门禁**，不再 `continue-on-e
 
 详见 [代码级 RCA / REA](docs/code-rca.md#63-真实-perf-10-次-c-rea)。
 
+## 60% 覆盖下的 RCA 与恢复
+
+现网 eBPF 覆盖不全时，不能把“没观测到”当成健康。
+
+```bash
+python -m opsgraph partial-demo
+```
+
+场景：
+
+- 10 个服务 / 15 条边，各 60% 有 eBPF；
+- 根因在盲区 `ledger-service` 的 DB 连接池；
+- eBPF 只看到 `checkout -> payment-gateway` 变慢。
+
+十次迭代从 60% 证据推断：
+
+```text
+1 coverage audit   60% / ledger/risk/inventory/notification blind
+2 ebpf path        only checkout/gateway slow
+3 APM metrics      ledger pool active=max, wait=420ms
+4 logs             connection pool exhausted
+5 config diff      max_pool 50 -> 10
+6 knowledge        db-pool-exhaustion signature
+7 pool probe       timeout confirmed
+8 remediation      rollback max_pool + restart pool
+9 verify           P99 1620 -> 620ms, recovered
+10 coverage        add DB uprobe; 60% -> 70%
+```
+
+结果：
+
+```text
+root ledger-service / DB 连接池耗尽 (99%)
+recovered PASS, P99 620ms
+blind spot true
+```
+
+![盲区 RCA](docs/partial-tab.png)
+
+详见 [60% 覆盖下的 RCA](docs/partial-observability.md)。
+
 ## 智能监控告警
 
 不只是“发告警”，而是把告警风暴压成根因组：
@@ -599,6 +640,7 @@ python -m opsgraph code-demo                            # 10 次代码 RCA/REA �
 python -m opsgraph real-perf-rea                        # Linux: 真实 perf + C 10 次闭环
 python -m opsgraph alerts                               # 智能告警压缩 + 自动 RCA
 python -m opsgraph alerts --node-failure                # 节点故障 / 告警风暴演练
+python -m opsgraph partial-demo                         # 60% 覆盖推断 + 10 次恢复
 python -m opsgraph alert-policy --list                  # 查看告警策略
 python -m opsgraph brief                                # 值班决策简报
 python -m opsgraph approvals                            # 审批单
@@ -611,7 +653,7 @@ python -m opsgraph baseline                             # 历史基线 + claim a
 python -m opsgraph serve --port 18088                   # 控制台
 python -m opsgraph doctor                               # UModel 连通性/计数
 python -m opsgraph query ".entity with(domain='svc', name='svc.service') | limit 5"
-python -m unittest discover -s tests -v                 # 65 个单测
+python -m unittest discover -s tests -v                 # 69 个单测
 ```
 
 ## UModel 查询示例
@@ -657,6 +699,8 @@ opsgraph/
 │   ├── laya.py            # 可解释告警决策模型
 │   ├── llm.py             # 可选 LLM 提议者（严格 JSON + 回退）
 │   ├── brain.py           # Laya + LLM 组合与守卫
+│   ├── partial.py         # 60% 覆盖下的贝叶斯推断与恢复
+│   ├── partial_cases.py   # 盲区故障 fixture 与十次探测
 │   ├── verification.py    # 可执行 SLO / 审批 / 回归检查
 │   ├── brief_history.py   # 动作状态机与审计链
 │   ├── approvals.py       # require_approval -> 审批单
@@ -670,10 +714,11 @@ opsgraph/
 ├── demo/fintech/          # 金融故障代码库 + 10 个回归用例
 ├── demo/fintech_c/        # C 金融故障 + 真实 perf 10 次 REA
 ├── data/replay/           # l7_flow_log.csv / agentsight_snapshot.json
+├── data/knowledge/        # failure_signatures.json 故障知识
 ├── data/history/          # agent_history.json（历史基线）
 ├── data/code_rca/         # eBPF 代码栈回放
 ├── console/               # 零依赖 SVG 图控制台（服务 + AI lane + 代码）
-├── artifacts/             # snapshot / analysis / agents / alerts / code_rca / real_perf / brief
+├── artifacts/             # snapshot / analysis / agents / alerts / partial / code_rca / real_perf / brief
 ├── docs/
 ├── tests/
 └── run-demo.ps1

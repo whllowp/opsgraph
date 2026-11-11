@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-11T16:40:26+00:00",
+  "generated_at": "2026-11-11T17:17:43+00:00",
   "status": "mitigation_pending",
   "severity": "P1",
   "headline": "Payment P99 SLO breach：根因 checkout-service（78%），受害 payment-gateway；Agent 处置尚未验证。",
@@ -39,6 +39,21 @@
       "threshold": 20,
       "input_events": 206
     }
+  },
+  "partial": {
+    "title": "支付 P99 故障，eBPF 只覆盖 60%",
+    "root_service": "ledger-service",
+    "root_cause": "DB 连接池耗尽",
+    "confidence": 0.99,
+    "recovered": true,
+    "iterations": 10,
+    "coverage_pct": 60.0,
+    "blind_spots": [
+      "ledger-service",
+      "risk-control",
+      "inventory-service",
+      "notification-service"
+    ]
   },
   "code": {
     "fixed": 10,
@@ -191,6 +206,11 @@
       "mode": "replay",
       "input_events": 206,
       "groups": 1
+    },
+    "partial": {
+      "source": "partial-observability dossier",
+      "mode": "replay + knowledge",
+      "coverage_pct": 60.0
     },
     "umodel": {}
   },

@@ -1,0 +1,728 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-11T17:17:33+00:00",
+  "case_id": "partial-60-ledger-pool",
+  "title": "支付 P99 故障，eBPF 只覆盖 60%",
+  "victim": "payment-gateway",
+  "slo_p99_ms": 800,
+  "coverage": {
+    "services": 10,
+    "covered_services": 6,
+    "service_pct": 60.0,
+    "edges": 15,
+    "covered_edges": 9,
+    "edge_pct": 60.0,
+    "blind_services": [
+      "ledger-service",
+      "risk-control",
+      "inventory-service",
+      "notification-service"
+    ]
+  },
+  "knowledge": {
+    "id": "db-pool-exhaustion",
+    "name": "Database connection pool exhaustion",
+    "signals": [
+      "pool_active == pool_max",
+      "pool_wait_ms > 200",
+      "connection timeout in logs",
+      "pool max size decreased",
+      "service has no eBPF internals"
+    ],
+    "likelihoods": {
+      "ledger_pool": 0.98,
+      "gateway_overload": 0.08,
+      "checkout_retry": 0.05,
+      "network_latency": 0.12,
+      "node_pressure": 0.06
+    },
+    "runbook": "Restore the previous pool size, drain/restart the pool, verify P99 and errors; then add DB-side eBPF coverage."
+  },
+  "iterations": [
+    {
+      "iteration": 1,
+      "phase": "probe",
+      "probe_id": "coverage-audit",
+      "action": "审计 eBPF 覆盖率与盲区",
+      "source": "coverage",
+      "cost": 0.2,
+      "observations": [
+        "10 个服务中只有 6 个有 eBPF 内部探针",
+        "ledger/risk/inventory/notification 没有进程内栈",
+        "5 条支付路径边没有 eBPF 流量，不能把“没观测到”当成健康"
+      ],
+      "posterior": {
+        "ledger_pool": 0.2,
+        "gateway_overload": 0.25,
+        "checkout_retry": 0.2,
+        "network_latency": 0.2,
+        "node_pressure": 0.15
+      },
+      "ranking": [
+        {
+          "hypothesis": "gateway_overload",
+          "service": "payment-gateway",
+          "title": "支付网关自身过载",
+          "probability": 0.25
+        },
+        {
+          "hypothesis": "ledger_pool",
+          "service": "ledger-service",
+          "title": "DB 连接池耗尽",
+          "probability": 0.2
+        },
+        {
+          "hypothesis": "checkout_retry",
+          "service": "checkout-service",
+          "title": "checkout 重试放大",
+          "probability": 0.2
+        },
+        {
+          "hypothesis": "network_latency",
+          "service": "payment-router",
+          "title": "网络/下游延迟",
+          "probability": 0.2
+        },
+        {
+          "hypothesis": "node_pressure",
+          "service": "node-3",
+          "title": "节点资源压力",
+          "probability": 0.15
+        }
+      ],
+      "top_hypothesis": "gateway_overload",
+      "confidence": 0.25,
+      "coverage": {
+        "services": 10,
+        "covered_services": 6,
+        "service_pct": 60.0,
+        "edges": 15,
+        "covered_edges": 9,
+        "edge_pct": 60.0,
+        "blind_services": [
+          "ledger-service",
+          "risk-control",
+          "inventory-service",
+          "notification-service"
+        ]
+      },
+      "knowledge_match": ""
+    },
+    {
+      "iteration": 2,
+      "phase": "probe",
+      "probe_id": "ebpf-path",
+      "action": "从已覆盖的 eBPF 边看支付路径",
+      "source": "ebpf",
+      "cost": 0.3,
+      "observations": [
+        "checkout -> payment-gateway P99 1620ms，出向放大",
+        "payment-gateway -> payment-router P99 1500ms",
+        "payment-gateway -> ledger 边没有 eBPF 数据，是盲区而非正常"
+      ],
+      "posterior": {
+        "ledger_pool": 0.243946,
+        "gateway_overload": 0.188341,
+        "checkout_retry": 0.179372,
+        "network_latency": 0.29417,
+        "node_pressure": 0.09417
+      },
+      "ranking": [
+        {
+          "hypothesis": "network_latency",
+          "service": "payment-router",
+          "title": "网络/下游延迟",
+          "probability": 0.29417
+        },
+        {
+          "hypothesis": "ledger_pool",
+          "service": "ledger-service",
+          "title": "DB 连接池耗尽",
+          "probability": 0.243946
+        },
+        {
+          "hypothesis": "gateway_overload",
+          "service": "payment-gateway",
+          "title": "支付网关自身过载",
+          "probability": 0.188341
+        },
+        {
+          "hypothesis": "checkout_retry",
+          "service": "checkout-service",
+          "title": "checkout 重试放大",
+          "probability": 0.179372
+        },
+        {
+          "hypothesis": "node_pressure",
+          "service": "node-3",
+          "title": "节点资源压力",
+          "probability": 0.09417
+        }
+      ],
+      "top_hypothesis": "network_latency",
+      "confidence": 0.2942,
+      "coverage": {
+        "services": 10,
+        "covered_services": 6,
+        "service_pct": 60.0,
+        "edges": 15,
+        "covered_edges": 9,
+        "edge_pct": 60.0,
+        "blind_services": [
+          "ledger-service",
+          "risk-control",
+          "inventory-service",
+          "notification-service"
+        ]
+      },
+      "knowledge_match": ""
+    },
+    {
+      "iteration": 3,
+      "phase": "probe",
+      "probe_id": "apm-metrics",
+      "action": "查询 APM 指标补足盲区",
+      "source": "metrics",
+      "cost": 0.5,
+      "observations": [
+        "ledger-service P99 1480ms，错误率 2%",
+        "DB pool active=10/max=10，等待 420ms",
+        "payment-gateway 自身 CPU/队列正常，像是下游阻塞"
+      ],
+      "posterior": {
+        "ledger_pool": 0.467183,
+        "gateway_overload": 0.115115,
+        "checkout_retry": 0.109633,
+        "network_latency": 0.269697,
+        "node_pressure": 0.038371
+      },
+      "ranking": [
+        {
+          "hypothesis": "ledger_pool",
+          "service": "ledger-service",
+          "title": "DB 连接池耗尽",
+          "probability": 0.467183
+        },
+        {
+          "hypothesis": "network_latency",
+          "service": "payment-router",
+          "title": "网络/下游延迟",
+          "probability": 0.269697
+        },
+        {
+          "hypothesis": "gateway_overload",
+          "service": "payment-gateway",
+          "title": "支付网关自身过载",
+          "probability": 0.115115
+        },
+        {
+          "hypothesis": "checkout_retry",
+          "service": "checkout-service",
+          "title": "checkout 重试放大",
+          "probability": 0.109633
+        },
+        {
+          "hypothesis": "node_pressure",
+          "service": "node-3",
+          "title": "节点资源压力",
+          "probability": 0.038371
+        }
+      ],
+      "top_hypothesis": "ledger_pool",
+      "confidence": 0.4672,
+      "coverage": {
+        "services": 10,
+        "covered_services": 6,
+        "service_pct": 60.0,
+        "edges": 15,
+        "covered_edges": 9,
+        "edge_pct": 60.0,
+        "blind_services": [
+          "ledger-service",
+          "risk-control",
+          "inventory-service",
+          "notification-service"
+        ]
+      },
+      "knowledge_match": ""
+    },
+    {
+      "iteration": 4,
+      "phase": "probe",
+      "probe_id": "log-signature",
+      "action": "检索盲区服务的错误日志",
+      "source": "logs",
+      "cost": 0.6,
+      "observations": [
+        "ledger-service: connection pool exhausted; timeout waiting for connection",
+        "错误集中在 00:13 之后，与 pool 配置变更时间一致"
+      ],
+      "posterior": {
+        "ledger_pool": 0.774934,
+        "gateway_overload": 0.03937,
+        "checkout_retry": 0.037495,
+        "network_latency": 0.138358,
+        "node_pressure": 0.009842
+      },
+      "ranking": [
+        {
+          "hypothesis": "ledger_pool",
+          "service": "ledger-service",
+          "title": "DB 连接池耗尽",
+          "probability": 0.774934
+        },
+        {
+          "hypothesis": "network_latency",
+          "service": "payment-router",
+          "title": "网络/下游延迟",
+          "probability": 0.138358
+        },
+        {
+          "hypothesis": "gateway_overload",
+          "service": "payment-gateway",
+          "title": "支付网关自身过载",
+          "probability": 0.03937
+        },
+        {
+          "hypothesis": "checkout_retry",
+          "service": "checkout-service",
+          "title": "checkout 重试放大",
+          "probability": 0.037495
+        },
+        {
+          "hypothesis": "node_pressure",
+          "service": "node-3",
+          "title": "节点资源压力",
+          "probability": 0.009842
+        }
+      ],
+      "top_hypothesis": "ledger_pool",
+      "confidence": 0.7749,
+      "coverage": {
+        "services": 10,
+        "covered_services": 6,
+        "service_pct": 60.0,
+        "edges": 15,
+        "covered_edges": 9,
+        "edge_pct": 60.0,
+        "blind_services": [
+          "ledger-service",
+          "risk-control",
+          "inventory-service",
+          "notification-service"
+        ]
+      },
+      "knowledge_match": ""
+    },
+    {
+      "iteration": 5,
+      "phase": "probe",
+      "probe_id": "config-diff",
+      "action": "对比变更配置",
+      "source": "config",
+      "cost": 0.4,
+      "observations": [
+        "ledger-service DB max_pool 50 -> 10 at 00:12",
+        "变更与 pool exhausted 日志只差 1 分钟"
+      ],
+      "posterior": {
+        "ledger_pool": 0.952554,
+        "gateway_overload": 0.004913,
+        "checkout_retry": 0.007019,
+        "network_latency": 0.034532,
+        "node_pressure": 0.000983
+      },
+      "ranking": [
+        {
+          "hypothesis": "ledger_pool",
+          "service": "ledger-service",
+          "title": "DB 连接池耗尽",
+          "probability": 0.952554
+        },
+        {
+          "hypothesis": "network_latency",
+          "service": "payment-router",
+          "title": "网络/下游延迟",
+          "probability": 0.034532
+        },
+        {
+          "hypothesis": "checkout_retry",
+          "service": "checkout-service",
+          "title": "checkout 重试放大",
+          "probability": 0.007019
+        },
+        {
+          "hypothesis": "gateway_overload",
+          "service": "payment-gateway",
+          "title": "支付网关自身过载",
+          "probability": 0.004913
+        },
+        {
+          "hypothesis": "node_pressure",
+          "service": "node-3",
+          "title": "节点资源压力",
+          "probability": 0.000983
+        }
+      ],
+      "top_hypothesis": "ledger_pool",
+      "confidence": 0.9526,
+      "coverage": {
+        "services": 10,
+        "covered_services": 6,
+        "service_pct": 60.0,
+        "edges": 15,
+        "covered_edges": 9,
+        "edge_pct": 60.0,
+        "blind_services": [
+          "ledger-service",
+          "risk-control",
+          "inventory-service",
+          "notification-service"
+        ]
+      },
+      "knowledge_match": ""
+    },
+    {
+      "iteration": 6,
+      "phase": "probe",
+      "probe_id": "knowledge-match",
+      "action": "匹配历史故障知识",
+      "source": "knowledge",
+      "cost": 0.2,
+      "observations": [
+        "命中历史签名 db-pool-exhaustion",
+        "pool_active==max + wait>200ms + max_pool 下调 = 池耗尽"
+      ],
+      "posterior": {
+        "ledger_pool": 0.994674,
+        "gateway_overload": 0.000311,
+        "checkout_retry": 0.000592,
+        "network_latency": 0.004371,
+        "node_pressure": 5.2e-05
+      },
+      "ranking": [
+        {
+          "hypothesis": "ledger_pool",
+          "service": "ledger-service",
+          "title": "DB 连接池耗尽",
+          "probability": 0.994674
+        },
+        {
+          "hypothesis": "network_latency",
+          "service": "payment-router",
+          "title": "网络/下游延迟",
+          "probability": 0.004371
+        },
+        {
+          "hypothesis": "checkout_retry",
+          "service": "checkout-service",
+          "title": "checkout 重试放大",
+          "probability": 0.000592
+        },
+        {
+          "hypothesis": "gateway_overload",
+          "service": "payment-gateway",
+          "title": "支付网关自身过载",
+          "probability": 0.000311
+        },
+        {
+          "hypothesis": "node_pressure",
+          "service": "node-3",
+          "title": "节点资源压力",
+          "probability": 5.2e-05
+        }
+      ],
+      "top_hypothesis": "ledger_pool",
+      "confidence": 0.99,
+      "coverage": {
+        "services": 10,
+        "covered_services": 6,
+        "service_pct": 60.0,
+        "edges": 15,
+        "covered_edges": 9,
+        "edge_pct": 60.0,
+        "blind_services": [
+          "ledger-service",
+          "risk-control",
+          "inventory-service",
+          "notification-service"
+        ]
+      },
+      "knowledge_match": "db-pool-exhaustion"
+    },
+    {
+      "iteration": 7,
+      "phase": "probe",
+      "probe_id": "pool-probe",
+      "action": "主动执行连接池探针",
+      "source": "synthetic",
+      "cost": 0.8,
+      "observations": [
+        "获取连接超时；活跃连接无法释放",
+        "重启连接池后探针恢复，证明不是网络问题"
+      ],
+      "posterior": {
+        "ledger_pool": 0.999698,
+        "gateway_overload": 1.3e-05,
+        "checkout_retry": 2.4e-05,
+        "network_latency": 0.000264,
+        "node_pressure": 2e-06
+      },
+      "ranking": [
+        {
+          "hypothesis": "ledger_pool",
+          "service": "ledger-service",
+          "title": "DB 连接池耗尽",
+          "probability": 0.999698
+        },
+        {
+          "hypothesis": "network_latency",
+          "service": "payment-router",
+          "title": "网络/下游延迟",
+          "probability": 0.000264
+        },
+        {
+          "hypothesis": "checkout_retry",
+          "service": "checkout-service",
+          "title": "checkout 重试放大",
+          "probability": 2.4e-05
+        },
+        {
+          "hypothesis": "gateway_overload",
+          "service": "payment-gateway",
+          "title": "支付网关自身过载",
+          "probability": 1.3e-05
+        },
+        {
+          "hypothesis": "node_pressure",
+          "service": "node-3",
+          "title": "节点资源压力",
+          "probability": 2e-06
+        }
+      ],
+      "top_hypothesis": "ledger_pool",
+      "confidence": 0.99,
+      "coverage": {
+        "services": 10,
+        "covered_services": 6,
+        "service_pct": 60.0,
+        "edges": 15,
+        "covered_edges": 9,
+        "edge_pct": 60.0,
+        "blind_services": [
+          "ledger-service",
+          "risk-control",
+          "inventory-service",
+          "notification-service"
+        ]
+      },
+      "knowledge_match": ""
+    },
+    {
+      "iteration": 8,
+      "phase": "remediation",
+      "action": "回滚 ledger-service DB max_pool 10 -> 50 并滚动重启连接池",
+      "source": "config",
+      "why": "配置变更与 pool 等待同时发生；回滚是最小、可逆、可验证的恢复动作。",
+      "before": {
+        "payment_gateway_p99_ms": 1620,
+        "error_rate": 0.018,
+        "pool_wait_ms": 420
+      },
+      "after": {
+        "payment_gateway_p99_ms": 620,
+        "error_rate": 0.004,
+        "pool_wait_ms": 30
+      },
+      "recovered": true,
+      "posterior": {
+        "ledger_pool": 0.999698,
+        "gateway_overload": 1.3e-05,
+        "checkout_retry": 2.4e-05,
+        "network_latency": 0.000264,
+        "node_pressure": 2e-06
+      },
+      "ranking": [
+        {
+          "hypothesis": "ledger_pool",
+          "service": "ledger-service",
+          "title": "DB 连接池耗尽",
+          "probability": 0.999698
+        },
+        {
+          "hypothesis": "network_latency",
+          "service": "payment-router",
+          "title": "网络/下游延迟",
+          "probability": 0.000264
+        },
+        {
+          "hypothesis": "checkout_retry",
+          "service": "checkout-service",
+          "title": "checkout 重试放大",
+          "probability": 2.4e-05
+        },
+        {
+          "hypothesis": "gateway_overload",
+          "service": "payment-gateway",
+          "title": "支付网关自身过载",
+          "probability": 1.3e-05
+        },
+        {
+          "hypothesis": "node_pressure",
+          "service": "node-3",
+          "title": "节点资源压力",
+          "probability": 2e-06
+        }
+      ],
+      "top_hypothesis": "ledger_pool",
+      "confidence": 0.99,
+      "coverage": {
+        "services": 10,
+        "covered_services": 6,
+        "service_pct": 60.0,
+        "edges": 15,
+        "covered_edges": 9,
+        "edge_pct": 60.0,
+        "blind_services": [
+          "ledger-service",
+          "risk-control",
+          "inventory-service",
+          "notification-service"
+        ]
+      }
+    },
+    {
+      "iteration": 9,
+      "phase": "verify",
+      "action": "用 SLO 与错误率验证恢复",
+      "source": "slo",
+      "checks": [
+        {
+          "name": "payment-gateway P99 <= 800ms",
+          "actual": 620,
+          "passed": true
+        },
+        {
+          "name": "error rate <= 1%",
+          "actual": 0.004,
+          "passed": true
+        }
+      ],
+      "posterior": {
+        "ledger_pool": 0.999698,
+        "gateway_overload": 1.3e-05,
+        "checkout_retry": 2.4e-05,
+        "network_latency": 0.000264,
+        "node_pressure": 2e-06
+      },
+      "ranking": [
+        {
+          "hypothesis": "ledger_pool",
+          "service": "ledger-service",
+          "title": "DB 连接池耗尽",
+          "probability": 0.999698
+        },
+        {
+          "hypothesis": "network_latency",
+          "service": "payment-router",
+          "title": "网络/下游延迟",
+          "probability": 0.000264
+        },
+        {
+          "hypothesis": "checkout_retry",
+          "service": "checkout-service",
+          "title": "checkout 重试放大",
+          "probability": 2.4e-05
+        },
+        {
+          "hypothesis": "gateway_overload",
+          "service": "payment-gateway",
+          "title": "支付网关自身过载",
+          "probability": 1.3e-05
+        },
+        {
+          "hypothesis": "node_pressure",
+          "service": "node-3",
+          "title": "节点资源压力",
+          "probability": 2e-06
+        }
+      ],
+      "top_hypothesis": "ledger_pool",
+      "confidence": 0.99,
+      "coverage": {
+        "services": 10,
+        "covered_services": 6,
+        "service_pct": 60.0,
+        "edges": 15,
+        "covered_edges": 9,
+        "edge_pct": 60.0,
+        "blind_services": [
+          "ledger-service",
+          "risk-control",
+          "inventory-service",
+          "notification-service"
+        ]
+      }
+    },
+    {
+      "iteration": 10,
+      "phase": "coverage",
+      "action": "为 ledger-service 增加 DB 连接池 eBPF uprobe；覆盖率 60% -> 70%",
+      "source": "coverage",
+      "coverage_before": {
+        "services": 10,
+        "covered_services": 6,
+        "service_pct": 60.0,
+        "edges": 15,
+        "covered_edges": 9,
+        "edge_pct": 60.0,
+        "blind_services": [
+          "ledger-service",
+          "risk-control",
+          "inventory-service",
+          "notification-service"
+        ]
+      },
+      "coverage_after": {
+        "services": 10,
+        "covered_services": 7,
+        "service_pct": 70.0,
+        "edges": 15,
+        "covered_edges": 9,
+        "edge_pct": 60.0,
+        "blind_services": [
+          "risk-control",
+          "inventory-service",
+          "notification-service"
+        ]
+      },
+      "residual_risk": "其余 3 个盲区服务仍没有进程内探针"
+    }
+  ],
+  "summary": {
+    "iterations": 10,
+    "root_service": "ledger-service",
+    "root_cause": "DB 连接池耗尽",
+    "confidence": 0.99,
+    "recovered": true,
+    "coverage_pct": 60.0,
+    "blind_spot": true,
+    "slo_p99_ms": 800,
+    "final_p99_ms": 620
+  },
+  "recovery": {
+    "action": "回滚 ledger-service DB max_pool 10 -> 50 并滚动重启连接池",
+    "why": "配置变更与 pool 等待同时发生；回滚是最小、可逆、可验证的恢复动作。",
+    "before": {
+      "payment_gateway_p99_ms": 1620,
+      "error_rate": 0.018,
+      "pool_wait_ms": 420
+    },
+    "after": {
+      "payment_gateway_p99_ms": 620,
+      "error_rate": 0.004,
+      "pool_wait_ms": 30
+    },
+    "coverage_fix": "为 ledger-service 增加 DB 连接池 eBPF uprobe；覆盖率 60% -> 70%"
+  }
+}

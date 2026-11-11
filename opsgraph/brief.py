@@ -88,11 +88,13 @@ def build_brief(
     codeowners: Any = None,
     approvals: list[dict[str, Any]] | None = None,
     alerts: dict[str, Any] | None = None,
+    partial: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     agents = agents or {}
     policy = policy or []
     approvals = approvals or []
     alerts = alerts or {}
+    partial = partial or {}
     code_rca = code_rca or {}
     code_graph = code_graph or {}
     incident = _incident(snapshot)
@@ -273,6 +275,11 @@ def build_brief(
             "input_events": int((alerts.get("stats") or {}).get("input_events") or 0),
             "groups": int((alerts.get("stats") or {}).get("groups") or 0),
         },
+        "partial": {
+            "source": "partial-observability dossier",
+            "mode": "replay + knowledge",
+            "coverage_pct": (partial.get("coverage") or {}).get("service_pct", 0),
+        },
         "umodel": umodel_info or {},
     }
     return {
@@ -307,6 +314,16 @@ def build_brief(
             "brain": (alerts.get("brain") or {}).get("laya", {}).get("model", ""),
             "llm": (alerts.get("brain") or {}).get("llm", {}).get("enabled", False),
             "storm": alerts.get("storm") or {},
+        },
+        "partial": {
+            "title": partial.get("title", ""),
+            "root_service": (partial.get("summary") or {}).get("root_service", ""),
+            "root_cause": (partial.get("summary") or {}).get("root_cause", ""),
+            "confidence": (partial.get("summary") or {}).get("confidence", 0),
+            "recovered": bool((partial.get("summary") or {}).get("recovered")),
+            "iterations": (partial.get("summary") or {}).get("iterations", 0),
+            "coverage_pct": (partial.get("coverage") or {}).get("service_pct", 0),
+            "blind_spots": (partial.get("coverage") or {}).get("blind_services") or [],
         },
         "code": {
             "fixed": code_fixed,

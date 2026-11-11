@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "signatures": [
+    {
+      "id": "db-pool-exhaustion",
+      "name": "Database connection pool exhaustion",
+      "signals": [
+        "pool_active == pool_max",
+        "pool_wait_ms > 200",
+        "connection timeout in logs",
+        "pool max size decreased",
+        "service has no eBPF internals"
+      ],
+      "likelihoods": {
+        "ledger_pool": 0.98,
+        "gateway_overload": 0.08,
+        "checkout_retry": 0.05,
+        "network_latency": 0.12,
+        "node_pressure": 0.06
+      },
+      "runbook": "Restore the previous pool size, drain/restart the pool, verify P99 and errors; then add DB-side eBPF coverage."
+    }
+  ]
+}

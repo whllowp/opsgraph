@@ -185,6 +185,7 @@ def build_console_state(
     approvals: list[dict[str, Any]] | None = None,
     codeowners: Any = None,
     alerts: dict[str, Any] | None = None,
+    partial: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     visible_types = {
         "svc.service",
@@ -289,6 +290,7 @@ def build_console_state(
         codeowners=codeowners,
         approvals=approvals,
         alerts=alerts,
+        partial=partial,
     )
     return {
         "meta": {
@@ -319,6 +321,7 @@ def build_console_state(
         "code_graph": code_graph or {},
         "real_perf": real_perf or {},
         "alerts": alerts or {},
+        "partial": partial or {},
         "brief": brief,
         "incident": next(
             (
@@ -346,6 +349,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     approvals: list[dict[str, Any]] = []
     codeowners: Any = None
     alerts: dict[str, Any] = {}
+    partial: dict[str, Any] = {}
     umodel_info: dict[str, Any] = {"addr": UMODEL_ADDR, "connected": False}
     umodel_checked_at: float = 0.0
     lock = threading.Lock()
@@ -389,6 +393,8 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             cls.codeowners = OwnersIndex(PROJECT_ROOT)
             alerts_path = ARTIFACT_DIR / "alerts.json"
             cls.alerts = read_json(alerts_path) if alerts_path.exists() else {}
+            partial_path = ARTIFACT_DIR / "partial_rca.json"
+            cls.partial = read_json(partial_path) if partial_path.exists() else {}
         return True
 
     def _refresh_umodel(self) -> None:
@@ -433,6 +439,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             cls.approvals,
             cls.codeowners,
             cls.alerts,
+            cls.partial,
         )
         state["brief"] = ActionLedger(ARTIFACT_DIR / "brief_history.jsonl").reconcile(
             state["brief"],
