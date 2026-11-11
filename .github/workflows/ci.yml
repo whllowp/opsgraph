@@ -34,12 +34,14 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies and perf
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          sudo timeout 300 apt-get update -o Acquire::Retries=2 -o Acquire::http::Timeout=20 -o Acquire::ForceIPv4=true
-          sudo timeout 300 apt-get install -y --no-install-recommends gcc linux-tools-common linux-tools-generic -o Acquire::Retries=2 -o Acquire::http::Timeout=20 -o Acquire::ForceIPv4=true
-          perf --version
+          timeout 120 python -m pip install --upgrade pip --retries 2 --timeout 30
+          timeout 120 python -m pip install -r requirements.txt --retries 2 --timeout 30
+          timeout 300 sudo -E apt-get update -o Acquire::Retries=2 -o Acquire::http::Timeout=20 -o Acquire::ForceIPv4=true
+          timeout 300 sudo -E apt-get install -y --no-install-recommends gcc linux-tools-common linux-tools-generic -o Dpkg::Options::=--force-confold -o Acquire::Retries=2 -o Acquire::http::Timeout=20 -o Acquire::ForceIPv4=true
+          timeout 60 perf --version
       - name: Allow own-process perf sampling
         run: sudo sysctl -w kernel.perf_event_paranoid=1
       - name: Real perf capture -> C RCA -> 10-case REA
