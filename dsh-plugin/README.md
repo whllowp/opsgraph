@@ -20,7 +20,7 @@ Local observability + end-cloud RCA bridge for DeepSeek Harness, plus a desktop 
 ## Install (linked local package)
 
 ```powershell
-dsh plugin add E:\ebpf\opsgraph\dsh-plugin --profile web
+dsh plugin --profile web add E:\ebpf\opsgraph\dsh-plugin
 ```
 
 The profile must also list the bundle (or use the plugin manager's bundle install):
