@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import mimetypes
 import threading
 import time
@@ -363,8 +364,16 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(body)
+
+    def do_OPTIONS(self) -> None:
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
 
     def _load(self) -> bool:
         cls = type(self)
@@ -571,6 +580,46 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 write_json(ARTIFACT_DIR / "snapshot.json", type(self).snapshot)
                 write_json(ARTIFACT_DIR / "analysis.json", analysis)
                 self._json(self._state())
+            return
+
+        if parsed.path == "/api/coordinate":
+            with self.lock:
+                if not self._load():
+                    self._json({"error": "no snapshot"}, 503)
+                    return
+                summary = payload.get("summary") if isinstance(payload, dict) else None
+                if not isinstance(summary, dict):
+                    self._json({"error": "summary object required"}, 400)
+                    return
+                if len(json.dumps(summary, ensure_ascii=False)) > 20000:
+                    self._json({"error": "summary too large"}, 413)
+                    return
+                request_id = (
+                    "SYNC-"
+                    + hashlib.sha1(f"{time.time()}|{summary}".encode("utf-8")).hexdigest()[:10]
+                )
+                record = {
+                    "request_id": request_id,
+                    "received_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                    "source": str(payload.get("source") or "dsh-opsgraph-pet"),
+                    "summary": summary,
+                }
+                path = ARTIFACT_DIR / "coordination.jsonl"
+                path.parent.mkdir(parents=True, exist_ok=True)
+                with path.open("a", encoding="utf-8", newline="\n") as handle:
+                    handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+                analysis = type(self).analysis or {}
+                partial = type(self).partial or {}
+                self._json(
+                    {
+                        "status": "accepted",
+                        "request_id": request_id,
+                        "cloud_root": analysis.get("root_cause"),
+                        "cloud_confidence": analysis.get("confidence"),
+                        "cloud_coverage_pct": (partial.get("coverage") or {}).get("service_pct"),
+                        "ledger": str(path),
+                    }
+                )
             return
 
         if parsed.path == "/api/gate":

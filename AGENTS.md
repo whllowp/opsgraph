@@ -17,6 +17,7 @@ OpsGraph is a Python reference implementation of eBPF-observed operational graph
 - `opsgraph/llm.py` — optional LLM proposer, strict JSON, disabled without credentials.
 - `opsgraph/brain.py` — Laya + LLM combination and guardrails.
 - `opsgraph/partial.py` — 60%-coverage Bayesian RCA + 10-step recovery; fixture in `partial_cases.py`.
+- `dsh-plugin/` — local DSH observability client (`shell.overlay` pet) + cloud summary bridge.
 - `data/knowledge/failure_signatures.json` — versioned failure knowledge.
 - `config/alert_policies.json` — alert policy-as-code.
 - `opsgraph/verification.py` — executable SLO/approval/regression checks.
@@ -84,6 +85,10 @@ node --check console/app.js
 - In partial-observability mode, missing eBPF data is never evidence of health. A blind service must remain a candidate until another source (metrics/logs/config/knowledge/probe) excludes it.
 - The 60% case's `root_hint` is test-only; the inference engine must not read it.
 - Partial recovery must pass an SLO/verification step and propose coverage hardening, not just apply a rollback.
+- The DSH client plugin must stay dependency-free and read OpsGraph over HTTP; never inject Host services from the browser half.
+- End-cloud sync sends only the compact summary in `api/coordinate`; never logs, code, prompts, tokens, or DSH session content.
+- CORS on the local console is for the local plugin only; do not expose port 18088 to an untrusted network.
+- The desktop pet is a UI state indicator, not an alerting or approval authority.
 - Update `docs/en`-style paired docs only if the project gains bilingual docs; currently Chinese README plus English code comments is intentional.
 - Regenerate `model/` after changing `ontology.py` (`python -m opsgraph model`).
 

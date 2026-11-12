@@ -1,0 +1,4 @@
+- insert:
+    - id: opsgraph-pet
+      name: ./lib/index.js
+      config: {}

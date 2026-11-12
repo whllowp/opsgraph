@@ -13,6 +13,7 @@
 | [智能监控告警](alerts.md) | 策略配置、去重/静默/分组/抑制、告警组自动 RCA |
 | [Laya + LLM 大脑](brain.md) | 可解释决策、期望损失、LLM 提议者、守卫与回退 |
 | [60% 覆盖下的 RCA](partial-observability.md) | 盲区推断、知识签名、十次迭代、恢复与覆盖补齐 |
+| [DSH 插件与宠物](dsh-plugin.md) | 本地可观测、端云摘要协同、桌面宠物状态 |
 | [AgentSight 接入](agentsight.md) | snapshot/SQLite 适配、schema 映射、风险/重试环/校验 |
 | [模型](model.md) | 22 EntitySet / 29 Link、字段、ID 规则、导入与查询 |
 | [DeepFlow 接入](deepflow.md) | L7 SQL、tag 映射、实时模式、边界 |

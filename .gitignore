@@ -6,6 +6,7 @@ data/replay/agentsight_snapshot.json
 artifacts/*.png
 artifacts/*.json
 artifacts/*.md
+artifacts/coordination.jsonl
 !artifacts/incident-report.md
 !artifacts/verification.json
 !artifacts/agents.json

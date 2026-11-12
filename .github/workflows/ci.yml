@@ -24,6 +24,10 @@ jobs:
           node-version: "22"
       - name: Check console JavaScript
         run: node --check console/app.js
+      - name: Check DSH plugin JavaScript
+        run: |
+          node --check dsh-plugin/lib/client.js
+          node --check dsh-plugin/lib/index.js
 
   real-perf:
     runs-on: ubuntu-latest

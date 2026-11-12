@@ -426,6 +426,23 @@ CI 新增 `real-perf` job（Linux + perf，**硬门禁**，不再 `continue-on-e
 
 详见 [代码级 RCA / REA](docs/code-rca.md#63-真实-perf-10-次-c-rea)。
 
+## DSH 本地可观测插件 + 桌面宠物
+
+`dsh-plugin/` 是一个本地 DSH 插件：
+
+- 右下角桌面宠物随根因/覆盖/风暴状态变化；
+- 点开显示 OpsGraph 根因、coverage、告警组、代码修复、P99；
+- 本地 DSH → OpsGraph 云端 `POST /api/coordinate` 只同步摘要；
+- 云端返回自己的根因与置信度，端云结论不一致时保留两边。
+
+```text
+本地 root ledger-service 99%  ←→  云端 root checkout-service 78%
+```
+
+![DSH 宠物](docs/dsh-pet.png)
+
+详见 [DSH 插件与宠物](docs/dsh-plugin.md)。
+
 ## 60% 覆盖下的 RCA 与恢复
 
 现网 eBPF 覆盖不全时，不能把“没观测到”当成健康。
@@ -710,6 +727,7 @@ opsgraph/
 │   ├── umodel_client.py   # UModel 公共 REST 客户端
 │   └── cli.py
 ├── config/                # alert_policies.json + laya_model.json
+├── dsh-plugin/            # 本地 DSH 可观测插件 + 桌面宠物
 ├── model/                 # 生成的 UModel 模型包
 ├── demo/fintech/          # 金融故障代码库 + 10 个回归用例
 ├── demo/fintech_c/        # C 金融故障 + 真实 perf 10 次 REA
