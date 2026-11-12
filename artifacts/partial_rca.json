@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-11T17:17:33+00:00",
+  "generated_at": "2026-11-11T17:21:20+00:00",
   "case_id": "partial-60-ledger-pool",
   "title": "支付 P99 故障，eBPF 只覆盖 60%",
   "victim": "payment-gateway",
