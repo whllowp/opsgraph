@@ -380,12 +380,28 @@ window.__ModuleLoader__.load({
     }
 
     function apply(ctx) {
-      ctx.slots.inject("shell.overlay", () =>
-        ctx.slots.register(
-          { name: "shell.overlay", id: "opsgraph-pet", order: 40 },
-          PetOverlay
-        )
-      );
+      // DataAgent owns the desktop-pet surface when installed. Its host mounts
+      // asynchronously, so check both immediately and after the first paint.
+      const register = () => {
+        if (
+          typeof document !== "undefined" &&
+          document.querySelector('[data-dataagent-observability="true"]')
+        ) {
+          return;
+        }
+        ctx.slots.inject("shell.overlay", () =>
+          ctx.slots.register(
+            { name: "shell.overlay", id: "opsgraph-pet", order: 40 },
+            PetOverlay
+          )
+        );
+      };
+      if (typeof document === "undefined") {
+        register();
+        return;
+      }
+      const timer = window.setTimeout(register, 2500);
+      ctx.effect(() => () => window.clearTimeout(timer));
     }
 
     exports.apply = apply;
